@@ -105,6 +105,23 @@
     .markmap-node circle { cursor: pointer; }
     .markmap-foreign div { font-family: var(--map-font); }
     .markmap-foreign img { border-radius: 6px; max-height: 120px; max-width: 220px; object-fit: contain; }
+    .markmap-foreign table {
+      border-collapse: collapse;
+      display: block;
+      font-size: 0.82em;
+      margin-top: 6px;
+      max-width: 340px;
+      overflow: hidden;
+    }
+    .markmap-foreign th,
+    .markmap-foreign td {
+      border: 1px solid var(--border);
+      padding: 4px 7px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+    .markmap-foreign th { background: color-mix(in srgb, var(--panel-2) 86%, transparent); font-weight: 700; }
     .status {
       background: color-mix(in srgb, var(--panel) 94%, transparent);
       border: 1px solid var(--border);
@@ -166,6 +183,7 @@
         </label>
         <input id="import-file" type="file" accept=".md,.markdown,text/markdown,text/plain">
         <button class="secondary" id="import" type="button">Importar MD</button>
+        <button class="secondary" id="table" type="button">Tabla</button>
         <button class="secondary" id="sample" type="button">Ejemplo</button>
         <button class="secondary" id="fit" type="button">Ajustar</button>
         <button class="secondary" id="share" type="button">Copiar link</button>
@@ -192,7 +210,9 @@
   <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js"></script>
   <script>
-    const sample = `# Markmap avanzado\n\n## Despliegue\n\n- Elegi el nivel inicial arriba\n- Hace clic en el circulo de un nodo para contraer o desplegar\n- Ctrl + clic aplica a toda la rama\n\n## Formulas\n\n- Inline: $E = mc^2$\n- Display compatible: $\\displaystyle \\int_a^b f(x)\\,dx = F(b) - F(a)$\n- Fracciones: $\\frac{a^2 + b^2}{c^2}$\n\n## Enlaces e imagenes\n\n- [Documentacion de Markmap](https://markmap.js.org/docs/markmap)\n- ![Markmap](https://markmap.js.org/favicon.png)\n\n## Codigo\n\n\`\`\`js\nconst mindmap = 'markdown + svg';\nconsole.log(mindmap);\n\`\`\``;
+    const sample = `# Markmap avanzado\n\n## Despliegue\n\n- Elegi el nivel inicial arriba\n- Hace clic en el circulo de un nodo para contraer o desplegar\n- Ctrl + clic aplica a toda la rama\n\n## Formulas\n\n- Inline: $E = mc^2$\n- Display compatible: $\\displaystyle \\int_a^b f(x)\\,dx = F(b) - F(a)$\n- Fracciones: $\\frac{a^2 + b^2}{c^2}$\n\n## Tabla\n\n| Opcion | Resultado |\n| --- | --- |\n| Guardar HTML | Mapa interactivo |\n| Guardar SVG | Imagen vectorial |\n| Copiar link | URL compartible |\n\n## Enlaces e imagenes\n\n- [Documentacion de Markmap](https://markmap.js.org/docs/markmap)\n- ![Markmap](https://markmap.js.org/favicon.png)\n\n## Codigo\n\n\`\`\`js\nconst mindmap = 'markdown + svg';\nconsole.log(mindmap);\n\`\`\``;
+
+    const tableSnippet = `\n\n## Tabla\n\n| Columna | Detalle | Estado |\n| --- | --- | --- |\n| HTML | Exporta interactividad | Listo |\n| SVG | Exporta imagen vectorial | Listo |\n| PNG | Puede depender de imagenes externas | Variable |\n`;
 
     const scripts = [
       'https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js',
@@ -255,7 +275,7 @@
         duration: 180,
         initialExpandLevel: settings.level,
         color: colorFor(settings.palette),
-        maxWidth: 340,
+        maxWidth: 380,
         spacingHorizontal: 78,
         spacingVertical: 7
       };
@@ -329,7 +349,7 @@
         const { root } = transformer.transform(textarea.value.trim() || '# Markmap');
         await mm.setData(root, markmapOptions());
         await mm.fit();
-        setStatus('La expansion y contraccion se hace con clic en los circulos de cada nodo. Ctrl + clic aplica a toda la rama.');
+        setStatus('Tablas: usa encabezado, linea separadora y filas. La expansion y contraccion se hace con clic en los circulos.');
       } catch (error) {
         setStatus(error.message || 'No se pudo renderizar el mapa.', true);
       }
@@ -338,6 +358,17 @@
     function scheduleRender() {
       clearTimeout(renderTimer);
       renderTimer = setTimeout(render, 160);
+    }
+
+    function insertAtCursor(text) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const before = textarea.value.slice(0, start);
+      const after = textarea.value.slice(end);
+      textarea.value = `${before}${text}${after}`;
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + text.length;
+      render();
     }
 
     function exportSvgSource() {
@@ -406,7 +437,7 @@
 <title>Markmap</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <style>
-:root{--map-font:${fonts[settings.font] || fonts.system}}*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:${settings.theme === 'dark' ? '#111827' : '#fbfcfd'};color:${settings.theme === 'dark' ? '#edf2f7' : '#17202a'}}header{align-items:center;background:${settings.theme === 'dark' ? '#182235' : '#fff'};border-bottom:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:transparent;border:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};border-radius:6px;color:inherit;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.markmap-foreign div{font-family:var(--map-font)}.markmap-foreign img{border-radius:6px;max-height:120px;max-width:220px;object-fit:contain}.hint{color:${settings.theme === 'dark' ? '#aab6c7' : '#64748b'};font-size:12px}
+:root{--map-font:${fonts[settings.font] || fonts.system};--table-border:${settings.theme === 'dark' ? '#334155' : '#d6dee8'};--table-head:${settings.theme === 'dark' ? '#223047' : '#eef2f6'}}*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:${settings.theme === 'dark' ? '#111827' : '#fbfcfd'};color:${settings.theme === 'dark' ? '#edf2f7' : '#17202a'}}header{align-items:center;background:${settings.theme === 'dark' ? '#182235' : '#fff'};border-bottom:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:transparent;border:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};border-radius:6px;color:inherit;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.markmap-foreign div{font-family:var(--map-font)}.markmap-foreign img{border-radius:6px;max-height:120px;max-width:220px;object-fit:contain}.markmap-foreign table{border-collapse:collapse;display:block;font-size:.82em;margin-top:6px;max-width:380px;overflow:hidden}.markmap-foreign th,.markmap-foreign td{border:1px solid var(--table-border);padding:4px 7px;text-align:left;vertical-align:top;white-space:nowrap}.markmap-foreign th{background:var(--table-head);font-weight:700}.hint{color:${settings.theme === 'dark' ? '#aab6c7' : '#64748b'};font-size:12px}
 </style>
 </head>
 <body>
@@ -421,7 +452,7 @@ const api = window.markmap;
 const svg = document.querySelector('#mindmap');
 function colorFor(name){const colors=palettes[name]||palettes.classic;return node=>colors[Math.max(0,(node.state?.depth||1)-1)%colors.length];}
 const transformer = new api.Transformer();
-const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: settings.level, color: colorFor(settings.palette), maxWidth: 340, spacingHorizontal: 78, spacingVertical: 7 });
+const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: settings.level, color: colorFor(settings.palette), maxWidth: 380, spacingHorizontal: 78, spacingVertical: 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
   await mm.setData(root, { initialExpandLevel: settings.level, color: colorFor(settings.palette) });
@@ -475,6 +506,7 @@ draw();
       [levelSelect, paletteSelect, fontSelect, themeSelect].forEach((control) => control.addEventListener('change', render));
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
       document.querySelector('#sample').addEventListener('click', () => { textarea.value = sample; render(); textarea.focus(); });
+      document.querySelector('#table').addEventListener('click', () => insertAtCursor(tableSnippet));
       document.querySelector('#import').addEventListener('click', () => fileInput.click());
       fileInput.addEventListener('change', () => importMarkdown(fileInput.files[0]));
       document.querySelector('#share').addEventListener('click', copyShareLink);
