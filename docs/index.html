@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Markmap REPL</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <style>
     :root {
-      color-scheme: light;
       --bg: #f6f7f9;
       --panel: #ffffff;
       --panel-2: #eef2f6;
@@ -43,7 +43,7 @@
       background: var(--panel);
       border-bottom: 1px solid var(--border);
       display: flex;
-      gap: 16px;
+      gap: 14px;
       justify-content: space-between;
       padding: 12px 16px;
     }
@@ -146,6 +146,10 @@
       width: 100%;
     }
 
+    .markmap-node circle {
+      cursor: pointer;
+    }
+
     .status {
       background: rgba(255, 255, 255, 0.94);
       border: 1px solid var(--border);
@@ -173,7 +177,6 @@
       .editor { border-bottom: 1px solid var(--border); border-right: 0; }
     }
   </style>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 </head>
 <body>
   <div class="app">
@@ -203,17 +206,17 @@
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/lib/common.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js"></script>
   <script>
-    const sample = `# Markmap\n\n## Escribi Markdown\n\n- Ideas\n- Apuntes\n- Clases\n- Proyectos\n\n## Desplegar y contraer\n\n- Hace clic en el circulo de cada nodo\n- Ctrl + clic contrae o expande en forma recursiva\n\n## Exportar\n\n- Guardar HTML conserva la interactividad\n- Guardar SVG crea una imagen vectorial`;
+    const sample = `# Markmap\n\n## Escribi Markdown\n\n- Ideas\n- Apuntes\n- Clases\n- Proyectos\n\n## Desplegar y contraer\n\n- Hace clic en el circulo que aparece al final de cada nodo\n- Ctrl + clic contrae o expande toda esa rama\n\n## Exportar\n\n- Guardar HTML conserva la interactividad\n- Guardar SVG crea una imagen vectorial`;
 
     const cdnScripts = [
       'https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js',
       'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js',
       'https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/lib/common.min.js',
-      'https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.js',
-      'https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.js'
+      'https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.min.js',
+      'https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js'
     ];
 
     const textarea = document.querySelector('#markdown');
@@ -224,6 +227,10 @@
     let mm;
     let renderTimer;
     let expandLevel = -1;
+
+    function getMarkmapApi() {
+      return window.markmap || null;
+    }
 
     function setStatus(message, isError = false) {
       status.textContent = message;
@@ -261,7 +268,7 @@
         const { root } = transformer.transform(markdown);
         await mm.setData(root, { initialExpandLevel: expandLevel });
         await mm.fit();
-        setStatus('Hace clic en los circulos para contraer o desplegar ramas. Ctrl + clic aplica a toda la rama.');
+        setStatus('Para desplegar o contraer una rama, hace clic en el circulo del nodo. Ctrl + clic aplica a toda esa rama.');
       } catch (error) {
         setStatus(error.message || 'No se pudo renderizar el mapa.', true);
       }
@@ -289,18 +296,19 @@
 <title>Markmap</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <style>
-*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fbfcfd;color:#17202a}header{align-items:center;background:#fff;border-bottom:1px solid #d6dee8;display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:#fff;border:1px solid #d6dee8;border-radius:6px;color:#17202a;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.hint{color:#64748b;font-size:12px}
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fbfcfd;color:#17202a}header{align-items:center;background:#fff;border-bottom:1px solid #d6dee8;display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:#fff;border:1px solid #d6dee8;border-radius:6px;color:#17202a;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.hint{color:#64748b;font-size:12px}
 </style>
 </head>
 <body>
-<header><h1>Markmap</h1><div><button id="collapse">Contraer</button> <button id="expand">Expandir todo</button> <button id="fit">Ajustar</button> <span class="hint">clic en circulos para desplegar/contraer</span></div></header>
+<header><h1>Markmap</h1><div><button id="collapse">Contraer</button> <button id="expand">Expandir todo</button> <button id="fit">Ajustar</button> <span class="hint">clic en circulos de nodos para desplegar/contraer</span></div></header>
 <svg id="mindmap"></svg>
 ${scripts}
 <script>
 const markdown = ${safeMarkdown};
+const api = window.markmap;
 const svg = document.querySelector('#mindmap');
-const transformer = new markmap.Transformer();
-const mm = markmap.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: -1 });
+const transformer = new api.Transformer();
+const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: -1 });
 async function draw(level = -1) {
   const { root } = transformer.transform(markdown);
   await mm.setData(root, { initialExpandLevel: level });
@@ -321,12 +329,14 @@ draw();
     }
 
     function boot() {
-      if (!window.d3 || !window.markmap || !window.markmap.Transformer || !window.markmap.Markmap) {
-        setStatus('No se cargaron las librerias de Markmap. Revisa la conexion o recarga la pagina.', true);
+      const api = getMarkmapApi();
+      if (!window.d3 || !api || !api.Transformer || !api.Markmap) {
+        const keys = api ? Object.keys(api).join(', ') : 'sin window.markmap';
+        setStatus(`No se cargaron las librerias de Markmap. Detalle: ${keys}. Proba Ctrl + F5.`, true);
         return;
       }
-      transformer = new markmap.Transformer();
-      mm = markmap.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: -1 });
+      transformer = new api.Transformer();
+      mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: -1 });
       textarea.value = loadInitialMarkdown();
       textarea.addEventListener('input', scheduleRender);
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
