@@ -205,6 +205,13 @@
             <option value="3.2">Muy gruesa</option>
           </select>
         </label>
+        <label>Ancho
+          <select id="node-width">
+            <option value="compact">Compacto</option>
+            <option value="normal" selected>Normal</option>
+            <option value="wide">Amplio</option>
+          </select>
+        </label>
         <label>Tema
           <select id="theme">
             <option value="light">Claro</option>
@@ -269,6 +276,12 @@
       rounded: '"Trebuchet MS", "Segoe UI", ui-sans-serif, sans-serif'
     };
 
+    const widthProfiles = {
+      compact: [260, 220, 190, 170],
+      normal: [420, 360, 320, 280],
+      wide: [620, 520, 460, 400]
+    };
+
     const textarea = document.querySelector('#markdown');
     const levelSelect = document.querySelector('#level');
     const paletteSelect = document.querySelector('#palette');
@@ -276,6 +289,7 @@
     const textSizeSelect = document.querySelector('#text-size');
     const textColorSelect = document.querySelector('#text-color');
     const lineWidthSelect = document.querySelector('#line-width');
+    const nodeWidthSelect = document.querySelector('#node-width');
     const themeSelect = document.querySelector('#theme');
     const fileInput = document.querySelector('#import-file');
     const count = document.querySelector('#count');
@@ -298,8 +312,14 @@
         textSize: Number(textSizeSelect.value),
         textColor: textColorSelect.value,
         lineWidth: Number(lineWidthSelect.value),
+        nodeWidth: nodeWidthSelect.value,
         theme: themeSelect.value
       };
+    }
+
+    function maxWidthFor(profileName) {
+      const profile = widthProfiles[profileName] || widthProfiles.normal;
+      return (node) => profile[Math.min(profile.length - 1, Math.max(0, (node.state?.depth || 1) - 1))];
     }
 
     function applyUiSettings(settings = currentSettings()) {
@@ -316,7 +336,7 @@
         initialExpandLevel: settings.level,
         color: colorFor(settings.palette),
         lineWidth: (node) => Math.max(1, settings.lineWidth + 2.2 / 2 ** node.state.depth),
-        maxWidth: 380,
+        maxWidth: maxWidthFor(settings.nodeWidth),
         spacingHorizontal: 78,
         spacingVertical: 7
       };
@@ -352,6 +372,7 @@
       if (settings.textSize) textSizeSelect.value = String(settings.textSize);
       if (settings.textColor) textColorSelect.value = settings.textColor;
       if (settings.lineWidth) lineWidthSelect.value = String(settings.lineWidth);
+      if (settings.nodeWidth && widthProfiles[settings.nodeWidth]) nodeWidthSelect.value = settings.nodeWidth;
       if (settings.theme === 'dark' || settings.theme === 'light') themeSelect.value = settings.theme;
       applyUiSettings();
     }
@@ -508,15 +529,17 @@ ${scriptTags}
 const markdown = ${safeMarkdown};
 const settings = ${safeSettings};
 const palettes = ${JSON.stringify(palettes)};
+const widthProfiles = ${JSON.stringify(widthProfiles)};
 const api = window.markmap;
 const svg = document.querySelector('#mindmap');
 function colorFor(name){const colors=palettes[name]||palettes.classic;return node=>colors[Math.max(0,(node.state?.depth||1)-1)%colors.length];}
+function maxWidthFor(name){const profile=widthProfiles[name]||widthProfiles.normal;return node=>profile[Math.min(profile.length-1,Math.max(0,(node.state?.depth||1)-1))];}
 const transformer = new api.Transformer();
 function lineWidth(node){return Math.max(1,(settings.lineWidth||1.6)+2.2/2**node.state.depth)}
-const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: settings.level, color: colorFor(settings.palette), lineWidth, maxWidth: 380, spacingHorizontal: 78, spacingVertical: 7 });
+const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: settings.level, color: colorFor(settings.palette), lineWidth, maxWidth: maxWidthFor(settings.nodeWidth), spacingHorizontal: 78, spacingVertical: 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
-  await mm.setData(root, { initialExpandLevel: settings.level, color: colorFor(settings.palette), lineWidth });
+  await mm.setData(root, { initialExpandLevel: settings.level, color: colorFor(settings.palette), lineWidth, maxWidth: maxWidthFor(settings.nodeWidth) });
   await mm.fit();
 }
 document.querySelector('#fit').addEventListener('click', () => mm.fit());
@@ -564,7 +587,7 @@ draw();
       mm = api.Markmap.create(svg, markmapOptions());
       restore();
       textarea.addEventListener('input', scheduleRender);
-      [levelSelect, paletteSelect, fontSelect, textSizeSelect, textColorSelect, lineWidthSelect, themeSelect].forEach((control) => control.addEventListener('change', render));
+      [levelSelect, paletteSelect, fontSelect, textSizeSelect, textColorSelect, lineWidthSelect, nodeWidthSelect, themeSelect].forEach((control) => control.addEventListener('change', render));
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
       document.querySelector('#sample').addEventListener('click', () => { textarea.value = sample; render(); textarea.focus(); });
       document.querySelector('#bold').addEventListener('click', () => wrapSelection('**', '**', 'negrita'));
