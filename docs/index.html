@@ -17,27 +17,14 @@
       --accent-dark: #115e59;
       --danger: #b42318;
     }
-
     * { box-sizing: border-box; }
-
-    html,
-    body {
-      height: 100%;
-      margin: 0;
-    }
-
+    html, body { height: 100%; margin: 0; }
     body {
       background: var(--bg);
       color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-
-    .app {
-      display: grid;
-      grid-template-rows: auto 1fr;
-      min-height: 100%;
-    }
-
+    .app { display: grid; grid-template-rows: auto 1fr; min-height: 100%; }
     header {
       align-items: center;
       background: var(--panel);
@@ -47,22 +34,19 @@
       justify-content: space-between;
       padding: 12px 16px;
     }
-
-    h1 {
-      font-size: 18px;
-      line-height: 1.2;
-      margin: 0;
-      white-space: nowrap;
+    h1 { font-size: 18px; line-height: 1.2; margin: 0; white-space: nowrap; }
+    .actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    label { align-items: center; color: var(--muted); display: inline-flex; font-size: 13px; gap: 6px; }
+    select {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+      min-height: 34px;
+      padding: 0 8px;
     }
-
-    .actions {
-      align-items: center;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: flex-end;
-    }
-
     button {
       appearance: none;
       background: var(--accent);
@@ -75,42 +59,12 @@
       min-height: 34px;
       padding: 0 11px;
     }
-
-    button.secondary {
-      background: var(--panel);
-      border-color: var(--border);
-      color: var(--text);
-    }
-
-    button:hover {
-      background: var(--accent-dark);
-      border-color: var(--accent-dark);
-    }
-
-    button.secondary:hover {
-      background: var(--panel-2);
-      border-color: var(--border);
-    }
-
-    main {
-      display: grid;
-      grid-template-columns: minmax(280px, 38vw) 1fr;
-      min-height: 0;
-    }
-
-    .editor,
-    .preview {
-      min-height: 0;
-      position: relative;
-    }
-
-    .editor {
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      display: grid;
-      grid-template-rows: auto 1fr;
-    }
-
+    button.secondary { background: var(--panel); border-color: var(--border); color: var(--text); }
+    button:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+    button.secondary:hover { background: var(--panel-2); border-color: var(--border); }
+    main { display: grid; grid-template-columns: minmax(280px, 38vw) 1fr; min-height: 0; }
+    .editor, .preview { min-height: 0; position: relative; }
+    .editor { background: var(--panel); border-right: 1px solid var(--border); display: grid; grid-template-rows: auto 1fr; }
     .bar {
       align-items: center;
       background: var(--panel-2);
@@ -122,7 +76,6 @@
       min-height: 34px;
       padding: 0 12px;
     }
-
     textarea {
       background: transparent;
       border: 0;
@@ -134,22 +87,10 @@
       resize: none;
       width: 100%;
     }
-
-    .preview {
-      background: #fbfcfd;
-      overflow: hidden;
-    }
-
-    svg.markmap {
-      display: block;
-      height: 100%;
-      width: 100%;
-    }
-
-    .markmap-node circle {
-      cursor: pointer;
-    }
-
+    .preview { background: #fbfcfd; overflow: hidden; }
+    svg.markmap { display: block; height: 100%; width: 100%; }
+    .markmap-node circle { cursor: pointer; }
+    .markmap-foreign img { border-radius: 6px; max-height: 120px; max-width: 220px; object-fit: contain; }
     .status {
       background: rgba(255, 255, 255, 0.94);
       border: 1px solid var(--border);
@@ -163,17 +104,14 @@
       position: absolute;
       z-index: 2;
     }
-
     .status.error { color: var(--danger); }
     .hidden { display: none; }
-
-    @media (max-width: 860px) {
+    @media (max-width: 980px) {
       header { align-items: flex-start; flex-direction: column; }
       .actions { justify-content: flex-start; }
-      main {
-        grid-template-columns: 1fr;
-        grid-template-rows: minmax(260px, 44vh) 1fr;
-      }
+    }
+    @media (max-width: 860px) {
+      main { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 44vh) 1fr; }
       .editor { border-bottom: 1px solid var(--border); border-right: 0; }
     }
   </style>
@@ -183,9 +121,25 @@
     <header>
       <h1>Markmap REPL</h1>
       <div class="actions">
+        <label>Nivel
+          <select id="level">
+            <option value="-1">Todo abierto</option>
+            <option value="2">Nivel 1</option>
+            <option value="3">Nivel 2</option>
+            <option value="4">Nivel 3</option>
+            <option value="5">Nivel 4</option>
+          </select>
+        </label>
+        <label>Color
+          <select id="palette">
+            <option value="classic">Clasico</option>
+            <option value="ocean">Oceano</option>
+            <option value="forest">Bosque</option>
+            <option value="sunset">Atardecer</option>
+            <option value="mono">Mono</option>
+          </select>
+        </label>
         <button class="secondary" id="sample" type="button">Ejemplo</button>
-        <button class="secondary" id="collapse" type="button">Contraer</button>
-        <button class="secondary" id="expand" type="button">Expandir todo</button>
         <button class="secondary" id="fit" type="button">Ajustar</button>
         <button id="save-html" type="button">Guardar HTML</button>
         <button class="secondary" id="save-svg" type="button">Guardar SVG</button>
@@ -209,9 +163,9 @@
   <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js"></script>
   <script>
-    const sample = `# Markmap\n\n## Escribi Markdown\n\n- Ideas\n- Apuntes\n- Clases\n- Proyectos\n\n## Desplegar y contraer\n\n- Hace clic en el circulo que aparece al final de cada nodo\n- Ctrl + clic contrae o expande toda esa rama\n\n## Exportar\n\n- Guardar HTML conserva la interactividad\n- Guardar SVG crea una imagen vectorial`;
+    const sample = `# Markmap avanzado\n\n## Despliegue\n\n- Elegi el nivel inicial arriba\n- Hace clic en el circulo de un nodo para contraer o desplegar\n- Ctrl + clic aplica a toda la rama\n\n## Formulas\n\n- Inline: $E = mc^2$\n- Bloque:\n\n$$\n\\int_a^b f(x)\\,dx = F(b) - F(a)\n$$\n\n## Enlaces e imagenes\n\n- [Documentacion de Markmap](https://markmap.js.org/docs/markmap)\n- ![Markmap](https://markmap.js.org/favicon.png)\n\n## Codigo\n\n\`\`\`js\nconst mindmap = 'markdown + svg';\nconsole.log(mindmap);\n\`\`\``;
 
-    const cdnScripts = [
+    const scripts = [
       'https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js',
       'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js',
       'https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/lib/common.min.js',
@@ -219,23 +173,70 @@
       'https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js'
     ];
 
+    const palettes = {
+      classic: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#17becf'],
+      ocean: ['#005f73', '#0a9396', '#94d2bd', '#3a86ff', '#4361ee', '#4895ef'],
+      forest: ['#386641', '#6a994e', '#a7c957', '#2d6a4f', '#40916c', '#74c69d'],
+      sunset: ['#9b2226', '#bb3e03', '#ca6702', '#ee9b00', '#ae2012', '#e76f51'],
+      mono: ['#111827', '#374151', '#4b5563', '#6b7280', '#0f766e']
+    };
+
     const textarea = document.querySelector('#markdown');
+    const levelSelect = document.querySelector('#level');
+    const paletteSelect = document.querySelector('#palette');
     const count = document.querySelector('#count');
     const status = document.querySelector('#status');
     const svg = document.querySelector('#mindmap');
     let transformer;
     let mm;
     let renderTimer;
-    let expandLevel = -1;
 
-    function getMarkmapApi() {
-      return window.markmap || null;
+    function colorFor(paletteName) {
+      const colors = palettes[paletteName] || palettes.classic;
+      return (node) => colors[Math.max(0, (node.state?.depth || 1) - 1) % colors.length];
+    }
+
+    function currentSettings() {
+      return {
+        level: Number(levelSelect.value),
+        palette: paletteSelect.value
+      };
+    }
+
+    function markmapOptions(settings = currentSettings()) {
+      return {
+        autoFit: true,
+        duration: 180,
+        initialExpandLevel: settings.level,
+        color: colorFor(settings.palette),
+        maxWidth: 320,
+        spacingHorizontal: 76,
+        spacingVertical: 7
+      };
     }
 
     function setStatus(message, isError = false) {
       status.textContent = message;
       status.classList.toggle('hidden', !message);
       status.classList.toggle('error', isError);
+    }
+
+    function persist() {
+      try {
+        localStorage.setItem('markmap-repl-markdown', textarea.value);
+        localStorage.setItem('markmap-repl-settings', JSON.stringify(currentSettings()));
+      } catch (error) {}
+    }
+
+    function restore() {
+      try {
+        const settings = JSON.parse(localStorage.getItem('markmap-repl-settings') || '{}');
+        if (settings.level != null) levelSelect.value = String(settings.level);
+        if (settings.palette && palettes[settings.palette]) paletteSelect.value = settings.palette;
+        textarea.value = localStorage.getItem('markmap-repl-markdown') || sample;
+      } catch (error) {
+        textarea.value = sample;
+      }
     }
 
     function download(filename, content, type) {
@@ -250,25 +251,15 @@
       URL.revokeObjectURL(url);
     }
 
-    function saveMarkdown(value) {
-      try { localStorage.setItem('markmap-repl-markdown', value); } catch (error) {}
-    }
-
-    function loadInitialMarkdown() {
-      try { return localStorage.getItem('markmap-repl-markdown') || sample; }
-      catch (error) { return sample; }
-    }
-
     async function render() {
       if (!transformer || !mm) return;
-      const markdown = textarea.value.trim() || '# Markmap';
       count.textContent = `${textarea.value.length} caracteres`;
-      saveMarkdown(textarea.value);
+      persist();
       try {
-        const { root } = transformer.transform(markdown);
-        await mm.setData(root, { initialExpandLevel: expandLevel });
+        const { root } = transformer.transform(textarea.value.trim() || '# Markmap');
+        await mm.setData(root, markmapOptions());
         await mm.fit();
-        setStatus('Para desplegar o contraer una rama, hace clic en el circulo del nodo. Ctrl + clic aplica a toda esa rama.');
+        setStatus('La expansion y contraccion se hace con clic en los circulos de cada nodo. Ctrl + clic aplica a toda la rama.');
       } catch (error) {
         setStatus(error.message || 'No se pudo renderizar el mapa.', true);
       }
@@ -285,9 +276,10 @@
       download('markmap.svg', new XMLSerializer().serializeToString(clone), 'image/svg+xml;charset=utf-8');
     }
 
-    function exportedHtml(markdown) {
+    function exportedHtml(markdown, settings) {
       const safeMarkdown = JSON.stringify(markdown).replace(/</g, '\\u003c');
-      const scripts = cdnScripts.map((src) => `<script src="${src}"><\/script>`).join('\n');
+      const safeSettings = JSON.stringify(settings).replace(/</g, '\\u003c');
+      const scriptTags = scripts.map((src) => `<script src="${src}"><\/script>`).join('\n');
       return `<!doctype html>
 <html lang="es">
 <head>
@@ -296,27 +288,28 @@
 <title>Markmap</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <style>
-*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fbfcfd;color:#17202a}header{align-items:center;background:#fff;border-bottom:1px solid #d6dee8;display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:#fff;border:1px solid #d6dee8;border-radius:6px;color:#17202a;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.hint{color:#64748b;font-size:12px}
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fbfcfd;color:#17202a}header{align-items:center;background:#fff;border-bottom:1px solid #d6dee8;display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:#fff;border:1px solid #d6dee8;border-radius:6px;color:#17202a;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.markmap-foreign img{border-radius:6px;max-height:120px;max-width:220px;object-fit:contain}.hint{color:#64748b;font-size:12px}
 </style>
 </head>
 <body>
-<header><h1>Markmap</h1><div><button id="collapse">Contraer</button> <button id="expand">Expandir todo</button> <button id="fit">Ajustar</button> <span class="hint">clic en circulos de nodos para desplegar/contraer</span></div></header>
+<header><h1>Markmap</h1><div><button id="fit">Ajustar</button> <span class="hint">clic en circulos para desplegar/contraer</span></div></header>
 <svg id="mindmap"></svg>
-${scripts}
+${scriptTags}
 <script>
 const markdown = ${safeMarkdown};
+const settings = ${safeSettings};
+const palettes = ${JSON.stringify(palettes)};
 const api = window.markmap;
 const svg = document.querySelector('#mindmap');
+function colorFor(name){const colors=palettes[name]||palettes.classic;return node=>colors[Math.max(0,(node.state?.depth||1)-1)%colors.length];}
 const transformer = new api.Transformer();
-const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: -1 });
-async function draw(level = -1) {
+const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: settings.level, color: colorFor(settings.palette), maxWidth: 320, spacingHorizontal: 76, spacingVertical: 7 });
+async function draw() {
   const { root } = transformer.transform(markdown);
-  await mm.setData(root, { initialExpandLevel: level });
+  await mm.setData(root, { initialExpandLevel: settings.level, color: colorFor(settings.palette) });
   await mm.fit();
 }
 document.querySelector('#fit').addEventListener('click', () => mm.fit());
-document.querySelector('#collapse').addEventListener('click', () => draw(2));
-document.querySelector('#expand').addEventListener('click', () => draw(-1));
 window.addEventListener('resize', () => mm.fit());
 draw();
 <\/script>
@@ -325,35 +318,24 @@ draw();
     }
 
     function exportHtml() {
-      download('markmap.html', exportedHtml(textarea.value), 'text/html;charset=utf-8');
+      download('markmap.html', exportedHtml(textarea.value, currentSettings()), 'text/html;charset=utf-8');
     }
 
     function boot() {
-      const api = getMarkmapApi();
+      const api = window.markmap;
       if (!window.d3 || !api || !api.Transformer || !api.Markmap) {
         const keys = api ? Object.keys(api).join(', ') : 'sin window.markmap';
         setStatus(`No se cargaron las librerias de Markmap. Detalle: ${keys}. Proba Ctrl + F5.`, true);
         return;
       }
       transformer = new api.Transformer();
-      mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: -1 });
-      textarea.value = loadInitialMarkdown();
+      mm = api.Markmap.create(svg, markmapOptions());
+      restore();
       textarea.addEventListener('input', scheduleRender);
+      levelSelect.addEventListener('change', render);
+      paletteSelect.addEventListener('change', render);
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
-      document.querySelector('#sample').addEventListener('click', () => {
-        textarea.value = sample;
-        expandLevel = -1;
-        render();
-        textarea.focus();
-      });
-      document.querySelector('#collapse').addEventListener('click', () => {
-        expandLevel = 2;
-        render();
-      });
-      document.querySelector('#expand').addEventListener('click', () => {
-        expandLevel = -1;
-        render();
-      });
+      document.querySelector('#sample').addEventListener('click', () => { textarea.value = sample; render(); textarea.focus(); });
       document.querySelector('#save-html').addEventListener('click', exportHtml);
       document.querySelector('#save-svg').addEventListener('click', exportSvg);
       window.addEventListener('resize', () => mm.fit());
