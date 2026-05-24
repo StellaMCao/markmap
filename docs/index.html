@@ -333,9 +333,16 @@
       return visibleLevel <= 0 ? -1 : visibleLevel + 1;
     }
 
-    function maxWidthFor(profileName) {
+    function widthForDepth(profileName, depth) {
       const profile = widthProfiles[profileName] || widthProfiles.normal;
-      return (node) => profile[Math.min(profile.length - 1, Math.max(0, (node.state?.depth || 1) - 1))];
+      return profile[Math.min(profile.length - 1, Math.max(0, depth - 1))];
+    }
+
+    function widthCssFor(profileName) {
+      return Array.from({ length: 16 }, (_, index) => {
+        const depth = index + 1;
+        return `.markmap-node[data-depth="${depth}"] .markmap-foreign > div{width:${widthForDepth(profileName, depth)}px}`;
+      }).join('\n');
     }
 
     function applyUiSettings(settings = currentSettings()) {
@@ -352,7 +359,8 @@
         initialExpandLevel: initialExpandLevelFor(settings.level),
         color: colorFor(settings.palette),
         lineWidth: (node) => Math.max(1, settings.lineWidth + 2.2 / 2 ** node.state.depth),
-        maxWidth: maxWidthFor(settings.nodeWidth),
+        maxWidth: 0,
+        style: () => widthCssFor(settings.nodeWidth),
         spacingHorizontal: settings.spacingHorizontal,
         spacingVertical: settings.spacingVertical
       };
@@ -553,13 +561,14 @@ const api = window.markmap;
 const svg = document.querySelector('#mindmap');
 function colorFor(name){const colors=palettes[name]||palettes.classic;return node=>colors[Math.max(0,(node.state?.depth||1)-1)%colors.length];}
 function initialExpandLevelFor(level){return level<=0?-1:level+1}
-function maxWidthFor(name){const profile=widthProfiles[name]||widthProfiles.normal;return node=>profile[Math.min(profile.length-1,Math.max(0,(node.state?.depth||1)-1))];}
+function widthForDepth(name,depth){const profile=widthProfiles[name]||widthProfiles.normal;return profile[Math.min(profile.length-1,Math.max(0,depth-1))]}
+function widthCssFor(name){return Array.from({length:16},(_,i)=>{const depth=i+1;return '.markmap-node[data-depth="'+depth+'"] .markmap-foreign > div{width:'+widthForDepth(name,depth)+'px}'}).join('\\n')}
 const transformer = new api.Transformer();
 function lineWidth(node){return Math.max(1,(settings.lineWidth||1.6)+2.2/2**node.state.depth)}
-const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: maxWidthFor(settings.nodeWidth), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
+const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.nodeWidth), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
-  await mm.setData(root, { duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: maxWidthFor(settings.nodeWidth), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
+  await mm.setData(root, { duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.nodeWidth), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
   await mm.fit();
 }
 document.querySelector('#fit').addEventListener('click', () => mm.fit());
