@@ -50,7 +50,8 @@
     h1 { font-size: 18px; line-height: 1.2; margin: 0; white-space: nowrap; }
     .actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
     label { align-items: center; color: var(--muted); display: inline-flex; font-size: 13px; gap: 6px; }
-    select {
+    select,
+    input[type="number"] {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -60,6 +61,7 @@
       min-height: 34px;
       padding: 0 8px;
     }
+    input[type="number"] { width: 72px; }
     button {
       appearance: none;
       background: var(--accent);
@@ -153,13 +155,7 @@
       <h1>Markmap REPL</h1>
       <div class="actions">
         <label>Nivel
-          <select id="level">
-            <option value="-1">Todo abierto</option>
-            <option value="2">Nivel 1</option>
-            <option value="3">Nivel 2</option>
-            <option value="4">Nivel 3</option>
-            <option value="5">Nivel 4</option>
-          </select>
+          <input id="level" type="number" min="0" max="99" step="1" value="0" title="0 abre todo; 1, 2, 3... limitan los niveles visibles al abrir">
         </label>
         <label>Color
           <select id="palette">
@@ -212,6 +208,15 @@
             <option value="wide">Amplio</option>
           </select>
         </label>
+        <label>Esp. H
+          <input id="spacing-h" type="number" min="24" max="220" step="2" value="78">
+        </label>
+        <label>Esp. V
+          <input id="spacing-v" type="number" min="0" max="40" step="1" value="7">
+        </label>
+        <label>Anim.
+          <input id="duration" type="number" min="0" max="1500" step="20" value="180">
+        </label>
         <label>Tema
           <select id="theme">
             <option value="light">Claro</option>
@@ -220,6 +225,7 @@
         </label>
         <input id="import-file" type="file" accept=".md,.markdown,text/markdown,text/plain">
         <button class="secondary" id="import" type="button">Importar MD</button>
+        <button class="secondary" id="save-md" type="button">Guardar MD</button>
         <button class="secondary" id="bold" type="button"><strong>B</strong></button>
         <button class="secondary" id="italic" type="button"><em>I</em></button>
         <button class="secondary" id="table" type="button">Tabla</button>
@@ -290,6 +296,9 @@
     const textColorSelect = document.querySelector('#text-color');
     const lineWidthSelect = document.querySelector('#line-width');
     const nodeWidthSelect = document.querySelector('#node-width');
+    const spacingHInput = document.querySelector('#spacing-h');
+    const spacingVInput = document.querySelector('#spacing-v');
+    const durationInput = document.querySelector('#duration');
     const themeSelect = document.querySelector('#theme');
     const fileInput = document.querySelector('#import-file');
     const count = document.querySelector('#count');
@@ -306,15 +315,22 @@
 
     function currentSettings() {
       return {
-        level: Number(levelSelect.value),
+        level: Math.max(0, Number(levelSelect.value) || 0),
         palette: paletteSelect.value,
         font: fontSelect.value,
         textSize: Number(textSizeSelect.value),
         textColor: textColorSelect.value,
         lineWidth: Number(lineWidthSelect.value),
         nodeWidth: nodeWidthSelect.value,
+        spacingHorizontal: Number(spacingHInput.value) || 78,
+        spacingVertical: Number(spacingVInput.value) || 7,
+        duration: Math.max(0, Number(durationInput.value) || 0),
         theme: themeSelect.value
       };
+    }
+
+    function initialExpandLevelFor(visibleLevel) {
+      return visibleLevel <= 0 ? -1 : visibleLevel + 1;
     }
 
     function maxWidthFor(profileName) {
@@ -332,13 +348,13 @@
     function markmapOptions(settings = currentSettings()) {
       return {
         autoFit: true,
-        duration: 180,
-        initialExpandLevel: settings.level,
+        duration: settings.duration,
+        initialExpandLevel: initialExpandLevelFor(settings.level),
         color: colorFor(settings.palette),
         lineWidth: (node) => Math.max(1, settings.lineWidth + 2.2 / 2 ** node.state.depth),
         maxWidth: maxWidthFor(settings.nodeWidth),
-        spacingHorizontal: 78,
-        spacingVertical: 7
+        spacingHorizontal: settings.spacingHorizontal,
+        spacingVertical: settings.spacingVertical
       };
     }
 
@@ -366,13 +382,16 @@
     }
 
     function loadSettings(settings = {}) {
-      if (settings.level != null) levelSelect.value = String(settings.level);
+      if (settings.level != null) levelSelect.value = String(settings.level < 0 ? 0 : settings.level);
       if (settings.palette && palettes[settings.palette]) paletteSelect.value = settings.palette;
       if (settings.font && fonts[settings.font]) fontSelect.value = settings.font;
       if (settings.textSize) textSizeSelect.value = String(settings.textSize);
       if (settings.textColor) textColorSelect.value = settings.textColor;
       if (settings.lineWidth) lineWidthSelect.value = String(settings.lineWidth);
       if (settings.nodeWidth && widthProfiles[settings.nodeWidth]) nodeWidthSelect.value = settings.nodeWidth;
+      if (settings.spacingHorizontal) spacingHInput.value = String(settings.spacingHorizontal);
+      if (settings.spacingVertical != null) spacingVInput.value = String(settings.spacingVertical);
+      if (settings.duration != null) durationInput.value = String(settings.duration);
       if (settings.theme === 'dark' || settings.theme === 'light') themeSelect.value = settings.theme;
       applyUiSettings();
     }
@@ -533,13 +552,14 @@ const widthProfiles = ${JSON.stringify(widthProfiles)};
 const api = window.markmap;
 const svg = document.querySelector('#mindmap');
 function colorFor(name){const colors=palettes[name]||palettes.classic;return node=>colors[Math.max(0,(node.state?.depth||1)-1)%colors.length];}
+function initialExpandLevelFor(level){return level<=0?-1:level+1}
 function maxWidthFor(name){const profile=widthProfiles[name]||widthProfiles.normal;return node=>profile[Math.min(profile.length-1,Math.max(0,(node.state?.depth||1)-1))];}
 const transformer = new api.Transformer();
 function lineWidth(node){return Math.max(1,(settings.lineWidth||1.6)+2.2/2**node.state.depth)}
-const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: settings.level, color: colorFor(settings.palette), lineWidth, maxWidth: maxWidthFor(settings.nodeWidth), spacingHorizontal: 78, spacingVertical: 7 });
+const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: maxWidthFor(settings.nodeWidth), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
-  await mm.setData(root, { initialExpandLevel: settings.level, color: colorFor(settings.palette), lineWidth, maxWidth: maxWidthFor(settings.nodeWidth) });
+  await mm.setData(root, { duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: maxWidthFor(settings.nodeWidth), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
   await mm.fit();
 }
 document.querySelector('#fit').addEventListener('click', () => mm.fit());
@@ -552,6 +572,10 @@ draw();
 
     function exportHtml() {
       download('markmap.html', exportedHtml(textarea.value, currentSettings()), 'text/html;charset=utf-8');
+    }
+
+    function exportMarkdown() {
+      download('markmap.md', textarea.value, 'text/markdown;charset=utf-8');
     }
 
     async function copyShareLink() {
@@ -587,13 +611,15 @@ draw();
       mm = api.Markmap.create(svg, markmapOptions());
       restore();
       textarea.addEventListener('input', scheduleRender);
-      [levelSelect, paletteSelect, fontSelect, textSizeSelect, textColorSelect, lineWidthSelect, nodeWidthSelect, themeSelect].forEach((control) => control.addEventListener('change', render));
+      [levelSelect, paletteSelect, fontSelect, textSizeSelect, textColorSelect, lineWidthSelect, nodeWidthSelect, spacingHInput, spacingVInput, durationInput, themeSelect].forEach((control) => control.addEventListener('change', render));
+      [levelSelect, spacingHInput, spacingVInput, durationInput].forEach((control) => control.addEventListener('input', scheduleRender));
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
       document.querySelector('#sample').addEventListener('click', () => { textarea.value = sample; render(); textarea.focus(); });
       document.querySelector('#bold').addEventListener('click', () => wrapSelection('**', '**', 'negrita'));
       document.querySelector('#italic').addEventListener('click', () => wrapSelection('*', '*', 'cursiva'));
       document.querySelector('#table').addEventListener('click', () => insertAtCursor(tableSnippet));
       document.querySelector('#import').addEventListener('click', () => fileInput.click());
+      document.querySelector('#save-md').addEventListener('click', exportMarkdown);
       fileInput.addEventListener('change', () => importMarkdown(fileInput.files[0]));
       document.querySelector('#share').addEventListener('click', copyShareLink);
       document.querySelector('#save-html').addEventListener('click', exportHtml);
