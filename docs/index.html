@@ -62,6 +62,14 @@
       padding: 0 8px;
     }
     input[type="number"] { width: 72px; }
+    .summary {
+      color: var(--muted);
+      font-size: 12px;
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     button {
       appearance: none;
       background: var(--accent);
@@ -201,13 +209,15 @@
             <option value="3.2">Muy gruesa</option>
           </select>
         </label>
-        <label>Ancho
-          <select id="node-width">
-            <option value="compact">Compacto</option>
-            <option value="normal" selected>Normal</option>
-            <option value="wide">Amplio</option>
-          </select>
+        <label>Nivel ancho
+          <input id="width-level" type="number" min="1" max="99" step="1" value="1">
         </label>
+        <label>Ancho px
+          <input id="width-px" type="number" min="80" max="1200" step="10" value="420">
+        </label>
+        <button class="secondary" id="set-width" type="button">Aplicar ancho</button>
+        <button class="secondary" id="reset-width" type="button">Anchos base</button>
+        <span class="summary" id="width-summary"></span>
         <label>Esp. H
           <input id="spacing-h" type="number" min="24" max="220" step="2" value="78">
         </label>
@@ -288,6 +298,9 @@
       wide: [620, 520, 460, 400]
     };
 
+    const defaultWidthRules = { 1: 420, 2: 360, 3: 320, 4: 280 };
+    let widthRules = { ...defaultWidthRules };
+
     const textarea = document.querySelector('#markdown');
     const levelSelect = document.querySelector('#level');
     const paletteSelect = document.querySelector('#palette');
@@ -295,7 +308,9 @@
     const textSizeSelect = document.querySelector('#text-size');
     const textColorSelect = document.querySelector('#text-color');
     const lineWidthSelect = document.querySelector('#line-width');
-    const nodeWidthSelect = document.querySelector('#node-width');
+    const widthLevelInput = document.querySelector('#width-level');
+    const widthPxInput = document.querySelector('#width-px');
+    const widthSummary = document.querySelector('#width-summary');
     const spacingHInput = document.querySelector('#spacing-h');
     const spacingVInput = document.querySelector('#spacing-v');
     const durationInput = document.querySelector('#duration');
@@ -321,7 +336,7 @@
         textSize: Number(textSizeSelect.value),
         textColor: textColorSelect.value,
         lineWidth: Number(lineWidthSelect.value),
-        nodeWidth: nodeWidthSelect.value,
+        widthRules: { ...widthRules },
         spacingHorizontal: Number(spacingHInput.value) || 78,
         spacingVertical: Number(spacingVInput.value) || 7,
         duration: Math.max(0, Number(durationInput.value) || 0),
@@ -333,16 +348,40 @@
       return visibleLevel <= 0 ? -1 : visibleLevel + 1;
     }
 
-    function widthForDepth(profileName, depth) {
-      const profile = widthProfiles[profileName] || widthProfiles.normal;
-      return profile[Math.min(profile.length - 1, Math.max(0, depth - 1))];
+    function sanitizeWidthRules(rules) {
+      const next = {};
+      Object.entries(rules || {}).forEach(([level, width]) => {
+        const numericLevel = Math.max(1, Math.round(Number(level)));
+        const numericWidth = Math.max(80, Math.min(1200, Math.round(Number(width))));
+        if (Number.isFinite(numericLevel) && Number.isFinite(numericWidth)) next[numericLevel] = numericWidth;
+      });
+      return Object.keys(next).length ? next : { ...defaultWidthRules };
     }
 
-    function widthCssFor(profileName) {
-      return Array.from({ length: 16 }, (_, index) => {
+    function widthRulesFromProfile(profileName) {
+      const profile = widthProfiles[profileName] || widthProfiles.normal;
+      return Object.fromEntries(profile.map((width, index) => [index + 1, width]));
+    }
+
+    function widthForDepth(rules, depth) {
+      const sanitized = sanitizeWidthRules(rules);
+      const levels = Object.keys(sanitized).map(Number).sort((a, b) => a - b);
+      const matchedLevel = levels.filter((level) => level <= depth).pop() || levels[0];
+      return sanitized[matchedLevel];
+    }
+
+    function widthCssFor(rules) {
+      return Array.from({ length: 32 }, (_, index) => {
         const depth = index + 1;
-        return `.markmap-node[data-depth="${depth}"] .markmap-foreign > div{width:${widthForDepth(profileName, depth)}px}`;
+        return `.markmap-node[data-depth="${depth}"] .markmap-foreign > div{width:${widthForDepth(rules, depth)}px}`;
       }).join('\n');
+    }
+
+    function updateWidthSummary() {
+      widthSummary.textContent = Object.entries(sanitizeWidthRules(widthRules))
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([level, width]) => `N${level}:${width}px`)
+        .join(' ');
     }
 
     function applyUiSettings(settings = currentSettings()) {
@@ -360,7 +399,7 @@
         color: colorFor(settings.palette),
         lineWidth: (node) => Math.max(1, settings.lineWidth + 2.2 / 2 ** node.state.depth),
         maxWidth: 0,
-        style: () => widthCssFor(settings.nodeWidth),
+        style: () => widthCssFor(settings.widthRules),
         spacingHorizontal: settings.spacingHorizontal,
         spacingVertical: settings.spacingVertical
       };
@@ -396,12 +435,14 @@
       if (settings.textSize) textSizeSelect.value = String(settings.textSize);
       if (settings.textColor) textColorSelect.value = settings.textColor;
       if (settings.lineWidth) lineWidthSelect.value = String(settings.lineWidth);
-      if (settings.nodeWidth && widthProfiles[settings.nodeWidth]) nodeWidthSelect.value = settings.nodeWidth;
+      if (settings.widthRules) widthRules = sanitizeWidthRules(settings.widthRules);
+      else if (settings.nodeWidth) widthRules = widthRulesFromProfile(settings.nodeWidth);
       if (settings.spacingHorizontal) spacingHInput.value = String(settings.spacingHorizontal);
       if (settings.spacingVertical != null) spacingVInput.value = String(settings.spacingVertical);
       if (settings.duration != null) durationInput.value = String(settings.duration);
       if (settings.theme === 'dark' || settings.theme === 'light') themeSelect.value = settings.theme;
       applyUiSettings();
+      updateWidthSummary();
     }
 
     function restore() {
@@ -460,6 +501,24 @@
       textarea.value = `${before}${text}${after}`;
       textarea.focus();
       textarea.selectionStart = textarea.selectionEnd = start + text.length;
+      render();
+    }
+
+    function setWidthRule() {
+      const level = Math.max(1, Math.round(Number(widthLevelInput.value) || 1));
+      const width = Math.max(80, Math.min(1200, Math.round(Number(widthPxInput.value) || 420)));
+      widthLevelInput.value = String(level);
+      widthPxInput.value = String(width);
+      widthRules = sanitizeWidthRules({ ...widthRules, [level]: width });
+      updateWidthSummary();
+      render();
+    }
+
+    function resetWidthRules() {
+      widthRules = { ...defaultWidthRules };
+      widthLevelInput.value = '1';
+      widthPxInput.value = String(widthRules[1]);
+      updateWidthSummary();
       render();
     }
 
@@ -556,19 +615,20 @@ ${scriptTags}
 const markdown = ${safeMarkdown};
 const settings = ${safeSettings};
 const palettes = ${JSON.stringify(palettes)};
-const widthProfiles = ${JSON.stringify(widthProfiles)};
+const defaultWidthRules = ${JSON.stringify(defaultWidthRules)};
 const api = window.markmap;
 const svg = document.querySelector('#mindmap');
 function colorFor(name){const colors=palettes[name]||palettes.classic;return node=>colors[Math.max(0,(node.state?.depth||1)-1)%colors.length];}
 function initialExpandLevelFor(level){return level<=0?-1:level+1}
-function widthForDepth(name,depth){const profile=widthProfiles[name]||widthProfiles.normal;return profile[Math.min(profile.length-1,Math.max(0,depth-1))]}
-function widthCssFor(name){return Array.from({length:16},(_,i)=>{const depth=i+1;return '.markmap-node[data-depth="'+depth+'"] .markmap-foreign > div{width:'+widthForDepth(name,depth)+'px}'}).join('\\n')}
+function sanitizeWidthRules(rules){const next={};Object.entries(rules||{}).forEach(([level,width])=>{const numericLevel=Math.max(1,Math.round(Number(level)));const numericWidth=Math.max(80,Math.min(1200,Math.round(Number(width))));if(Number.isFinite(numericLevel)&&Number.isFinite(numericWidth))next[numericLevel]=numericWidth});return Object.keys(next).length?next:{...defaultWidthRules}}
+function widthForDepth(rules,depth){const sanitized=sanitizeWidthRules(rules);const levels=Object.keys(sanitized).map(Number).sort((a,b)=>a-b);const matched=levels.filter(level=>level<=depth).pop()||levels[0];return sanitized[matched]}
+function widthCssFor(rules){return Array.from({length:32},(_,i)=>{const depth=i+1;return '.markmap-node[data-depth="'+depth+'"] .markmap-foreign > div{width:'+widthForDepth(rules,depth)+'px}'}).join('\\n')}
 const transformer = new api.Transformer();
 function lineWidth(node){return Math.max(1,(settings.lineWidth||1.6)+2.2/2**node.state.depth)}
-const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.nodeWidth), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
+const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
-  await mm.setData(root, { duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.nodeWidth), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
+  await mm.setData(root, { duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
   await mm.fit();
 }
 document.querySelector('#fit').addEventListener('click', () => mm.fit());
@@ -620,13 +680,18 @@ draw();
       mm = api.Markmap.create(svg, markmapOptions());
       restore();
       textarea.addEventListener('input', scheduleRender);
-      [levelSelect, paletteSelect, fontSelect, textSizeSelect, textColorSelect, lineWidthSelect, nodeWidthSelect, spacingHInput, spacingVInput, durationInput, themeSelect].forEach((control) => control.addEventListener('change', render));
+      [levelSelect, paletteSelect, fontSelect, textSizeSelect, textColorSelect, lineWidthSelect, spacingHInput, spacingVInput, durationInput, themeSelect].forEach((control) => control.addEventListener('change', render));
       [levelSelect, spacingHInput, spacingVInput, durationInput].forEach((control) => control.addEventListener('input', scheduleRender));
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
       document.querySelector('#sample').addEventListener('click', () => { textarea.value = sample; render(); textarea.focus(); });
       document.querySelector('#bold').addEventListener('click', () => wrapSelection('**', '**', 'negrita'));
       document.querySelector('#italic').addEventListener('click', () => wrapSelection('*', '*', 'cursiva'));
       document.querySelector('#table').addEventListener('click', () => insertAtCursor(tableSnippet));
+      document.querySelector('#set-width').addEventListener('click', setWidthRule);
+      document.querySelector('#reset-width').addEventListener('click', resetWidthRules);
+      [widthLevelInput, widthPxInput].forEach((control) => control.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') setWidthRule();
+      }));
       document.querySelector('#import').addEventListener('click', () => fileInput.click());
       document.querySelector('#save-md').addEventListener('click', exportMarkdown);
       fileInput.addEventListener('change', () => importMarkdown(fileInput.files[0]));
