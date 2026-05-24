@@ -18,6 +18,7 @@
       --danger: #b42318;
       --map-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --map-font-size: 1em;
+      --map-text: var(--text);
     }
     [data-theme="dark"] {
       --bg: #111827;
@@ -104,7 +105,8 @@
     .preview { background: color-mix(in srgb, var(--panel) 55%, var(--bg)); overflow: hidden; }
     svg.markmap { display: block; height: 100%; width: 100%; }
     .markmap-node circle { cursor: pointer; }
-    .markmap-foreign div { font-family: var(--map-font); font-size: var(--map-font-size); }
+    .markmap-foreign div { color: var(--map-text); font-family: var(--map-font); font-size: var(--map-font-size); }
+    .markmap-foreign a { color: color-mix(in srgb, var(--map-text) 72%, #008cff); }
     .markmap-foreign img { border-radius: 6px; max-height: 120px; max-width: 220px; object-fit: contain; }
     .markmap-foreign table {
       border-collapse: collapse;
@@ -184,6 +186,17 @@
             <option value="1.36">Muy grande</option>
           </select>
         </label>
+        <label>Letra
+          <select id="text-color">
+            <option value="auto" selected>Auto</option>
+            <option value="#111827">Negro</option>
+            <option value="#f8fafc">Blanco</option>
+            <option value="#64748b">Gris</option>
+            <option value="#0ea5e9">Azul</option>
+            <option value="#f59e0b">Ambar</option>
+            <option value="#22c55e">Verde</option>
+          </select>
+        </label>
         <label>Linea
           <select id="line-width">
             <option value="1">Fina</option>
@@ -261,6 +274,7 @@
     const paletteSelect = document.querySelector('#palette');
     const fontSelect = document.querySelector('#font');
     const textSizeSelect = document.querySelector('#text-size');
+    const textColorSelect = document.querySelector('#text-color');
     const lineWidthSelect = document.querySelector('#line-width');
     const themeSelect = document.querySelector('#theme');
     const fileInput = document.querySelector('#import-file');
@@ -282,6 +296,7 @@
         palette: paletteSelect.value,
         font: fontSelect.value,
         textSize: Number(textSizeSelect.value),
+        textColor: textColorSelect.value,
         lineWidth: Number(lineWidthSelect.value),
         theme: themeSelect.value
       };
@@ -291,6 +306,7 @@
       document.body.dataset.theme = settings.theme;
       document.documentElement.style.setProperty('--map-font', fonts[settings.font] || fonts.system);
       document.documentElement.style.setProperty('--map-font-size', `${settings.textSize || 1}em`);
+      document.documentElement.style.setProperty('--map-text', settings.textColor === 'auto' ? 'var(--text)' : settings.textColor);
     }
 
     function markmapOptions(settings = currentSettings()) {
@@ -334,6 +350,7 @@
       if (settings.palette && palettes[settings.palette]) paletteSelect.value = settings.palette;
       if (settings.font && fonts[settings.font]) fontSelect.value = settings.font;
       if (settings.textSize) textSizeSelect.value = String(settings.textSize);
+      if (settings.textColor) textColorSelect.value = settings.textColor;
       if (settings.lineWidth) lineWidthSelect.value = String(settings.lineWidth);
       if (settings.theme === 'dark' || settings.theme === 'light') themeSelect.value = settings.theme;
       applyUiSettings();
@@ -469,6 +486,9 @@
       const safeMarkdown = JSON.stringify(markdown).replace(/</g, '\\u003c');
       const safeSettings = JSON.stringify(settings).replace(/</g, '\\u003c');
       const scriptTags = scripts.map((src) => `<script src="${src}"><\/script>`).join('\n');
+      const mapText = settings.textColor === 'auto'
+        ? (settings.theme === 'dark' ? '#edf2f7' : '#17202a')
+        : settings.textColor;
       return `<!doctype html>
 <html lang="es">
 <head>
@@ -477,7 +497,7 @@
 <title>Markmap</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <style>
-:root{--map-font:${fonts[settings.font] || fonts.system};--map-font-size:${settings.textSize || 1}em;--table-border:${settings.theme === 'dark' ? '#334155' : '#d6dee8'};--table-head:${settings.theme === 'dark' ? '#223047' : '#eef2f6'}}*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:${settings.theme === 'dark' ? '#111827' : '#fbfcfd'};color:${settings.theme === 'dark' ? '#edf2f7' : '#17202a'}}header{align-items:center;background:${settings.theme === 'dark' ? '#182235' : '#fff'};border-bottom:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:transparent;border:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};border-radius:6px;color:inherit;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.markmap-foreign div{font-family:var(--map-font);font-size:var(--map-font-size)}.markmap-foreign img{border-radius:6px;max-height:120px;max-width:220px;object-fit:contain}.markmap-foreign table{border-collapse:collapse;display:block;font-size:.82em;margin-top:6px;max-width:380px;overflow:hidden}.markmap-foreign th,.markmap-foreign td{border:1px solid var(--table-border);padding:4px 7px;text-align:left;vertical-align:top;white-space:nowrap}.markmap-foreign th{background:var(--table-head);font-weight:700}.hint{color:${settings.theme === 'dark' ? '#aab6c7' : '#64748b'};font-size:12px}
+:root{--map-font:${fonts[settings.font] || fonts.system};--map-font-size:${settings.textSize || 1}em;--map-text:${mapText};--table-border:${settings.theme === 'dark' ? '#334155' : '#d6dee8'};--table-head:${settings.theme === 'dark' ? '#223047' : '#eef2f6'}}*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:${settings.theme === 'dark' ? '#111827' : '#fbfcfd'};color:${settings.theme === 'dark' ? '#edf2f7' : '#17202a'}}header{align-items:center;background:${settings.theme === 'dark' ? '#182235' : '#fff'};border-bottom:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:transparent;border:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};border-radius:6px;color:inherit;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.markmap-foreign div{color:var(--map-text);font-family:var(--map-font);font-size:var(--map-font-size)}.markmap-foreign a{color:color-mix(in srgb,var(--map-text) 72%,#008cff)}.markmap-foreign img{border-radius:6px;max-height:120px;max-width:220px;object-fit:contain}.markmap-foreign table{border-collapse:collapse;display:block;font-size:.82em;margin-top:6px;max-width:380px;overflow:hidden}.markmap-foreign th,.markmap-foreign td{border:1px solid var(--table-border);padding:4px 7px;text-align:left;vertical-align:top;white-space:nowrap}.markmap-foreign th{background:var(--table-head);font-weight:700}.hint{color:${settings.theme === 'dark' ? '#aab6c7' : '#64748b'};font-size:12px}
 </style>
 </head>
 <body>
@@ -544,7 +564,7 @@ draw();
       mm = api.Markmap.create(svg, markmapOptions());
       restore();
       textarea.addEventListener('input', scheduleRender);
-      [levelSelect, paletteSelect, fontSelect, textSizeSelect, lineWidthSelect, themeSelect].forEach((control) => control.addEventListener('change', render));
+      [levelSelect, paletteSelect, fontSelect, textSizeSelect, textColorSelect, lineWidthSelect, themeSelect].forEach((control) => control.addEventListener('change', render));
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
       document.querySelector('#sample').addEventListener('click', () => { textarea.value = sample; render(); textarea.focus(); });
       document.querySelector('#bold').addEventListener('click', () => wrapSelection('**', '**', 'negrita'));
