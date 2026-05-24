@@ -163,7 +163,7 @@
       <h1>Markmap REPL</h1>
       <div class="actions">
         <label>Nivel
-          <input id="level" type="number" min="0" max="99" step="1" value="0" title="0 abre todo; 1, 2, 3... limitan los niveles visibles al abrir">
+          <input id="level" type="number" min="-1" max="99" step="1" value="-1" title="-1 abre todo; 0 muestra solo el título; 1, 2, 3... muestran más niveles">
         </label>
         <label>Despliegue
           <select id="fold-mode">
@@ -173,6 +173,7 @@
         </label>
         <button class="secondary" id="apply-level" type="button">Aplicar nivel</button>
         <button class="secondary" id="open-all" type="button">Abrir todo</button>
+        <button class="secondary" id="title-only" type="button">Solo título</button>
         <button class="secondary" id="close-main" type="button">Cerrar a nivel 1</button>
         <label>Color
           <select id="palette">
@@ -341,7 +342,7 @@
 
     function currentSettings() {
       return {
-        level: Math.max(0, Number(levelSelect.value) || 0),
+        level: Math.max(-1, Number(levelSelect.value) || 0),
         foldMode: foldModeSelect.value,
         palette: paletteSelect.value,
         font: fontSelect.value,
@@ -426,7 +427,7 @@
     function cloneWithLevelFold(node, visibleLevel, depth = 1) {
       const payload = node.payload ? { ...node.payload } : {};
       delete payload.fold;
-      if (visibleLevel > 0 && depth >= visibleLevel + 1 && node.children?.length) payload.fold = 1;
+      if (visibleLevel >= 0 && depth >= visibleLevel + 1 && node.children?.length) payload.fold = 1;
       return {
         ...node,
         payload: Object.keys(payload).length ? payload : undefined,
@@ -463,7 +464,7 @@
     }
 
     function loadSettings(settings = {}) {
-      if (settings.level != null) levelSelect.value = String(settings.level < 0 ? 0 : settings.level);
+      if (settings.level != null) levelSelect.value = String(Math.max(-1, Number(settings.level)));
       if (settings.foldMode === 'memory' || settings.foldMode === 'strict') foldModeSelect.value = settings.foldMode;
       if (settings.palette && palettes[settings.palette]) paletteSelect.value = settings.palette;
       if (settings.font && fonts[settings.font]) fontSelect.value = settings.font;
@@ -519,7 +520,7 @@
         await mm.setData(prepareRootForFoldMode(root, settings), markmapOptions(settings));
         await mm.fit();
         setStatus(foldModeSelect.value === 'strict'
-          ? 'Despliegue: Forzar nivel. El número de nivel manda y limpia la memoria de ramas al aplicar/renderizar.'
+          ? 'Despliegue: Forzar nivel. -1 abre todo, 0 deja solo el título, 1 muestra ramas principales.'
           : 'Despliegue: Recordar ramas. Los círculos recuerdan qué ramas dejaste abiertas o cerradas.');
       } catch (error) {
         setStatus(error.message || 'No se pudo renderizar el mapa.', true);
@@ -561,13 +562,13 @@
     }
 
     function applyLevel(level, mode = 'strict') {
-      levelSelect.value = String(Math.max(0, Number(level) || 0));
+      levelSelect.value = String(Math.max(-1, Number(level)));
       foldModeSelect.value = mode;
       render();
     }
 
     function showHelp() {
-      setStatus('Ayuda: Nivel 0 abre todo; Nivel 1 muestra solo ramas principales; Nivel 2 muestra dos niveles, etc. En Forzar nivel, el número manda y se borran aperturas previas. En Recordar ramas, cada círculo conserva cómo lo dejaste. Ctrl + clic en un círculo aplica a toda esa rama. Para ancho: elegí Nivel ancho + Ancho px y tocá Aplicar ancho.');
+      setStatus('Ayuda: Nivel -1 abre todo. Nivel 0 muestra solo el título. Nivel 1 muestra título + ramas principales. Nivel 2 muestra un nivel más, etc. En Forzar nivel, el número manda y se borran aperturas previas. En Recordar ramas, cada círculo conserva cómo lo dejaste. Ctrl + clic en un círculo aplica a toda esa rama. Para ancho: elegí Nivel ancho + Ancho px y tocá Aplicar ancho.');
     }
 
     function wrapSelection(prefix, suffix = prefix, placeholder = 'texto') {
@@ -671,8 +672,8 @@ function sanitizeWidthRules(rules){const next={};Object.entries(rules||{}).forEa
 function widthForDepth(rules,depth){const sanitized=sanitizeWidthRules(rules);const levels=Object.keys(sanitized).map(Number).sort((a,b)=>a-b);const matched=levels.filter(level=>level<=depth).pop()||levels[0];return sanitized[matched]}
 function widthCssFor(rules){return Array.from({length:32},(_,i)=>{const depth=i+1;return '.markmap-node[data-depth="'+depth+'"] .markmap-foreign > div{width:'+widthForDepth(rules,depth)+'px}'}).join('\\n')}
 function cloneWithoutFold(node){const payload=node.payload?{...node.payload}:undefined;if(payload)delete payload.fold;return {...node,payload,children:node.children?.map(cloneWithoutFold)||[]}}
-function cloneWithLevelFold(node,visibleLevel,depth=1){const payload=node.payload?{...node.payload}:{};delete payload.fold;if(visibleLevel>0&&depth>=visibleLevel+1&&node.children?.length)payload.fold=1;return {...node,payload:Object.keys(payload).length?payload:undefined,children:node.children?.map(child=>cloneWithLevelFold(child,visibleLevel,depth+1))||[]}}
-function prepareRoot(root){return settings.foldMode==='memory'?cloneWithoutFold(root):cloneWithLevelFold(root,settings.level||0)}
+function cloneWithLevelFold(node,visibleLevel,depth=1){const payload=node.payload?{...node.payload}:{};delete payload.fold;if(visibleLevel>=0&&depth>=visibleLevel+1&&node.children?.length)payload.fold=1;return {...node,payload:Object.keys(payload).length?payload:undefined,children:node.children?.map(child=>cloneWithLevelFold(child,visibleLevel,depth+1))||[]}}
+function prepareRoot(root){return settings.foldMode==='memory'?cloneWithoutFold(root):cloneWithLevelFold(root,settings.level??-1)}
 const transformer = new api.Transformer();
 function lineWidth(node){return Math.max(1,(settings.lineWidth||1.6)+2.2/2**node.state.depth)}
 const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
@@ -735,7 +736,8 @@ draw();
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
       document.querySelector('#sample').addEventListener('click', () => { textarea.value = sample; render(); textarea.focus(); });
       document.querySelector('#apply-level').addEventListener('click', () => render());
-      document.querySelector('#open-all').addEventListener('click', () => applyLevel(0, 'strict'));
+      document.querySelector('#open-all').addEventListener('click', () => applyLevel(-1, 'strict'));
+      document.querySelector('#title-only').addEventListener('click', () => applyLevel(0, 'strict'));
       document.querySelector('#close-main').addEventListener('click', () => applyLevel(1, 'strict'));
       document.querySelector('#help').addEventListener('click', showHelp);
       document.querySelector('#bold').addEventListener('click', () => wrapSelection('**', '**', 'negrita'));
