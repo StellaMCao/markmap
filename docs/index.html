@@ -255,9 +255,9 @@
   <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js"></script>
   <script>
-    const sample = `# Markmap avanzado\n\n## Despliegue\n\n- Elegi el nivel inicial arriba\n- Hace clic en el circulo de un nodo para contraer o desplegar\n- Ctrl + clic aplica a toda la rama\n\n## Formato\n\n- **Negrita** para ideas centrales\n- *Cursiva* para matices o notas\n- Ajusta tamaño de texto y grosor de linea desde la barra superior\n\n## Formulas\n\n- Inline: $E = mc^2$\n- Display compatible: $\\displaystyle \\int_a^b f(x)\\,dx = F(b) - F(a)$\n- Fracciones: $\\frac{a^2 + b^2}{c^2}$\n\n## Tabla\n\n| Opcion | Resultado |\n| --- | --- |\n| Guardar HTML | Mapa interactivo |\n| Guardar SVG | Imagen vectorial |\n| Copiar link | URL compartible |\n\n## Enlaces e imagenes\n\n- [Documentacion de Markmap](https://markmap.js.org/docs/markmap)\n- ![Markmap](https://markmap.js.org/favicon.png)\n\n## Codigo\n\n\`\`\`js\nconst mindmap = 'markdown + svg';\nconsole.log(mindmap);\n\`\`\``;
+    const sample = `# Markmap avanzado\n\n## Despliegue\n\n- Elegí el nivel inicial arriba\n- Hacé clic en el círculo de un nodo para contraer o desplegar\n- Ctrl + clic aplica a toda la rama\n\n## Formato\n\n- **Negrita** para ideas centrales\n- *Cursiva* para matices o notas\n- Ajustá tamaño de texto y grosor de línea desde la barra superior\n\n## Fórmulas\n\n- Inline: $E = mc^2$\n- Display compatible: $\\displaystyle \\int_a^b f(x)\\,dx = F(b) - F(a)$\n- Fracciones: $\\frac{a^2 + b^2}{c^2}$\n\n## Tabla\n\n| Opción | Resultado |\n| --- | --- |\n| Guardar HTML | Mapa interactivo |\n| Guardar SVG | Imagen vectorial |\n| Copiar link | URL compartible |\n\n## Enlaces e imágenes\n\n- [Documentación de Markmap](https://markmap.js.org/docs/markmap)\n- ![Markmap](https://markmap.js.org/favicon.png)\n\n## Código\n\n\`\`\`js\nconst mindmap = 'markdown + svg';\nconsole.log(mindmap);\n\`\`\``;
 
-    const tableSnippet = `\n\n## Tabla\n\n| Columna | Detalle | Estado |\n| --- | --- | --- |\n| HTML | Exporta interactividad | Listo |\n| SVG | Exporta imagen vectorial | Listo |\n| PNG | Puede depender de imagenes externas | Variable |\n`;
+    const tableSnippet = `\n\n## Tabla\n\n| Columna | Detalle | Estado |\n| --- | --- | --- |\n| HTML | Exporta interactividad | Listo |\n| SVG | Exporta imagen vectorial | Listo |\n| PNG | Puede depender de imágenes externas | Variable |\n`;
 
     const scripts = [
       'https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js',
@@ -433,7 +433,7 @@
         const { root } = transformer.transform(textarea.value.trim() || '# Markmap');
         await mm.setData(root, markmapOptions());
         await mm.fit();
-        setStatus('Tablas: usa encabezado, linea separadora y filas. La expansion y contraccion se hace con clic en los circulos.');
+        setStatus('Tablas: usá encabezado, línea separadora y filas. La expansión y contracción se hace con clic en los círculos.');
       } catch (error) {
         setStatus(error.message || 'No se pudo renderizar el mapa.', true);
       }
@@ -512,7 +512,7 @@
           }, 'image/png');
         } catch (error) {
           URL.revokeObjectURL(url);
-          setStatus('No se pudo generar PNG. Si el mapa incluye imagenes externas, el navegador puede bloquear la exportacion.', true);
+          setStatus('No se pudo generar PNG. Si el mapa incluye imágenes externas, el navegador puede bloquear la exportación.', true);
         }
       };
       image.onerror = () => {
@@ -541,7 +541,7 @@
 </style>
 </head>
 <body>
-<header><h1>Markmap</h1><div><button id="fit">Ajustar</button> <span class="hint">clic en circulos para desplegar/contraer</span></div></header>
+<header><h1>Markmap</h1><div><button id="fit">Ajustar</button> <span class="hint">clic en círculos para desplegar/contraer</span></div></header>
 <svg id="mindmap"></svg>
 ${scriptTags}
 <script>
