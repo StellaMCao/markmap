@@ -16,6 +16,17 @@
       --accent: #0f766e;
       --accent-dark: #115e59;
       --danger: #b42318;
+      --map-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    [data-theme="dark"] {
+      --bg: #111827;
+      --panel: #182235;
+      --panel-2: #223047;
+      --text: #edf2f7;
+      --muted: #aab6c7;
+      --border: #334155;
+      --accent: #2dd4bf;
+      --accent-dark: #14b8a6;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
@@ -52,16 +63,18 @@
       background: var(--accent);
       border: 1px solid var(--accent);
       border-radius: 6px;
-      color: #fff;
+      color: #06201d;
       cursor: pointer;
       font: inherit;
       font-size: 14px;
       min-height: 34px;
       padding: 0 11px;
     }
+    [data-theme="light"] button { color: #fff; }
     button.secondary { background: var(--panel); border-color: var(--border); color: var(--text); }
     button:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
     button.secondary:hover { background: var(--panel-2); border-color: var(--border); }
+    input[type="file"] { display: none; }
     main { display: grid; grid-template-columns: minmax(280px, 38vw) 1fr; min-height: 0; }
     .editor, .preview { min-height: 0; position: relative; }
     .editor { background: var(--panel); border-right: 1px solid var(--border); display: grid; grid-template-rows: auto 1fr; }
@@ -87,12 +100,13 @@
       resize: none;
       width: 100%;
     }
-    .preview { background: #fbfcfd; overflow: hidden; }
+    .preview { background: color-mix(in srgb, var(--panel) 55%, var(--bg)); overflow: hidden; }
     svg.markmap { display: block; height: 100%; width: 100%; }
     .markmap-node circle { cursor: pointer; }
+    .markmap-foreign div { font-family: var(--map-font); }
     .markmap-foreign img { border-radius: 6px; max-height: 120px; max-width: 220px; object-fit: contain; }
     .status {
-      background: rgba(255, 255, 255, 0.94);
+      background: color-mix(in srgb, var(--panel) 94%, transparent);
       border: 1px solid var(--border);
       border-radius: 6px;
       bottom: 12px;
@@ -106,17 +120,14 @@
     }
     .status.error { color: var(--danger); }
     .hidden { display: none; }
-    @media (max-width: 980px) {
-      header { align-items: flex-start; flex-direction: column; }
-      .actions { justify-content: flex-start; }
-    }
+    @media (max-width: 1120px) { header { align-items: flex-start; flex-direction: column; } .actions { justify-content: flex-start; } }
     @media (max-width: 860px) {
       main { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 44vh) 1fr; }
       .editor { border-bottom: 1px solid var(--border); border-right: 0; }
     }
   </style>
 </head>
-<body>
+<body data-theme="light">
   <div class="app">
     <header>
       <h1>Markmap REPL</h1>
@@ -139,10 +150,28 @@
             <option value="mono">Mono</option>
           </select>
         </label>
+        <label>Fuente
+          <select id="font">
+            <option value="system">Sistema</option>
+            <option value="serif">Serif</option>
+            <option value="mono">Mono</option>
+            <option value="rounded">Redondeada</option>
+          </select>
+        </label>
+        <label>Tema
+          <select id="theme">
+            <option value="light">Claro</option>
+            <option value="dark">Oscuro</option>
+          </select>
+        </label>
+        <input id="import-file" type="file" accept=".md,.markdown,text/markdown,text/plain">
+        <button class="secondary" id="import" type="button">Importar MD</button>
         <button class="secondary" id="sample" type="button">Ejemplo</button>
         <button class="secondary" id="fit" type="button">Ajustar</button>
+        <button class="secondary" id="share" type="button">Copiar link</button>
         <button id="save-html" type="button">Guardar HTML</button>
         <button class="secondary" id="save-svg" type="button">Guardar SVG</button>
+        <button class="secondary" id="save-png" type="button">Guardar PNG</button>
       </div>
     </header>
     <main>
@@ -163,7 +192,7 @@
   <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js"></script>
   <script>
-    const sample = `# Markmap avanzado\n\n## Despliegue\n\n- Elegi el nivel inicial arriba\n- Hace clic en el circulo de un nodo para contraer o desplegar\n- Ctrl + clic aplica a toda la rama\n\n## Formulas\n\n- Inline: $E = mc^2$\n- Bloque:\n\n$$\n\\int_a^b f(x)\\,dx = F(b) - F(a)\n$$\n\n## Enlaces e imagenes\n\n- [Documentacion de Markmap](https://markmap.js.org/docs/markmap)\n- ![Markmap](https://markmap.js.org/favicon.png)\n\n## Codigo\n\n\`\`\`js\nconst mindmap = 'markdown + svg';\nconsole.log(mindmap);\n\`\`\``;
+    const sample = `# Markmap avanzado\n\n## Despliegue\n\n- Elegi el nivel inicial arriba\n- Hace clic en el circulo de un nodo para contraer o desplegar\n- Ctrl + clic aplica a toda la rama\n\n## Formulas\n\n- Inline: $E = mc^2$\n- Display compatible: $\\displaystyle \\int_a^b f(x)\\,dx = F(b) - F(a)$\n- Fracciones: $\\frac{a^2 + b^2}{c^2}$\n\n## Enlaces e imagenes\n\n- [Documentacion de Markmap](https://markmap.js.org/docs/markmap)\n- ![Markmap](https://markmap.js.org/favicon.png)\n\n## Codigo\n\n\`\`\`js\nconst mindmap = 'markdown + svg';\nconsole.log(mindmap);\n\`\`\``;
 
     const scripts = [
       'https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js',
@@ -181,9 +210,19 @@
       mono: ['#111827', '#374151', '#4b5563', '#6b7280', '#0f766e']
     };
 
+    const fonts = {
+      system: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      serif: 'Georgia, Cambria, "Times New Roman", serif',
+      mono: 'Consolas, "Liberation Mono", Menlo, monospace',
+      rounded: '"Trebuchet MS", "Segoe UI", ui-sans-serif, sans-serif'
+    };
+
     const textarea = document.querySelector('#markdown');
     const levelSelect = document.querySelector('#level');
     const paletteSelect = document.querySelector('#palette');
+    const fontSelect = document.querySelector('#font');
+    const themeSelect = document.querySelector('#theme');
+    const fileInput = document.querySelector('#import-file');
     const count = document.querySelector('#count');
     const status = document.querySelector('#status');
     const svg = document.querySelector('#mindmap');
@@ -199,8 +238,15 @@
     function currentSettings() {
       return {
         level: Number(levelSelect.value),
-        palette: paletteSelect.value
+        palette: paletteSelect.value,
+        font: fontSelect.value,
+        theme: themeSelect.value
       };
+    }
+
+    function applyUiSettings(settings = currentSettings()) {
+      document.body.dataset.theme = settings.theme;
+      document.documentElement.style.setProperty('--map-font', fonts[settings.font] || fonts.system);
     }
 
     function markmapOptions(settings = currentSettings()) {
@@ -209,8 +255,8 @@
         duration: 180,
         initialExpandLevel: settings.level,
         color: colorFor(settings.palette),
-        maxWidth: 320,
-        spacingHorizontal: 76,
+        maxWidth: 340,
+        spacingHorizontal: 78,
         spacingVertical: 7
       };
     }
@@ -221,6 +267,16 @@
       status.classList.toggle('error', isError);
     }
 
+    function encodeState(markdown, settings) {
+      return btoa(unescape(encodeURIComponent(JSON.stringify({ markdown, settings }))));
+    }
+
+    function decodeState(hash) {
+      if (!hash.startsWith('#m=')) return null;
+      try { return JSON.parse(decodeURIComponent(escape(atob(hash.slice(3))))); }
+      catch (error) { return null; }
+    }
+
     function persist() {
       try {
         localStorage.setItem('markmap-repl-markdown', textarea.value);
@@ -228,14 +284,27 @@
       } catch (error) {}
     }
 
+    function loadSettings(settings = {}) {
+      if (settings.level != null) levelSelect.value = String(settings.level);
+      if (settings.palette && palettes[settings.palette]) paletteSelect.value = settings.palette;
+      if (settings.font && fonts[settings.font]) fontSelect.value = settings.font;
+      if (settings.theme === 'dark' || settings.theme === 'light') themeSelect.value = settings.theme;
+      applyUiSettings();
+    }
+
     function restore() {
+      const shared = decodeState(location.hash);
+      if (shared) {
+        textarea.value = shared.markdown || sample;
+        loadSettings(shared.settings || {});
+        return;
+      }
       try {
-        const settings = JSON.parse(localStorage.getItem('markmap-repl-settings') || '{}');
-        if (settings.level != null) levelSelect.value = String(settings.level);
-        if (settings.palette && palettes[settings.palette]) paletteSelect.value = settings.palette;
+        loadSettings(JSON.parse(localStorage.getItem('markmap-repl-settings') || '{}'));
         textarea.value = localStorage.getItem('markmap-repl-markdown') || sample;
       } catch (error) {
         textarea.value = sample;
+        loadSettings();
       }
     }
 
@@ -254,6 +323,7 @@
     async function render() {
       if (!transformer || !mm) return;
       count.textContent = `${textarea.value.length} caracteres`;
+      applyUiSettings();
       persist();
       try {
         const { root } = transformer.transform(textarea.value.trim() || '# Markmap');
@@ -270,10 +340,58 @@
       renderTimer = setTimeout(render, 160);
     }
 
-    function exportSvg() {
+    function exportSvgSource() {
       const clone = svg.cloneNode(true);
       clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-      download('markmap.svg', new XMLSerializer().serializeToString(clone), 'image/svg+xml;charset=utf-8');
+      clone.setAttribute('style', `font-family:${fonts[currentSettings().font] || fonts.system}`);
+      return new XMLSerializer().serializeToString(clone);
+    }
+
+    function exportSvg() {
+      download('markmap.svg', exportSvgSource(), 'image/svg+xml;charset=utf-8');
+    }
+
+    function exportPng() {
+      const source = exportSvgSource();
+      const image = new Image();
+      const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      image.onload = () => {
+        try {
+          const rect = svg.getBoundingClientRect();
+          const canvas = document.createElement('canvas');
+          const scale = 2;
+          canvas.width = Math.max(1, Math.round(rect.width * scale));
+          canvas.height = Math.max(1, Math.round(rect.height * scale));
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = getComputedStyle(document.querySelector('.preview')).backgroundColor;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((png) => {
+            URL.revokeObjectURL(url);
+            if (!png) {
+              setStatus('No se pudo generar el PNG.', true);
+              return;
+            }
+            const pngUrl = URL.createObjectURL(png);
+            const link = document.createElement('a');
+            link.href = pngUrl;
+            link.download = 'markmap.png';
+            document.body.append(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(pngUrl);
+          }, 'image/png');
+        } catch (error) {
+          URL.revokeObjectURL(url);
+          setStatus('No se pudo generar PNG. Si el mapa incluye imagenes externas, el navegador puede bloquear la exportacion.', true);
+        }
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(url);
+        setStatus('No se pudo convertir el SVG a PNG.', true);
+      };
+      image.src = url;
     }
 
     function exportedHtml(markdown, settings) {
@@ -288,7 +406,7 @@
 <title>Markmap</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <style>
-*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fbfcfd;color:#17202a}header{align-items:center;background:#fff;border-bottom:1px solid #d6dee8;display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:#fff;border:1px solid #d6dee8;border-radius:6px;color:#17202a;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.markmap-foreign img{border-radius:6px;max-height:120px;max-width:220px;object-fit:contain}.hint{color:#64748b;font-size:12px}
+:root{--map-font:${fonts[settings.font] || fonts.system}}*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:${settings.theme === 'dark' ? '#111827' : '#fbfcfd'};color:${settings.theme === 'dark' ? '#edf2f7' : '#17202a'}}header{align-items:center;background:${settings.theme === 'dark' ? '#182235' : '#fff'};border-bottom:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:transparent;border:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};border-radius:6px;color:inherit;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.markmap-foreign div{font-family:var(--map-font)}.markmap-foreign img{border-radius:6px;max-height:120px;max-width:220px;object-fit:contain}.hint{color:${settings.theme === 'dark' ? '#aab6c7' : '#64748b'};font-size:12px}
 </style>
 </head>
 <body>
@@ -303,7 +421,7 @@ const api = window.markmap;
 const svg = document.querySelector('#mindmap');
 function colorFor(name){const colors=palettes[name]||palettes.classic;return node=>colors[Math.max(0,(node.state?.depth||1)-1)%colors.length];}
 const transformer = new api.Transformer();
-const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: settings.level, color: colorFor(settings.palette), maxWidth: 320, spacingHorizontal: 76, spacingVertical: 7 });
+const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: settings.level, color: colorFor(settings.palette), maxWidth: 340, spacingHorizontal: 78, spacingVertical: 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
   await mm.setData(root, { initialExpandLevel: settings.level, color: colorFor(settings.palette) });
@@ -321,6 +439,28 @@ draw();
       download('markmap.html', exportedHtml(textarea.value, currentSettings()), 'text/html;charset=utf-8');
     }
 
+    async function copyShareLink() {
+      const url = `${location.origin}${location.pathname}#m=${encodeState(textarea.value, currentSettings())}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        setStatus('Link copiado. Puede ser largo si el Markdown es largo.');
+      } catch (error) {
+        location.hash = `m=${encodeState(textarea.value, currentSettings())}`;
+        setStatus('No pude copiar al portapapeles, pero deje el link compartible en la barra de direcciones.');
+      }
+    }
+
+    function importMarkdown(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        textarea.value = String(reader.result || '');
+        render();
+      };
+      reader.onerror = () => setStatus('No se pudo leer el archivo.', true);
+      reader.readAsText(file);
+    }
+
     function boot() {
       const api = window.markmap;
       if (!window.d3 || !api || !api.Transformer || !api.Markmap) {
@@ -332,13 +472,17 @@ draw();
       mm = api.Markmap.create(svg, markmapOptions());
       restore();
       textarea.addEventListener('input', scheduleRender);
-      levelSelect.addEventListener('change', render);
-      paletteSelect.addEventListener('change', render);
+      [levelSelect, paletteSelect, fontSelect, themeSelect].forEach((control) => control.addEventListener('change', render));
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
       document.querySelector('#sample').addEventListener('click', () => { textarea.value = sample; render(); textarea.focus(); });
+      document.querySelector('#import').addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => importMarkdown(fileInput.files[0]));
+      document.querySelector('#share').addEventListener('click', copyShareLink);
       document.querySelector('#save-html').addEventListener('click', exportHtml);
       document.querySelector('#save-svg').addEventListener('click', exportSvg);
+      document.querySelector('#save-png').addEventListener('click', exportPng);
       window.addEventListener('resize', () => mm.fit());
+      window.addEventListener('hashchange', () => { restore(); render(); });
       render();
     }
 
