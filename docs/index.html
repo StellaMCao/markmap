@@ -17,6 +17,7 @@
       --accent-dark: #115e59;
       --danger: #b42318;
       --map-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --map-font-size: 1em;
     }
     [data-theme="dark"] {
       --bg: #111827;
@@ -103,7 +104,7 @@
     .preview { background: color-mix(in srgb, var(--panel) 55%, var(--bg)); overflow: hidden; }
     svg.markmap { display: block; height: 100%; width: 100%; }
     .markmap-node circle { cursor: pointer; }
-    .markmap-foreign div { font-family: var(--map-font); }
+    .markmap-foreign div { font-family: var(--map-font); font-size: var(--map-font-size); }
     .markmap-foreign img { border-radius: 6px; max-height: 120px; max-width: 220px; object-fit: contain; }
     .markmap-foreign table {
       border-collapse: collapse;
@@ -175,6 +176,22 @@
             <option value="rounded">Redondeada</option>
           </select>
         </label>
+        <label>Texto
+          <select id="text-size">
+            <option value="0.86">Chico</option>
+            <option value="1" selected>Normal</option>
+            <option value="1.18">Grande</option>
+            <option value="1.36">Muy grande</option>
+          </select>
+        </label>
+        <label>Linea
+          <select id="line-width">
+            <option value="1">Fina</option>
+            <option value="1.6" selected>Normal</option>
+            <option value="2.4">Gruesa</option>
+            <option value="3.2">Muy gruesa</option>
+          </select>
+        </label>
         <label>Tema
           <select id="theme">
             <option value="light">Claro</option>
@@ -183,6 +200,8 @@
         </label>
         <input id="import-file" type="file" accept=".md,.markdown,text/markdown,text/plain">
         <button class="secondary" id="import" type="button">Importar MD</button>
+        <button class="secondary" id="bold" type="button"><strong>B</strong></button>
+        <button class="secondary" id="italic" type="button"><em>I</em></button>
         <button class="secondary" id="table" type="button">Tabla</button>
         <button class="secondary" id="sample" type="button">Ejemplo</button>
         <button class="secondary" id="fit" type="button">Ajustar</button>
@@ -210,7 +229,7 @@
   <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js"></script>
   <script>
-    const sample = `# Markmap avanzado\n\n## Despliegue\n\n- Elegi el nivel inicial arriba\n- Hace clic en el circulo de un nodo para contraer o desplegar\n- Ctrl + clic aplica a toda la rama\n\n## Formulas\n\n- Inline: $E = mc^2$\n- Display compatible: $\\displaystyle \\int_a^b f(x)\\,dx = F(b) - F(a)$\n- Fracciones: $\\frac{a^2 + b^2}{c^2}$\n\n## Tabla\n\n| Opcion | Resultado |\n| --- | --- |\n| Guardar HTML | Mapa interactivo |\n| Guardar SVG | Imagen vectorial |\n| Copiar link | URL compartible |\n\n## Enlaces e imagenes\n\n- [Documentacion de Markmap](https://markmap.js.org/docs/markmap)\n- ![Markmap](https://markmap.js.org/favicon.png)\n\n## Codigo\n\n\`\`\`js\nconst mindmap = 'markdown + svg';\nconsole.log(mindmap);\n\`\`\``;
+    const sample = `# Markmap avanzado\n\n## Despliegue\n\n- Elegi el nivel inicial arriba\n- Hace clic en el circulo de un nodo para contraer o desplegar\n- Ctrl + clic aplica a toda la rama\n\n## Formato\n\n- **Negrita** para ideas centrales\n- *Cursiva* para matices o notas\n- Ajusta tamaño de texto y grosor de linea desde la barra superior\n\n## Formulas\n\n- Inline: $E = mc^2$\n- Display compatible: $\\displaystyle \\int_a^b f(x)\\,dx = F(b) - F(a)$\n- Fracciones: $\\frac{a^2 + b^2}{c^2}$\n\n## Tabla\n\n| Opcion | Resultado |\n| --- | --- |\n| Guardar HTML | Mapa interactivo |\n| Guardar SVG | Imagen vectorial |\n| Copiar link | URL compartible |\n\n## Enlaces e imagenes\n\n- [Documentacion de Markmap](https://markmap.js.org/docs/markmap)\n- ![Markmap](https://markmap.js.org/favicon.png)\n\n## Codigo\n\n\`\`\`js\nconst mindmap = 'markdown + svg';\nconsole.log(mindmap);\n\`\`\``;
 
     const tableSnippet = `\n\n## Tabla\n\n| Columna | Detalle | Estado |\n| --- | --- | --- |\n| HTML | Exporta interactividad | Listo |\n| SVG | Exporta imagen vectorial | Listo |\n| PNG | Puede depender de imagenes externas | Variable |\n`;
 
@@ -241,6 +260,8 @@
     const levelSelect = document.querySelector('#level');
     const paletteSelect = document.querySelector('#palette');
     const fontSelect = document.querySelector('#font');
+    const textSizeSelect = document.querySelector('#text-size');
+    const lineWidthSelect = document.querySelector('#line-width');
     const themeSelect = document.querySelector('#theme');
     const fileInput = document.querySelector('#import-file');
     const count = document.querySelector('#count');
@@ -260,6 +281,8 @@
         level: Number(levelSelect.value),
         palette: paletteSelect.value,
         font: fontSelect.value,
+        textSize: Number(textSizeSelect.value),
+        lineWidth: Number(lineWidthSelect.value),
         theme: themeSelect.value
       };
     }
@@ -267,6 +290,7 @@
     function applyUiSettings(settings = currentSettings()) {
       document.body.dataset.theme = settings.theme;
       document.documentElement.style.setProperty('--map-font', fonts[settings.font] || fonts.system);
+      document.documentElement.style.setProperty('--map-font-size', `${settings.textSize || 1}em`);
     }
 
     function markmapOptions(settings = currentSettings()) {
@@ -275,6 +299,7 @@
         duration: 180,
         initialExpandLevel: settings.level,
         color: colorFor(settings.palette),
+        lineWidth: (node) => Math.max(1, settings.lineWidth + 2.2 / 2 ** node.state.depth),
         maxWidth: 380,
         spacingHorizontal: 78,
         spacingVertical: 7
@@ -308,6 +333,8 @@
       if (settings.level != null) levelSelect.value = String(settings.level);
       if (settings.palette && palettes[settings.palette]) paletteSelect.value = settings.palette;
       if (settings.font && fonts[settings.font]) fontSelect.value = settings.font;
+      if (settings.textSize) textSizeSelect.value = String(settings.textSize);
+      if (settings.lineWidth) lineWidthSelect.value = String(settings.lineWidth);
       if (settings.theme === 'dark' || settings.theme === 'light') themeSelect.value = settings.theme;
       applyUiSettings();
     }
@@ -368,6 +395,19 @@
       textarea.value = `${before}${text}${after}`;
       textarea.focus();
       textarea.selectionStart = textarea.selectionEnd = start + text.length;
+      render();
+    }
+
+    function wrapSelection(prefix, suffix = prefix, placeholder = 'texto') {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selected = textarea.value.slice(start, end) || placeholder;
+      const replacement = `${prefix}${selected}${suffix}`;
+      textarea.value = `${textarea.value.slice(0, start)}${replacement}${textarea.value.slice(end)}`;
+      textarea.focus();
+      const selectionStart = start + prefix.length;
+      textarea.selectionStart = selectionStart;
+      textarea.selectionEnd = selectionStart + selected.length;
       render();
     }
 
@@ -437,7 +477,7 @@
 <title>Markmap</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <style>
-:root{--map-font:${fonts[settings.font] || fonts.system};--table-border:${settings.theme === 'dark' ? '#334155' : '#d6dee8'};--table-head:${settings.theme === 'dark' ? '#223047' : '#eef2f6'}}*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:${settings.theme === 'dark' ? '#111827' : '#fbfcfd'};color:${settings.theme === 'dark' ? '#edf2f7' : '#17202a'}}header{align-items:center;background:${settings.theme === 'dark' ? '#182235' : '#fff'};border-bottom:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:transparent;border:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};border-radius:6px;color:inherit;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.markmap-foreign div{font-family:var(--map-font)}.markmap-foreign img{border-radius:6px;max-height:120px;max-width:220px;object-fit:contain}.markmap-foreign table{border-collapse:collapse;display:block;font-size:.82em;margin-top:6px;max-width:380px;overflow:hidden}.markmap-foreign th,.markmap-foreign td{border:1px solid var(--table-border);padding:4px 7px;text-align:left;vertical-align:top;white-space:nowrap}.markmap-foreign th{background:var(--table-head);font-weight:700}.hint{color:${settings.theme === 'dark' ? '#aab6c7' : '#64748b'};font-size:12px}
+:root{--map-font:${fonts[settings.font] || fonts.system};--map-font-size:${settings.textSize || 1}em;--table-border:${settings.theme === 'dark' ? '#334155' : '#d6dee8'};--table-head:${settings.theme === 'dark' ? '#223047' : '#eef2f6'}}*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:${settings.theme === 'dark' ? '#111827' : '#fbfcfd'};color:${settings.theme === 'dark' ? '#edf2f7' : '#17202a'}}header{align-items:center;background:${settings.theme === 'dark' ? '#182235' : '#fff'};border-bottom:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:transparent;border:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};border-radius:6px;color:inherit;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.markmap-foreign div{font-family:var(--map-font);font-size:var(--map-font-size)}.markmap-foreign img{border-radius:6px;max-height:120px;max-width:220px;object-fit:contain}.markmap-foreign table{border-collapse:collapse;display:block;font-size:.82em;margin-top:6px;max-width:380px;overflow:hidden}.markmap-foreign th,.markmap-foreign td{border:1px solid var(--table-border);padding:4px 7px;text-align:left;vertical-align:top;white-space:nowrap}.markmap-foreign th{background:var(--table-head);font-weight:700}.hint{color:${settings.theme === 'dark' ? '#aab6c7' : '#64748b'};font-size:12px}
 </style>
 </head>
 <body>
@@ -452,10 +492,11 @@ const api = window.markmap;
 const svg = document.querySelector('#mindmap');
 function colorFor(name){const colors=palettes[name]||palettes.classic;return node=>colors[Math.max(0,(node.state?.depth||1)-1)%colors.length];}
 const transformer = new api.Transformer();
-const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: settings.level, color: colorFor(settings.palette), maxWidth: 380, spacingHorizontal: 78, spacingVertical: 7 });
+function lineWidth(node){return Math.max(1,(settings.lineWidth||1.6)+2.2/2**node.state.depth)}
+const mm = api.Markmap.create(svg, { autoFit: true, duration: 180, initialExpandLevel: settings.level, color: colorFor(settings.palette), lineWidth, maxWidth: 380, spacingHorizontal: 78, spacingVertical: 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
-  await mm.setData(root, { initialExpandLevel: settings.level, color: colorFor(settings.palette) });
+  await mm.setData(root, { initialExpandLevel: settings.level, color: colorFor(settings.palette), lineWidth });
   await mm.fit();
 }
 document.querySelector('#fit').addEventListener('click', () => mm.fit());
@@ -503,9 +544,11 @@ draw();
       mm = api.Markmap.create(svg, markmapOptions());
       restore();
       textarea.addEventListener('input', scheduleRender);
-      [levelSelect, paletteSelect, fontSelect, themeSelect].forEach((control) => control.addEventListener('change', render));
+      [levelSelect, paletteSelect, fontSelect, textSizeSelect, lineWidthSelect, themeSelect].forEach((control) => control.addEventListener('change', render));
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
       document.querySelector('#sample').addEventListener('click', () => { textarea.value = sample; render(); textarea.focus(); });
+      document.querySelector('#bold').addEventListener('click', () => wrapSelection('**', '**', 'negrita'));
+      document.querySelector('#italic').addEventListener('click', () => wrapSelection('*', '*', 'cursiva'));
       document.querySelector('#table').addEventListener('click', () => insertAtCursor(tableSnippet));
       document.querySelector('#import').addEventListener('click', () => fileInput.click());
       fileInput.addEventListener('change', () => importMarkdown(fileInput.files[0]));
