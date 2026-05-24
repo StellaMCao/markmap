@@ -356,10 +356,6 @@
       };
     }
 
-    function initialExpandLevelFor(visibleLevel) {
-      return visibleLevel <= 0 ? -1 : visibleLevel + 1;
-    }
-
     function sanitizeWidthRules(rules) {
       const next = {};
       Object.entries(rules || {}).forEach(([level, width]) => {
@@ -407,7 +403,7 @@
       return {
         autoFit: true,
         duration: settings.duration,
-        initialExpandLevel: initialExpandLevelFor(settings.level),
+        initialExpandLevel: -1,
         color: colorFor(settings.palette),
         lineWidth: (node) => Math.max(1, settings.lineWidth + 2.2 / 2 ** node.state.depth),
         maxWidth: 0,
@@ -425,6 +421,22 @@
         payload,
         children: node.children?.map(cloneWithoutFold) || []
       };
+    }
+
+    function cloneWithLevelFold(node, visibleLevel, depth = 1) {
+      const payload = node.payload ? { ...node.payload } : {};
+      delete payload.fold;
+      if (visibleLevel > 0 && depth >= visibleLevel + 1 && node.children?.length) payload.fold = 1;
+      return {
+        ...node,
+        payload: Object.keys(payload).length ? payload : undefined,
+        children: node.children?.map((child) => cloneWithLevelFold(child, visibleLevel, depth + 1)) || []
+      };
+    }
+
+    function prepareRootForFoldMode(root, settings) {
+      if (settings.foldMode === 'strict') return cloneWithLevelFold(root, settings.level);
+      return cloneWithoutFold(root);
     }
 
     function setStatus(message, isError = false) {
@@ -503,7 +515,8 @@
       persist();
       try {
         const { root } = transformer.transform(textarea.value.trim() || '# Markmap');
-        await mm.setData(currentSettings().foldMode === 'strict' ? cloneWithoutFold(root) : root, markmapOptions());
+        const settings = currentSettings();
+        await mm.setData(prepareRootForFoldMode(root, settings), markmapOptions(settings));
         await mm.fit();
         setStatus(foldModeSelect.value === 'strict'
           ? 'Despliegue: Forzar nivel. El número de nivel manda y limpia la memoria de ramas al aplicar/renderizar.'
@@ -654,17 +667,18 @@ const defaultWidthRules = ${JSON.stringify(defaultWidthRules)};
 const api = window.markmap;
 const svg = document.querySelector('#mindmap');
 function colorFor(name){const colors=palettes[name]||palettes.classic;return node=>colors[Math.max(0,(node.state?.depth||1)-1)%colors.length];}
-function initialExpandLevelFor(level){return level<=0?-1:level+1}
 function sanitizeWidthRules(rules){const next={};Object.entries(rules||{}).forEach(([level,width])=>{const numericLevel=Math.max(1,Math.round(Number(level)));const numericWidth=Math.max(80,Math.min(1200,Math.round(Number(width))));if(Number.isFinite(numericLevel)&&Number.isFinite(numericWidth))next[numericLevel]=numericWidth});return Object.keys(next).length?next:{...defaultWidthRules}}
 function widthForDepth(rules,depth){const sanitized=sanitizeWidthRules(rules);const levels=Object.keys(sanitized).map(Number).sort((a,b)=>a-b);const matched=levels.filter(level=>level<=depth).pop()||levels[0];return sanitized[matched]}
 function widthCssFor(rules){return Array.from({length:32},(_,i)=>{const depth=i+1;return '.markmap-node[data-depth="'+depth+'"] .markmap-foreign > div{width:'+widthForDepth(rules,depth)+'px}'}).join('\\n')}
 function cloneWithoutFold(node){const payload=node.payload?{...node.payload}:undefined;if(payload)delete payload.fold;return {...node,payload,children:node.children?.map(cloneWithoutFold)||[]}}
+function cloneWithLevelFold(node,visibleLevel,depth=1){const payload=node.payload?{...node.payload}:{};delete payload.fold;if(visibleLevel>0&&depth>=visibleLevel+1&&node.children?.length)payload.fold=1;return {...node,payload:Object.keys(payload).length?payload:undefined,children:node.children?.map(child=>cloneWithLevelFold(child,visibleLevel,depth+1))||[]}}
+function prepareRoot(root){return settings.foldMode==='memory'?cloneWithoutFold(root):cloneWithLevelFold(root,settings.level||0)}
 const transformer = new api.Transformer();
 function lineWidth(node){return Math.max(1,(settings.lineWidth||1.6)+2.2/2**node.state.depth)}
-const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
+const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
-  await mm.setData(settings.foldMode === 'memory' ? root : cloneWithoutFold(root), { duration: settings.duration ?? 180, initialExpandLevel: initialExpandLevelFor(settings.level || 0), color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
+  await mm.setData(prepareRoot(root), { duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
   await mm.fit();
 }
 document.querySelector('#fit').addEventListener('click', () => mm.fit());
