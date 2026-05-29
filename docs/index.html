@@ -498,7 +498,11 @@
     function widthCssFor(rules) {
       return Array.from({ length: 32 }, (_, index) => {
         const depth = index + 1;
-        return `.markmap-node[data-depth="${depth}"] .markmap-foreign > div{width:${widthForDepth(rules, depth)}px}`;
+        const width = widthForDepth(rules, depth);
+        return [
+          `.markmap-node[data-depth="${depth}"] .markmap-foreign > div{width:${width}px;max-width:${width}px}`,
+          `.markmap-node[data-depth="${depth}"] .markmap-foreign > div > div{max-width:${width}px;white-space:normal;overflow-wrap:anywhere}`
+        ].join('\n');
       }).join('\n');
     }
 
@@ -918,7 +922,7 @@ function colorFor(name){const colors=palettes[name]||palettes.classic;return nod
 function sanitizeWidthRules(rules){const next={};Object.entries(rules||{}).forEach(([level,width])=>{const numericLevel=Math.max(1,Math.round(Number(level)));const numericWidth=Math.max(80,Math.min(1200,Math.round(Number(width))));if(Number.isFinite(numericLevel)&&Number.isFinite(numericWidth))next[numericLevel]=numericWidth});return Object.keys(next).length?next:{...defaultWidthRules}}
 function sanitizeTextSizeRules(rules){const next={};Object.entries(rules||{}).forEach(([level,size])=>{const numericLevel=Math.max(1,Math.round(Number(level)));const numericSize=Math.max(.4,Math.min(2.4,Number(size)));if(Number.isFinite(numericLevel)&&Number.isFinite(numericSize))next[numericLevel]=Math.round(numericSize*100)/100});return Object.keys(next).length?next:{...defaultTextSizeRules}}
 function widthForDepth(rules,depth){const sanitized=sanitizeWidthRules(rules);const levels=Object.keys(sanitized).map(Number).sort((a,b)=>a-b);const matched=levels.filter(level=>level<=depth).pop()||levels[0];return sanitized[matched]}
-function widthCssFor(rules){return Array.from({length:32},(_,i)=>{const depth=i+1;return '.markmap-node[data-depth="'+depth+'"] .markmap-foreign > div{width:'+widthForDepth(rules,depth)+'px}'}).join('\\n')}
+function widthCssFor(rules){return Array.from({length:32},(_,i)=>{const depth=i+1;const width=widthForDepth(rules,depth);return '.markmap-node[data-depth="'+depth+'"] .markmap-foreign > div{width:'+width+'px;max-width:'+width+'px}\\n.markmap-node[data-depth="'+depth+'"] .markmap-foreign > div > div{max-width:'+width+'px;white-space:normal;overflow-wrap:anywhere}'}).join('\\n')}
 function textSizeForDepth(rules,depth){const sanitized=sanitizeTextSizeRules(rules);const levels=Object.keys(sanitized).map(Number).sort((a,b)=>a-b);const matched=levels.filter(level=>level<=depth).pop()||levels[0];return sanitized[matched]}
 function textSizeCssFor(rules){return Array.from({length:32},(_,i)=>{const depth=i+1;return '.markmap-node[data-depth="'+depth+'"] .markmap-foreign > div{font-size:calc(var(--map-font-size) * '+textSizeForDepth(rules,depth)+')}'}).join('\\n')}
 function cloneWithoutFold(node){const payload=node.payload?{...node.payload}:undefined;if(payload)delete payload.fold;return {...node,payload,children:node.children?.map(cloneWithoutFold)||[]}}
