@@ -19,6 +19,7 @@
       --map-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --map-font-size: 1em;
       --map-text: var(--text);
+      --editor-width: minmax(280px, 38vw);
     }
     [data-theme="dark"] {
       --bg: #111827;
@@ -87,9 +88,11 @@
     button:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
     button.secondary:hover { background: var(--panel-2); border-color: var(--border); }
     input[type="file"] { display: none; }
-    main { display: grid; grid-template-columns: minmax(280px, 38vw) 1fr; min-height: 0; }
+    main { display: grid; grid-template-columns: var(--editor-width) 6px 1fr; min-height: 0; }
     .editor, .preview { min-height: 0; position: relative; }
     .editor { background: var(--panel); border-right: 1px solid var(--border); display: grid; grid-template-rows: auto 1fr; }
+    .splitter { background: var(--border); cursor: col-resize; min-height: 0; }
+    .splitter:hover { background: var(--accent); }
     .bar {
       align-items: center;
       background: var(--panel-2);
@@ -149,10 +152,28 @@
       z-index: 2;
     }
     .status.error { color: var(--danger); }
+    .help-panel {
+      background: color-mix(in srgb, var(--panel) 97%, transparent);
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      display: none;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      padding: 14px 16px;
+    }
+    .help-panel.open { display: grid; }
+    .help-panel h2 { font-size: 14px; margin: 0 0 6px; }
+    .help-panel p { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0; }
+    body.presentation .editor,
+    body.presentation .splitter,
+    body.presentation .status { display: none; }
+    body.presentation main { grid-template-columns: 1fr; }
+    body.presentation header { box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12); }
     .hidden { display: none; }
     @media (max-width: 1120px) { header { align-items: flex-start; flex-direction: column; } .actions { justify-content: flex-start; } }
     @media (max-width: 860px) {
       main { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 44vh) 1fr; }
+      .splitter { display: none; }
       .editor { border-bottom: 1px solid var(--border); border-right: 0; }
     }
   </style>
@@ -250,19 +271,29 @@
         <button class="secondary" id="italic" type="button"><em>I</em></button>
         <button class="secondary" id="table" type="button">Tabla</button>
         <button class="secondary" id="sample" type="button">Ejemplo</button>
+        <button class="secondary" id="reset-visual" type="button">Reset visual</button>
+        <button class="secondary" id="presentation" type="button">Presentación</button>
         <button class="secondary" id="help" type="button">Ayuda</button>
         <button class="secondary" id="fit" type="button">Ajustar</button>
+        <button class="secondary" id="copy-md" type="button">Copiar MD</button>
         <button class="secondary" id="share" type="button">Copiar link</button>
         <button id="save-html" type="button">Guardar HTML</button>
         <button class="secondary" id="save-svg" type="button">Guardar SVG</button>
         <button class="secondary" id="save-png" type="button">Guardar PNG</button>
       </div>
     </header>
+    <section class="help-panel" id="help-panel" aria-label="Ayuda de Markmap REPL">
+      <div><h2>Niveles</h2><p><strong>-1</strong> abre todo, <strong>0</strong> muestra solo el título, <strong>1</strong> muestra ramas principales. En Forzar nivel se limpia la memoria; en Recordar ramas los círculos conservan su estado.</p></div>
+      <div><h2>Ramas</h2><p>Clic en un círculo abre o cierra esa rama. Ctrl + clic aplica a toda la rama. Usá Solo título, Abrir todo o Cerrar a nivel 1 para ordenar rápido.</p></div>
+      <div><h2>Ancho</h2><p>Elegí Nivel ancho y Ancho px, luego Aplicar ancho. La regla se aplica desde ese nivel hacia abajo hasta que exista otra regla más profunda.</p></div>
+      <div><h2>Exportar</h2><p>HTML conserva interactividad. MD guarda la fuente. SVG/PNG exportan imagen. Los nombres salen del título del mapa.</p></div>
+    </section>
     <main>
       <section class="editor" aria-label="Editor Markdown">
         <div class="bar"><span>Markdown</span><span id="count">0 caracteres</span></div>
         <textarea id="markdown" spellcheck="false"></textarea>
       </section>
+      <div class="splitter" id="splitter" role="separator" aria-label="Ajustar paneles"></div>
       <section class="preview" aria-label="Vista previa Markmap">
         <svg class="markmap" id="mindmap"></svg>
         <div class="status" id="status">Cargando Markmap...</div>
@@ -330,6 +361,8 @@
     const fileInput = document.querySelector('#import-file');
     const count = document.querySelector('#count');
     const status = document.querySelector('#status');
+    const helpPanel = document.querySelector('#help-panel');
+    const splitter = document.querySelector('#splitter');
     const svg = document.querySelector('#mindmap');
     let transformer;
     let mm;
@@ -509,6 +542,20 @@
       URL.revokeObjectURL(url);
     }
 
+    function mapTitle() {
+      const firstHeading = textarea.value.match(/^#\s+(.+)$/m)?.[1] || 'markmap';
+      return firstHeading
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-+|-+$/g, '')
+        .toLowerCase() || 'markmap';
+    }
+
+    function fileName(extension) {
+      return `${mapTitle()}.${extension}`;
+    }
+
     async function render() {
       if (!transformer || !mm) return;
       count.textContent = `${textarea.value.length} caracteres`;
@@ -568,7 +615,63 @@
     }
 
     function showHelp() {
-      setStatus('Ayuda rápida: Nivel -1 abre todo; 0 deja solo el título; 1 muestra ramas principales; 2, 3... agregan profundidad. Despliegue > Forzar nivel limpia la memoria de ramas; Recordar ramas conserva los círculos abiertos/cerrados. Clic en un círculo abre/cierra esa rama; Ctrl + clic aplica a toda la rama. Ancho: poné Nivel ancho + Ancho px y tocá Aplicar ancho. Exportá como HTML para conservar interactividad, MD para guardar fuente, SVG/PNG para imagen.');
+      helpPanel.classList.toggle('open');
+      setStatus(helpPanel.classList.contains('open')
+        ? 'Ayuda abierta: niveles, ramas, ancho y exportación resumidos arriba.'
+        : 'Ayuda cerrada.');
+    }
+
+    function resetVisualSettings() {
+      levelSelect.value = '-1';
+      foldModeSelect.value = 'strict';
+      paletteSelect.value = 'classic';
+      fontSelect.value = 'system';
+      textSizeSelect.value = '1';
+      textColorSelect.value = 'auto';
+      lineWidthSelect.value = '1.6';
+      spacingHInput.value = '78';
+      spacingVInput.value = '7';
+      durationInput.value = '180';
+      themeSelect.value = 'light';
+      widthRules = { ...defaultWidthRules };
+      widthLevelInput.value = '1';
+      widthPxInput.value = String(widthRules[1]);
+      updateWidthSummary();
+      document.documentElement.style.setProperty('--editor-width', 'minmax(280px, 38vw)');
+      render();
+    }
+
+    async function copyMarkdown() {
+      try {
+        await navigator.clipboard.writeText(textarea.value);
+        setStatus('Markdown copiado al portapapeles.');
+      } catch (error) {
+        setStatus('No pude copiar el Markdown al portapapeles.', true);
+      }
+    }
+
+    function togglePresentation() {
+      document.body.classList.toggle('presentation');
+      document.querySelector('#presentation').textContent = document.body.classList.contains('presentation')
+        ? 'Salir presentación'
+        : 'Presentación';
+      setTimeout(() => mm?.fit(), 80);
+    }
+
+    function setupSplitter() {
+      let dragging = false;
+      splitter.addEventListener('pointerdown', (event) => {
+        dragging = true;
+        splitter.setPointerCapture(event.pointerId);
+      });
+      splitter.addEventListener('pointermove', (event) => {
+        if (!dragging) return;
+        const rect = document.querySelector('main').getBoundingClientRect();
+        const width = Math.max(260, Math.min(rect.width - 320, event.clientX - rect.left));
+        document.documentElement.style.setProperty('--editor-width', `${width}px`);
+        mm?.fit();
+      });
+      splitter.addEventListener('pointerup', () => { dragging = false; });
     }
 
     function wrapSelection(prefix, suffix = prefix, placeholder = 'texto') {
@@ -592,7 +695,7 @@
     }
 
     function exportSvg() {
-      download('markmap.svg', exportSvgSource(), 'image/svg+xml;charset=utf-8');
+      download(fileName('svg'), exportSvgSource(), 'image/svg+xml;charset=utf-8');
     }
 
     function exportPng() {
@@ -620,7 +723,7 @@
             const pngUrl = URL.createObjectURL(png);
             const link = document.createElement('a');
             link.href = pngUrl;
-            link.download = 'markmap.png';
+            link.download = fileName('png');
             document.body.append(link);
             link.click();
             link.remove();
@@ -691,11 +794,11 @@ draw();
     }
 
     function exportHtml() {
-      download('markmap.html', exportedHtml(textarea.value, currentSettings()), 'text/html;charset=utf-8');
+      download(fileName('html'), exportedHtml(textarea.value, currentSettings()), 'text/html;charset=utf-8');
     }
 
     function exportMarkdown() {
-      download('markmap.md', textarea.value, 'text/markdown;charset=utf-8');
+      download(fileName('md'), textarea.value, 'text/markdown;charset=utf-8');
     }
 
     async function copyShareLink() {
@@ -735,6 +838,8 @@ draw();
       [levelSelect, spacingHInput, spacingVInput, durationInput].forEach((control) => control.addEventListener('input', scheduleRender));
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
       document.querySelector('#sample').addEventListener('click', () => { textarea.value = sample; render(); textarea.focus(); });
+      document.querySelector('#reset-visual').addEventListener('click', resetVisualSettings);
+      document.querySelector('#presentation').addEventListener('click', togglePresentation);
       document.querySelector('#apply-level').addEventListener('click', () => render());
       document.querySelector('#open-all').addEventListener('click', () => applyLevel(-1, 'strict'));
       document.querySelector('#title-only').addEventListener('click', () => applyLevel(0, 'strict'));
@@ -750,11 +855,13 @@ draw();
       }));
       document.querySelector('#import').addEventListener('click', () => fileInput.click());
       document.querySelector('#save-md').addEventListener('click', exportMarkdown);
+      document.querySelector('#copy-md').addEventListener('click', copyMarkdown);
       fileInput.addEventListener('change', () => importMarkdown(fileInput.files[0]));
       document.querySelector('#share').addEventListener('click', copyShareLink);
       document.querySelector('#save-html').addEventListener('click', exportHtml);
       document.querySelector('#save-svg').addEventListener('click', exportSvg);
       document.querySelector('#save-png').addEventListener('click', exportPng);
+      setupSplitter();
       window.addEventListener('resize', () => mm.fit());
       window.addEventListener('hashchange', () => { restore(); render(); });
       render();
