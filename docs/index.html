@@ -49,7 +49,30 @@
       padding: 12px 16px;
     }
     h1 { font-size: 18px; line-height: 1.2; margin: 0; white-space: nowrap; }
-    .actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .actions { align-items: stretch; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+    .control-group {
+      align-items: center;
+      background: color-mix(in srgb, var(--panel-2) 72%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      padding: 7px;
+    }
+    .control-group.primary {
+      background: color-mix(in srgb, var(--accent) 9%, var(--panel));
+      border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+    }
+    .group-title {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0;
+      line-height: 1;
+      padding: 0 3px;
+      text-transform: uppercase;
+    }
     label { align-items: center; color: var(--muted); display: inline-flex; font-size: 13px; gap: 6px; }
     select,
     input[type="number"] {
@@ -62,11 +85,18 @@
       min-height: 34px;
       padding: 0 8px;
     }
+    select:focus-visible,
+    input[type="number"]:focus-visible,
+    button:focus-visible {
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 24%, transparent);
+      outline: 0;
+    }
     input[type="number"] { width: 72px; }
     .summary {
       color: var(--muted);
       font-size: 12px;
       max-width: 260px;
+      min-width: 96px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -85,6 +115,7 @@
     }
     [data-theme="light"] button { color: #fff; }
     button.secondary { background: var(--panel); border-color: var(--border); color: var(--text); }
+    button.iconish { min-width: 36px; padding: 0 9px; }
     button:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
     button.secondary:hover { background: var(--panel-2); border-color: var(--border); }
     input[type="file"] { display: none; }
@@ -172,6 +203,8 @@
     .hidden { display: none; }
     @media (max-width: 1120px) { header { align-items: flex-start; flex-direction: column; } .actions { justify-content: flex-start; } }
     @media (max-width: 860px) {
+      .control-group { width: 100%; }
+      .summary { max-width: 100%; }
       main { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 44vh) 1fr; }
       .splitter { display: none; }
       .editor { border-bottom: 1px solid var(--border); border-right: 0; }
@@ -183,117 +216,135 @@
     <header>
       <h1>Markmap REPL</h1>
       <div class="actions">
-        <label>Nivel
-          <input id="level" type="number" min="-1" max="99" step="1" value="-1" title="-1 abre todo; 0 muestra solo el título; 1, 2, 3... muestran más niveles">
-        </label>
-        <label>Despliegue
-          <select id="fold-mode">
-            <option value="memory">Recordar ramas</option>
-            <option value="strict" selected>Forzar nivel</option>
-          </select>
-        </label>
-        <button class="secondary" id="apply-level" type="button">Aplicar nivel</button>
-        <button class="secondary" id="open-all" type="button">Abrir todo</button>
-        <button class="secondary" id="title-only" type="button">Solo título</button>
-        <button class="secondary" id="close-main" type="button">Cerrar a nivel 1</button>
-        <label>Color
-          <select id="palette">
-            <option value="classic">Clasico</option>
-            <option value="ocean">Oceano</option>
-            <option value="forest">Bosque</option>
-            <option value="sunset">Atardecer</option>
-            <option value="mono">Mono</option>
-          </select>
-        </label>
-        <label>Fuente
-          <select id="font">
-            <option value="system">Sistema</option>
-            <option value="serif">Serif</option>
-            <option value="mono">Mono</option>
-            <option value="rounded">Redondeada</option>
-            <option value="humanist">Humanista</option>
-            <option value="geometric">Geométrica</option>
-            <option value="narrow">Condensada</option>
-            <option value="slab">Slab</option>
-            <option value="book">Libro</option>
-          </select>
-        </label>
-        <label>Texto global
-          <select id="text-size">
-            <option value="0.86">Chico</option>
-            <option value="1" selected>Normal</option>
-            <option value="1.18">Grande</option>
-            <option value="1.36">Muy grande</option>
-          </select>
-        </label>
-        <label>Letra
-          <select id="text-color">
-            <option value="auto" selected>Auto</option>
-            <option value="#111827">Negro</option>
-            <option value="#f8fafc">Blanco</option>
-            <option value="#64748b">Gris</option>
-            <option value="#0ea5e9">Azul</option>
-            <option value="#f59e0b">Ambar</option>
-            <option value="#22c55e">Verde</option>
-          </select>
-        </label>
-        <label>Linea
-          <select id="line-width">
-            <option value="1">Fina</option>
-            <option value="1.6" selected>Normal</option>
-            <option value="2.4">Gruesa</option>
-            <option value="3.2">Muy gruesa</option>
-          </select>
-        </label>
-        <label>Nivel ancho
-          <input id="width-level" type="number" min="1" max="99" step="1" value="1">
-        </label>
-        <label>Ancho px
-          <input id="width-px" type="number" min="80" max="1200" step="10" value="420">
-        </label>
-        <button class="secondary" id="set-width" type="button">Aplicar ancho</button>
-        <button class="secondary" id="reset-width" type="button">Anchos base</button>
-        <span class="summary" id="width-summary"></span>
-        <label>Nivel texto
-          <input id="text-level" type="number" min="1" max="99" step="1" value="1">
-        </label>
-        <label>Texto %
-          <input id="text-percent" type="number" min="40" max="240" step="2" value="118">
-        </label>
-        <button class="secondary" id="set-text-size" type="button">Aplicar texto</button>
-        <button class="secondary" id="reset-text-size" type="button">Textos base</button>
-        <span class="summary" id="text-size-summary"></span>
-        <label>Esp. H
-          <input id="spacing-h" type="number" min="24" max="220" step="2" value="78">
-        </label>
-        <label>Esp. V
-          <input id="spacing-v" type="number" min="0" max="40" step="1" value="7">
-        </label>
-        <label>Anim.
-          <input id="duration" type="number" min="0" max="1500" step="20" value="180">
-        </label>
-        <label>Tema
-          <select id="theme">
-            <option value="light">Claro</option>
-            <option value="dark">Oscuro</option>
-          </select>
-        </label>
-        <input id="import-file" type="file" accept=".md,.markdown,text/markdown,text/plain">
-        <button class="secondary" id="import" type="button">Importar MD</button>
-        <button class="secondary" id="save-md" type="button">Guardar MD</button>
-        <button class="secondary" id="bold" type="button"><strong>B</strong></button>
-        <button class="secondary" id="italic" type="button"><em>I</em></button>
-        <button class="secondary" id="table" type="button">Tabla</button>
-        <button class="secondary" id="sample" type="button">Ejemplo</button>
-        <button class="secondary" id="reset-visual" type="button">Reset visual</button>
-        <button class="secondary" id="presentation" type="button">Presentación</button>
-        <button class="secondary" id="help" type="button">Ayuda</button>
-        <button class="secondary" id="fit" type="button">Ajustar</button>
-        <button class="secondary" id="copy-md" type="button">Copiar MD</button>
-        <button class="secondary" id="share" type="button">Copiar link</button>
-        <button id="save-html" type="button">Guardar HTML</button>
-        <button class="secondary" id="save-svg" type="button">Guardar SVG</button>
-        <button class="secondary" id="save-png" type="button">Guardar PNG</button>
+        <div class="control-group primary">
+          <span class="group-title">Mapa</span>
+          <label>Nivel
+            <input id="level" type="number" min="-1" max="99" step="1" value="-1" title="-1 abre todo; 0 muestra solo el título; 1, 2, 3... muestran más niveles">
+          </label>
+          <label>Despliegue
+            <select id="fold-mode">
+              <option value="memory">Recordar ramas</option>
+              <option value="strict" selected>Forzar nivel</option>
+            </select>
+          </label>
+          <button class="secondary" id="apply-level" type="button">Aplicar</button>
+          <button class="secondary" id="open-all" type="button">Abrir todo</button>
+          <button class="secondary" id="title-only" type="button">Solo título</button>
+          <button class="secondary" id="close-main" type="button">Nivel 1</button>
+        </div>
+        <div class="control-group">
+          <span class="group-title">Apariencia</span>
+          <label>Color
+            <select id="palette">
+              <option value="classic">Clásico</option>
+              <option value="ocean">Océano</option>
+              <option value="forest">Bosque</option>
+              <option value="sunset">Atardecer</option>
+              <option value="mono">Mono</option>
+            </select>
+          </label>
+          <label>Fuente
+            <select id="font">
+              <option value="system">Sistema</option>
+              <option value="serif">Serif</option>
+              <option value="mono">Mono</option>
+              <option value="rounded">Redondeada</option>
+              <option value="humanist">Humanista</option>
+              <option value="geometric">Geométrica</option>
+              <option value="narrow">Condensada</option>
+              <option value="slab">Slab</option>
+              <option value="book">Libro</option>
+            </select>
+          </label>
+          <label>Texto global
+            <select id="text-size">
+              <option value="0.86">Chico</option>
+              <option value="1" selected>Normal</option>
+              <option value="1.18">Grande</option>
+              <option value="1.36">Muy grande</option>
+            </select>
+          </label>
+          <label>Letra
+            <select id="text-color">
+              <option value="auto" selected>Auto</option>
+              <option value="#111827">Negro</option>
+              <option value="#f8fafc">Blanco</option>
+              <option value="#64748b">Gris</option>
+              <option value="#0ea5e9">Azul</option>
+              <option value="#f59e0b">Ámbar</option>
+              <option value="#22c55e">Verde</option>
+            </select>
+          </label>
+          <label>Tema
+            <select id="theme">
+              <option value="light">Claro</option>
+              <option value="dark">Oscuro</option>
+            </select>
+          </label>
+        </div>
+        <div class="control-group">
+          <span class="group-title">Medidas</span>
+          <label>Línea
+            <select id="line-width">
+              <option value="1">Fina</option>
+              <option value="1.6" selected>Normal</option>
+              <option value="2.4">Gruesa</option>
+              <option value="3.2">Muy gruesa</option>
+            </select>
+          </label>
+          <label>Nivel ancho
+            <input id="width-level" type="number" min="1" max="99" step="1" value="1">
+          </label>
+          <label>Ancho px
+            <input id="width-px" type="number" min="80" max="1200" step="10" value="420">
+          </label>
+          <button class="secondary" id="set-width" type="button">Ancho</button>
+          <button class="secondary" id="reset-width" type="button">Base</button>
+          <span class="summary" id="width-summary"></span>
+          <label>Nivel texto
+            <input id="text-level" type="number" min="1" max="99" step="1" value="1">
+          </label>
+          <label>Texto %
+            <input id="text-percent" type="number" min="40" max="240" step="2" value="118">
+          </label>
+          <button class="secondary" id="set-text-size" type="button">Texto</button>
+          <button class="secondary" id="reset-text-size" type="button">Base</button>
+          <span class="summary" id="text-size-summary"></span>
+          <label>Esp. H
+            <input id="spacing-h" type="number" min="24" max="220" step="2" value="78">
+          </label>
+          <label>Esp. V
+            <input id="spacing-v" type="number" min="0" max="40" step="1" value="7">
+          </label>
+          <label>Anim.
+            <input id="duration" type="number" min="0" max="1500" step="20" value="180">
+          </label>
+        </div>
+        <div class="control-group">
+          <span class="group-title">Editor</span>
+          <input id="import-file" type="file" accept=".md,.markdown,text/markdown,text/plain">
+          <button class="secondary" id="import" type="button">Importar</button>
+          <button class="secondary" id="save-md" type="button">MD</button>
+          <button class="secondary iconish" id="bold" type="button"><strong>B</strong></button>
+          <button class="secondary iconish" id="italic" type="button"><em>I</em></button>
+          <button class="secondary" id="table" type="button">Tabla</button>
+          <button class="secondary" id="sample" type="button">Ejemplo</button>
+          <button class="secondary" id="copy-md" type="button">Copiar MD</button>
+        </div>
+        <div class="control-group">
+          <span class="group-title">Vista</span>
+          <button class="secondary" id="fit" type="button">Ajustar</button>
+          <button class="secondary" id="presentation" type="button">Presentación</button>
+          <button class="secondary" id="reset-visual" type="button">Reset visual</button>
+          <button class="secondary" id="help" type="button">Ayuda</button>
+        </div>
+        <div class="control-group primary">
+          <span class="group-title">Exportar</span>
+          <button class="secondary" id="share" type="button">Copiar link</button>
+          <button id="save-html" type="button">Guardar HTML</button>
+          <button class="secondary" id="save-svg" type="button">SVG</button>
+          <button class="secondary" id="save-png" type="button">PNG</button>
+        </div>
       </div>
     </header>
     <section class="help-panel" id="help-panel" aria-label="Ayuda de Markmap REPL">
