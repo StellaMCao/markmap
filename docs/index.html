@@ -161,6 +161,7 @@
     .markmap-foreign div { color: var(--map-text); font-family: var(--map-font); font-size: var(--map-font-size); }
     .markmap-foreign a { color: color-mix(in srgb, var(--map-text) 72%, #008cff); }
     .markmap-foreign img { border-radius: 6px; max-height: 120px; max-width: 220px; object-fit: contain; }
+    .markmap-foreign audio { display: block; max-width: 260px; width: 100%; }
     .markmap-foreign table {
       border-collapse: collapse;
       display: block;
@@ -359,6 +360,8 @@
           <button class="secondary iconish" id="bold" type="button"><strong>B</strong></button>
           <button class="secondary iconish" id="italic" type="button"><em>I</em></button>
           <button class="secondary" id="table" type="button">Tabla</button>
+          <button class="secondary" id="image" type="button">Imagen</button>
+          <button class="secondary" id="audio" type="button">Audio</button>
           <button class="secondary" id="sample" type="button">Ejemplo</button>
           <button class="secondary" id="copy-md" type="button">Copiar MD</button>
         </div>
@@ -386,7 +389,8 @@
       <div><h2>Buscar</h2><p>Busca en los nodos visibles y resalta coincidencias. Si no aparece algo, abrí ramas cerradas o usá Abrir todo antes de buscar.</p></div>
       <div><h2>Presets</h2><p>Los presets cambian fuente, color, anchos, tamaños y espaciado juntos. Después podés ajustar cualquier control a mano.</p></div>
       <div><h2>Ancho, línea y texto</h2><p>Línea usa px. Nivel ancho + Ancho px cambia el ancho de los nodos desde ese nivel hacia abajo, hasta que exista otra regla más profunda.</p></div>
-      <div><h2>Exportar</h2><p>HTML conserva interactividad, zoom estable, fuentes y reglas por nivel. MD guarda la fuente. SVG/PNG exportan imagen.</p></div>
+      <div><h2>Imágenes y audio</h2><p>Usá URL pública o enlace compartido de Drive. Imagen inserta Markdown; Audio inserta un reproductor HTML. En Drive, el archivo debe tener acceso por enlace.</p></div>
+      <div><h2>Exportar</h2><p>HTML conserva interactividad, zoom estable, fuentes, reglas por nivel y reproductores. MD guarda la fuente. SVG/PNG pueden depender de medios externos.</p></div>
     </section>
     <main>
       <section class="editor" aria-label="Editor Markdown">
@@ -837,6 +841,27 @@
       render();
     }
 
+    function directDriveUrl(url) {
+      const trimmed = url.trim();
+      const match = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (!match) return trimmed;
+      return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+    }
+
+    function insertImage() {
+      const rawUrl = prompt('Pegá una URL pública de imagen o un enlace compartido de Drive:');
+      if (!rawUrl) return;
+      const alt = prompt('Texto alternativo:', 'Imagen') || 'Imagen';
+      insertAtCursor(`\n- ![${alt}](${directDriveUrl(rawUrl)})\n`);
+    }
+
+    function insertAudio() {
+      const rawUrl = prompt('Pegá una URL pública de audio o un enlace compartido de Drive:');
+      if (!rawUrl) return;
+      const label = prompt('Título del audio:', 'Audio') || 'Audio';
+      insertAtCursor(`\n- ${label}\n  <audio controls src="${directDriveUrl(rawUrl)}"></audio>\n`);
+    }
+
     function setWidthRule() {
       const level = Math.max(1, Math.round(Number(widthLevelInput.value) || 1));
       const width = Math.max(80, Math.min(1200, Math.round(Number(widthPxInput.value) || 420)));
@@ -1047,7 +1072,7 @@
 <title>Markmap</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <style>
-:root{--map-font:${fonts[settings.font] || fonts.system};--map-font-size:${settings.textSize || 1}em;--map-text:${mapText};--table-border:${settings.theme === 'dark' ? '#334155' : '#d6dee8'};--table-head:${settings.theme === 'dark' ? '#223047' : '#eef2f6'}}*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:${settings.theme === 'dark' ? '#111827' : '#fbfcfd'};color:${settings.theme === 'dark' ? '#edf2f7' : '#17202a'}}header{align-items:center;background:${settings.theme === 'dark' ? '#182235' : '#fff'};border-bottom:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:transparent;border:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};border-radius:6px;color:inherit;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.markmap-foreign div{color:var(--map-text);font-family:var(--map-font);font-size:var(--map-font-size)}.markmap-foreign a{color:color-mix(in srgb,var(--map-text) 72%,#008cff)}.markmap-foreign img{border-radius:6px;max-height:120px;max-width:220px;object-fit:contain}.markmap-foreign table{border-collapse:collapse;display:block;font-size:.82em;margin-top:6px;max-width:380px;overflow:hidden}.markmap-foreign th,.markmap-foreign td{border:1px solid var(--table-border);padding:4px 7px;text-align:left;vertical-align:top;white-space:nowrap}.markmap-foreign th{background:var(--table-head);font-weight:700}.hint{color:${settings.theme === 'dark' ? '#aab6c7' : '#64748b'};font-size:12px}
+:root{--map-font:${fonts[settings.font] || fonts.system};--map-font-size:${settings.textSize || 1}em;--map-text:${mapText};--table-border:${settings.theme === 'dark' ? '#334155' : '#d6dee8'};--table-head:${settings.theme === 'dark' ? '#223047' : '#eef2f6'}}*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:${settings.theme === 'dark' ? '#111827' : '#fbfcfd'};color:${settings.theme === 'dark' ? '#edf2f7' : '#17202a'}}header{align-items:center;background:${settings.theme === 'dark' ? '#182235' : '#fff'};border-bottom:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:transparent;border:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};border-radius:6px;color:inherit;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer}.markmap-foreign div{color:var(--map-text);font-family:var(--map-font);font-size:var(--map-font-size)}.markmap-foreign a{color:color-mix(in srgb,var(--map-text) 72%,#008cff)}.markmap-foreign img{border-radius:6px;max-height:120px;max-width:220px;object-fit:contain}.markmap-foreign audio{display:block;max-width:260px;width:100%}.markmap-foreign table{border-collapse:collapse;display:block;font-size:.82em;margin-top:6px;max-width:380px;overflow:hidden}.markmap-foreign th,.markmap-foreign td{border:1px solid var(--table-border);padding:4px 7px;text-align:left;vertical-align:top;white-space:nowrap}.markmap-foreign th{background:var(--table-head);font-weight:700}.hint{color:${settings.theme === 'dark' ? '#aab6c7' : '#64748b'};font-size:12px}
 </style>
 </head>
 <body>
@@ -1153,6 +1178,8 @@ draw();
       document.querySelector('#bold').addEventListener('click', () => wrapSelection('**', '**', 'negrita'));
       document.querySelector('#italic').addEventListener('click', () => wrapSelection('*', '*', 'cursiva'));
       document.querySelector('#table').addEventListener('click', () => insertAtCursor(tableSnippet));
+      document.querySelector('#image').addEventListener('click', insertImage);
+      document.querySelector('#audio').addEventListener('click', insertAudio);
       document.querySelector('#set-width').addEventListener('click', setWidthRule);
       document.querySelector('#reset-width').addEventListener('click', resetWidthRules);
       document.querySelector('#set-text-size').addEventListener('click', setTextSizeRule);
