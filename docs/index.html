@@ -230,7 +230,6 @@
           <button class="secondary" id="apply-level" type="button">Aplicar</button>
           <button class="secondary" id="open-all" type="button">Abrir todo</button>
           <button class="secondary" id="title-only" type="button">Solo título</button>
-          <button class="secondary" id="close-main" type="button">Nivel 1</button>
         </div>
         <div class="control-group">
           <span class="group-title">Apariencia</span>
@@ -285,12 +284,7 @@
         <div class="control-group">
           <span class="group-title">Medidas</span>
           <label>Línea
-            <select id="line-width">
-              <option value="1">Fina</option>
-              <option value="1.6" selected>Normal</option>
-              <option value="2.4">Gruesa</option>
-              <option value="3.2">Muy gruesa</option>
-            </select>
+            <input id="line-width" type="number" min="0.5" max="12" step="0.1" value="1.6" title="Grosor base de línea en px">
           </label>
           <label>Nivel ancho
             <input id="width-level" type="number" min="1" max="99" step="1" value="1">
@@ -298,7 +292,7 @@
           <label>Ancho px
             <input id="width-px" type="number" min="80" max="1200" step="10" value="420">
           </label>
-          <button class="secondary" id="set-width" type="button">Ancho</button>
+          <button class="secondary" id="set-width" type="button">Aplicar ancho</button>
           <button class="secondary" id="reset-width" type="button">Base</button>
           <span class="summary" id="width-summary"></span>
           <label>Nivel texto
@@ -348,10 +342,10 @@
       </div>
     </header>
     <section class="help-panel" id="help-panel" aria-label="Ayuda de Markmap REPL">
-      <div><h2>Niveles</h2><p><strong>-1</strong> abre todo, <strong>0</strong> muestra solo el título, <strong>1</strong> muestra ramas principales. Usá Aplicar nivel cuando quieras reorganizar el mapa desde cero.</p></div>
+      <div><h2>Niveles</h2><p><strong>-1</strong> abre todo y <strong>0</strong> muestra solo el título. Escribí otros números si necesitás una apertura inicial más profunda y tocá Aplicar.</p></div>
       <div><h2>Ramas</h2><p>En Forzar nivel, los botones de nivel limpian el estado. En Recordar ramas, los círculos conservan lo que abriste o cerraste. Clic abre/cierra una rama; Ctrl + clic aplica a toda esa rama.</p></div>
       <div><h2>Zoom</h2><p>Abrir o cerrar nodos no debería reencuadrar el mapa. Si querés volver a la vista completa, tocá Ajustar. Presentación oculta el editor sin cambiar el contenido.</p></div>
-      <div><h2>Ancho y texto</h2><p>Elegí Nivel ancho o Nivel texto, ajustá el valor y aplicá. Cada regla se hereda hacia niveles más profundos hasta que exista otra regla.</p></div>
+      <div><h2>Ancho, línea y texto</h2><p>Línea usa px. Nivel ancho + Ancho px cambia el ancho de los nodos desde ese nivel hacia abajo, hasta que exista otra regla más profunda.</p></div>
       <div><h2>Exportar</h2><p>HTML conserva interactividad, zoom estable, fuentes y reglas por nivel. MD guarda la fuente. SVG/PNG exportan imagen.</p></div>
     </section>
     <main>
@@ -549,7 +543,7 @@
         duration: settings.duration,
         initialExpandLevel: -1,
         color: colorFor(settings.palette),
-        lineWidth: (node) => Math.max(1, settings.lineWidth + 2.2 / 2 ** node.state.depth),
+        lineWidth: () => Math.max(0.5, settings.lineWidth),
         maxWidth: 0,
         style: () => `${widthCssFor(settings.widthRules)}\n${textSizeCssFor(settings.textSizeRules)}`,
         spacingHorizontal: settings.spacingHorizontal,
@@ -724,7 +718,7 @@
       widthPxInput.value = String(width);
       widthRules = sanitizeWidthRules({ ...widthRules, [level]: width });
       updateWidthSummary();
-      render();
+      render().then(() => setStatus(`Ancho aplicado: nivel ${level} usa ${width}px y se hereda hacia niveles más profundos.`));
     }
 
     function resetWidthRules() {
@@ -732,7 +726,7 @@
       widthLevelInput.value = '1';
       widthPxInput.value = String(widthRules[1]);
       updateWidthSummary();
-      render();
+      render().then(() => setStatus('Anchos base restaurados.'));
     }
 
     function setTextSizeRule() {
@@ -932,7 +926,7 @@ function cloneWithLevelFold(node,visibleLevel,depth=1){const payload=node.payloa
 function prepareRoot(root){return settings.foldMode==='memory'?cloneWithoutFold(root):cloneWithLevelFold(root,settings.level??-1)}
 function configureMapLinks(){svg.querySelectorAll('.markmap-foreign a').forEach(link=>{if(!link.getAttribute('href')?.startsWith('#')){link.setAttribute('target','_blank');link.setAttribute('rel','noopener noreferrer')}if(link.dataset.mapLinkReady)return;link.dataset.mapLinkReady='1';['pointerdown','mousedown','click','dblclick'].forEach(name=>link.addEventListener(name,event=>event.stopPropagation()))})}
 const transformer = new api.Transformer();
-function lineWidth(node){return Math.max(1,(settings.lineWidth||1.6)+2.2/2**node.state.depth)}
+function lineWidth(){return Math.max(.5,settings.lineWidth||1.6)}
 const mm = api.Markmap.create(svg, { autoFit: false, duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules)+'\\n'+textSizeCssFor(settings.textSizeRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
@@ -998,7 +992,6 @@ draw();
       document.querySelector('#apply-level').addEventListener('click', () => render());
       document.querySelector('#open-all').addEventListener('click', () => applyLevel(-1, 'strict'));
       document.querySelector('#title-only').addEventListener('click', () => applyLevel(0, 'strict'));
-      document.querySelector('#close-main').addEventListener('click', () => applyLevel(1, 'strict'));
       document.querySelector('#help').addEventListener('click', showHelp);
       document.querySelector('#bold').addEventListener('click', () => wrapSelection('**', '**', 'negrita'));
       document.querySelector('#italic').addEventListener('click', () => wrapSelection('*', '*', 'cursiva'));
