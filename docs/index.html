@@ -556,6 +556,20 @@
       return `${mapTitle()}.${extension}`;
     }
 
+    function configureMapLinks(container = svg) {
+      container.querySelectorAll('.markmap-foreign a').forEach((link) => {
+        if (!link.getAttribute('href')?.startsWith('#')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener noreferrer');
+        }
+        if (link.dataset.mapLinkReady) return;
+        link.dataset.mapLinkReady = '1';
+        ['pointerdown', 'mousedown', 'click', 'dblclick'].forEach((eventName) => {
+          link.addEventListener(eventName, (event) => event.stopPropagation());
+        });
+      });
+    }
+
     async function render() {
       if (!transformer || !mm) return;
       count.textContent = `${textarea.value.length} caracteres`;
@@ -565,6 +579,7 @@
         const { root } = transformer.transform(textarea.value.trim() || '# Markmap');
         const settings = currentSettings();
         await mm.setData(prepareRootForFoldMode(root, settings), markmapOptions(settings));
+        configureMapLinks();
         await mm.fit();
         setStatus(foldModeSelect.value === 'strict'
           ? 'Despliegue: Forzar nivel. -1 abre todo, 0 deja solo el título, 1 muestra ramas principales.'
@@ -777,12 +792,14 @@ function widthCssFor(rules){return Array.from({length:32},(_,i)=>{const depth=i+
 function cloneWithoutFold(node){const payload=node.payload?{...node.payload}:undefined;if(payload)delete payload.fold;return {...node,payload,children:node.children?.map(cloneWithoutFold)||[]}}
 function cloneWithLevelFold(node,visibleLevel,depth=1){const payload=node.payload?{...node.payload}:{};delete payload.fold;if(visibleLevel>=0&&depth>=visibleLevel+1&&node.children?.length)payload.fold=1;return {...node,payload:Object.keys(payload).length?payload:undefined,children:node.children?.map(child=>cloneWithLevelFold(child,visibleLevel,depth+1))||[]}}
 function prepareRoot(root){return settings.foldMode==='memory'?cloneWithoutFold(root):cloneWithLevelFold(root,settings.level??-1)}
+function configureMapLinks(){svg.querySelectorAll('.markmap-foreign a').forEach(link=>{if(!link.getAttribute('href')?.startsWith('#')){link.setAttribute('target','_blank');link.setAttribute('rel','noopener noreferrer')}if(link.dataset.mapLinkReady)return;link.dataset.mapLinkReady='1';['pointerdown','mousedown','click','dblclick'].forEach(name=>link.addEventListener(name,event=>event.stopPropagation()))})}
 const transformer = new api.Transformer();
 function lineWidth(node){return Math.max(1,(settings.lineWidth||1.6)+2.2/2**node.state.depth)}
 const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
   await mm.setData(prepareRoot(root), { duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
+  configureMapLinks();
   await mm.fit();
 }
 document.querySelector('#fit').addEventListener('click', () => mm.fit());
