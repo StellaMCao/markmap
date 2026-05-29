@@ -297,10 +297,11 @@
       </div>
     </header>
     <section class="help-panel" id="help-panel" aria-label="Ayuda de Markmap REPL">
-      <div><h2>Niveles</h2><p><strong>-1</strong> abre todo, <strong>0</strong> muestra solo el título, <strong>1</strong> muestra ramas principales. En Forzar nivel se limpia la memoria; en Recordar ramas los círculos conservan su estado.</p></div>
-      <div><h2>Ramas</h2><p>Clic en un círculo abre o cierra esa rama. Ctrl + clic aplica a toda la rama. Usá Solo título, Abrir todo o Cerrar a nivel 1 para ordenar rápido.</p></div>
+      <div><h2>Niveles</h2><p><strong>-1</strong> abre todo, <strong>0</strong> muestra solo el título, <strong>1</strong> muestra ramas principales. Usá Aplicar nivel cuando quieras reorganizar el mapa desde cero.</p></div>
+      <div><h2>Ramas</h2><p>En Forzar nivel, los botones de nivel limpian el estado. En Recordar ramas, los círculos conservan lo que abriste o cerraste. Clic abre/cierra una rama; Ctrl + clic aplica a toda esa rama.</p></div>
+      <div><h2>Zoom</h2><p>Abrir o cerrar nodos no debería reencuadrar el mapa. Si querés volver a la vista completa, tocá Ajustar. Presentación oculta el editor sin cambiar el contenido.</p></div>
       <div><h2>Ancho y texto</h2><p>Elegí Nivel ancho o Nivel texto, ajustá el valor y aplicá. Cada regla se hereda hacia niveles más profundos hasta que exista otra regla.</p></div>
-      <div><h2>Exportar</h2><p>HTML conserva interactividad. MD guarda la fuente. SVG/PNG exportan imagen. Los nombres salen del título del mapa.</p></div>
+      <div><h2>Exportar</h2><p>HTML conserva interactividad, zoom estable, fuentes y reglas por nivel. MD guarda la fuente. SVG/PNG exportan imagen.</p></div>
     </section>
     <main>
       <section class="editor" aria-label="Editor Markdown">
@@ -493,7 +494,7 @@
 
     function markmapOptions(settings = currentSettings()) {
       return {
-        autoFit: true,
+        autoFit: false,
         duration: settings.duration,
         initialExpandLevel: -1,
         color: colorFor(settings.palette),
@@ -710,7 +711,7 @@
     function showHelp() {
       helpPanel.classList.toggle('open');
       setStatus(helpPanel.classList.contains('open')
-        ? 'Ayuda abierta: niveles, ramas, ancho y exportación resumidos arriba.'
+        ? 'Ayuda abierta: incluye niveles, ramas, zoom estable, ancho, texto y exportación.'
         : 'Ayuda cerrada.');
     }
 
@@ -881,7 +882,7 @@ function prepareRoot(root){return settings.foldMode==='memory'?cloneWithoutFold(
 function configureMapLinks(){svg.querySelectorAll('.markmap-foreign a').forEach(link=>{if(!link.getAttribute('href')?.startsWith('#')){link.setAttribute('target','_blank');link.setAttribute('rel','noopener noreferrer')}if(link.dataset.mapLinkReady)return;link.dataset.mapLinkReady='1';['pointerdown','mousedown','click','dblclick'].forEach(name=>link.addEventListener(name,event=>event.stopPropagation()))})}
 const transformer = new api.Transformer();
 function lineWidth(node){return Math.max(1,(settings.lineWidth||1.6)+2.2/2**node.state.depth)}
-const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules)+'\\n'+textSizeCssFor(settings.textSizeRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
+const mm = api.Markmap.create(svg, { autoFit: false, duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules)+'\\n'+textSizeCssFor(settings.textSizeRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
   await mm.setData(prepareRoot(root), { duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules)+'\\n'+textSizeCssFor(settings.textSizeRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
