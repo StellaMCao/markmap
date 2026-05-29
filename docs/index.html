@@ -48,7 +48,8 @@
       justify-content: flex-start;
       padding: 10px 12px;
     }
-    h1 { font-size: 18px; line-height: 1.2; margin: 11px 4px 0 0; white-space: nowrap; }
+    .brand { align-items: center; display: inline-flex; gap: 8px; margin: 4px 4px 0 0; white-space: nowrap; }
+    h1 { font-size: 18px; line-height: 1.2; margin: 0; }
     .actions { align-items: stretch; display: flex; flex: 1; flex-wrap: wrap; gap: 8px; justify-content: flex-start; min-width: 0; }
     .control-group {
       align-items: center;
@@ -75,7 +76,8 @@
     }
     label { align-items: center; color: var(--muted); display: inline-flex; font-size: 13px; gap: 6px; }
     select,
-    input[type="number"] {
+    input[type="number"],
+    input[type="search"] {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -87,11 +89,13 @@
     }
     select:focus-visible,
     input[type="number"]:focus-visible,
+    input[type="search"]:focus-visible,
     button:focus-visible {
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 24%, transparent);
       outline: 0;
     }
     input[type="number"] { width: 72px; }
+    input[type="search"] { min-width: 170px; }
     .summary {
       color: var(--muted);
       font-size: 12px;
@@ -149,6 +153,11 @@
     .preview { background: color-mix(in srgb, var(--panel) 55%, var(--bg)); overflow: hidden; }
     svg.markmap { display: block; height: 100%; width: 100%; }
     .markmap-node circle { cursor: pointer; }
+    .markmap-node.search-hit .markmap-foreign > div > div {
+      background: color-mix(in srgb, #fde047 30%, transparent);
+      border-radius: 5px;
+      box-shadow: 0 0 0 3px color-mix(in srgb, #f59e0b 50%, transparent);
+    }
     .markmap-foreign div { color: var(--map-text); font-family: var(--map-font); font-size: var(--map-font-size); }
     .markmap-foreign a { color: color-mix(in srgb, var(--map-text) 72%, #008cff); }
     .markmap-foreign img { border-radius: 6px; max-height: 120px; max-width: 220px; object-fit: contain; }
@@ -200,8 +209,16 @@
     body.presentation .status { display: none; }
     body.presentation main { grid-template-columns: 1fr; }
     body.presentation header { box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12); }
+    body.controls-collapsed .control-group:not(.essential) { display: none; }
+    body.reading .editor,
+    body.reading .splitter,
+    body.reading .status,
+    body.reading .help-panel { display: none; }
+    body.reading main { grid-template-columns: 1fr; }
+    body.reading .control-group:not(.reading-visible) { display: none; }
+    body.reading header { padding: 8px 10px; }
     .hidden { display: none; }
-    @media (max-width: 1120px) { header { flex-direction: column; } h1 { margin-top: 0; } }
+    @media (max-width: 1120px) { header { flex-direction: column; } .brand { margin-top: 0; } }
     @media (max-width: 860px) {
       .control-group { width: 100%; }
       .summary { max-width: 100%; }
@@ -214,9 +231,12 @@
 <body data-theme="light">
   <div class="app">
     <header>
-      <h1>Markmap REPL</h1>
+      <div class="brand">
+        <h1>Markmap REPL</h1>
+        <button class="secondary" id="toggle-controls" type="button">Menos controles</button>
+      </div>
       <div class="actions">
-        <div class="control-group primary">
+        <div class="control-group primary essential">
           <span class="group-title">Mapa</span>
           <label>Nivel
             <input id="level" type="number" min="-1" max="99" step="1" value="-1" title="-1 abre todo; 0 muestra solo el título; 1, 2, 3... muestran más niveles">
@@ -233,6 +253,16 @@
         </div>
         <div class="control-group">
           <span class="group-title">Apariencia</span>
+          <label>Preset
+            <select id="preset">
+              <option value="lecture">Lectura</option>
+              <option value="compact">Compacto</option>
+              <option value="presentation">Presentación</option>
+              <option value="dense">Mapa denso</option>
+              <option value="dark">Oscuro</option>
+            </select>
+          </label>
+          <button class="secondary" id="apply-preset" type="button">Aplicar preset</button>
           <label>Color
             <select id="palette">
               <option value="classic">Clásico</option>
@@ -281,6 +311,13 @@
             </select>
           </label>
         </div>
+        <div class="control-group reading-visible">
+          <span class="group-title">Buscar</span>
+          <input id="search-map" type="search" placeholder="Buscar en mapa">
+          <button class="secondary" id="find-map" type="button">Buscar</button>
+          <button class="secondary" id="clear-search" type="button">Limpiar</button>
+          <span class="summary" id="search-summary"></span>
+        </div>
         <div class="control-group">
           <span class="group-title">Medidas</span>
           <label>Línea
@@ -325,14 +362,15 @@
           <button class="secondary" id="sample" type="button">Ejemplo</button>
           <button class="secondary" id="copy-md" type="button">Copiar MD</button>
         </div>
-        <div class="control-group">
+        <div class="control-group essential reading-visible">
           <span class="group-title">Vista</span>
           <button class="secondary" id="fit" type="button">Ajustar</button>
+          <button class="secondary" id="reading" type="button">Lectura</button>
           <button class="secondary" id="presentation" type="button">Presentación</button>
           <button class="secondary" id="reset-visual" type="button">Reset visual</button>
           <button class="secondary" id="help" type="button">Ayuda</button>
         </div>
-        <div class="control-group primary">
+        <div class="control-group primary essential">
           <span class="group-title">Exportar</span>
           <button class="secondary" id="share" type="button">Copiar link</button>
           <button id="save-html" type="button">Guardar HTML</button>
@@ -344,7 +382,9 @@
     <section class="help-panel" id="help-panel" aria-label="Ayuda de Markmap REPL">
       <div><h2>Niveles</h2><p><strong>-1</strong> abre todo y <strong>0</strong> muestra solo el título. Escribí otros números si necesitás una apertura inicial más profunda y tocá Aplicar.</p></div>
       <div><h2>Ramas</h2><p>En Forzar nivel, los botones de nivel limpian el estado. En Recordar ramas, los círculos conservan lo que abriste o cerraste. Clic abre/cierra una rama; Ctrl + clic aplica a toda esa rama.</p></div>
-      <div><h2>Zoom</h2><p>Abrir o cerrar nodos no debería reencuadrar el mapa. Si querés volver a la vista completa, tocá Ajustar. Presentación oculta el editor sin cambiar el contenido.</p></div>
+      <div><h2>Vista</h2><p>Menos controles deja solo lo esencial. Lectura muestra el mapa con barra mínima. Presentación oculta el editor. Ajustar vuelve a encuadrar todo.</p></div>
+      <div><h2>Buscar</h2><p>Busca en los nodos visibles y resalta coincidencias. Si no aparece algo, abrí ramas cerradas o usá Abrir todo antes de buscar.</p></div>
+      <div><h2>Presets</h2><p>Los presets cambian fuente, color, anchos, tamaños y espaciado juntos. Después podés ajustar cualquier control a mano.</p></div>
       <div><h2>Ancho, línea y texto</h2><p>Línea usa px. Nivel ancho + Ancho px cambia el ancho de los nodos desde ese nivel hacia abajo, hasta que exista otra regla más profunda.</p></div>
       <div><h2>Exportar</h2><p>HTML conserva interactividad, zoom estable, fuentes y reglas por nivel. MD guarda la fuente. SVG/PNG exportan imagen.</p></div>
     </section>
@@ -399,6 +439,39 @@
       book: 'Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif'
     };
 
+    const visualPresets = {
+      lecture: {
+        palette: 'classic', font: 'book', textSize: 1.18, textColor: 'auto', lineWidth: 1.8,
+        widthRules: { 1: 520, 2: 460, 3: 400, 4: 360 },
+        textSizeRules: { 1: 1.22, 2: 1.1, 3: 1, 4: 0.96 },
+        spacingHorizontal: 92, spacingVertical: 10, theme: 'light'
+      },
+      compact: {
+        palette: 'ocean', font: 'system', textSize: 0.86, textColor: 'auto', lineWidth: 1.2,
+        widthRules: { 1: 300, 2: 250, 3: 220, 4: 190 },
+        textSizeRules: { 1: 1.12, 2: 1.02, 3: 0.94, 4: 0.9 },
+        spacingHorizontal: 54, spacingVertical: 4, theme: 'light'
+      },
+      presentation: {
+        palette: 'sunset', font: 'slab', textSize: 1.36, textColor: 'auto', lineWidth: 2.4,
+        widthRules: { 1: 680, 2: 560, 3: 480, 4: 420 },
+        textSizeRules: { 1: 1.2, 2: 1.08, 3: 1, 4: 0.94 },
+        spacingHorizontal: 110, spacingVertical: 14, theme: 'light'
+      },
+      dense: {
+        palette: 'forest', font: 'narrow', textSize: 0.86, textColor: 'auto', lineWidth: 1,
+        widthRules: { 1: 360, 2: 300, 3: 260, 4: 230 },
+        textSizeRules: { 1: 1.08, 2: 1, 3: 0.92, 4: 0.88 },
+        spacingHorizontal: 46, spacingVertical: 2, theme: 'light'
+      },
+      dark: {
+        palette: 'mono', font: 'humanist', textSize: 1, textColor: 'auto', lineWidth: 1.7,
+        widthRules: { 1: 460, 2: 390, 3: 340, 4: 300 },
+        textSizeRules: { 1: 1.18, 2: 1.08, 3: 1, 4: 0.94 },
+        spacingHorizontal: 78, spacingVertical: 8, theme: 'dark'
+      }
+    };
+
     const widthProfiles = {
       compact: [260, 220, 190, 170],
       normal: [420, 360, 320, 280],
@@ -414,6 +487,7 @@
     const levelSelect = document.querySelector('#level');
     const foldModeSelect = document.querySelector('#fold-mode');
     const paletteSelect = document.querySelector('#palette');
+    const presetSelect = document.querySelector('#preset');
     const fontSelect = document.querySelector('#font');
     const textSizeSelect = document.querySelector('#text-size');
     const textColorSelect = document.querySelector('#text-color');
@@ -432,6 +506,8 @@
     const count = document.querySelector('#count');
     const status = document.querySelector('#status');
     const helpPanel = document.querySelector('#help-panel');
+    const searchInput = document.querySelector('#search-map');
+    const searchSummary = document.querySelector('#search-summary');
     const splitter = document.querySelector('#splitter');
     const svg = document.querySelector('#mindmap');
     let transformer;
@@ -534,6 +610,26 @@
         .join(' ');
     }
 
+    function applySettingsToControls(settings) {
+      if (settings.palette && palettes[settings.palette]) paletteSelect.value = settings.palette;
+      if (settings.font && fonts[settings.font]) fontSelect.value = settings.font;
+      if (settings.textSize) textSizeSelect.value = String(settings.textSize);
+      if (settings.textColor) textColorSelect.value = settings.textColor;
+      if (settings.lineWidth) lineWidthSelect.value = String(settings.lineWidth);
+      if (settings.widthRules) widthRules = sanitizeWidthRules(settings.widthRules);
+      if (settings.textSizeRules) textSizeRules = sanitizeTextSizeRules(settings.textSizeRules);
+      if (settings.spacingHorizontal) spacingHInput.value = String(settings.spacingHorizontal);
+      if (settings.spacingVertical != null) spacingVInput.value = String(settings.spacingVertical);
+      if (settings.theme === 'dark' || settings.theme === 'light') themeSelect.value = settings.theme;
+      widthLevelInput.value = '1';
+      widthPxInput.value = String(sanitizeWidthRules(widthRules)[1] || 420);
+      textLevelInput.value = '1';
+      textPercentInput.value = String(Math.round((sanitizeTextSizeRules(textSizeRules)[1] || 1) * 100));
+      updateWidthSummary();
+      updateTextSizeSummary();
+      applyUiSettings();
+    }
+
     function applyUiSettings(settings = currentSettings()) {
       document.body.dataset.theme = settings.theme;
       document.documentElement.style.setProperty('--map-font', fonts[settings.font] || fonts.system);
@@ -607,18 +703,10 @@
     function loadSettings(settings = {}) {
       if (settings.level != null) levelSelect.value = String(Math.max(-1, Number(settings.level)));
       if (settings.foldMode === 'memory' || settings.foldMode === 'strict') foldModeSelect.value = settings.foldMode;
-      if (settings.palette && palettes[settings.palette]) paletteSelect.value = settings.palette;
-      if (settings.font && fonts[settings.font]) fontSelect.value = settings.font;
-      if (settings.textSize) textSizeSelect.value = String(settings.textSize);
-      if (settings.textSizeRules) textSizeRules = sanitizeTextSizeRules(settings.textSizeRules);
-      if (settings.textColor) textColorSelect.value = settings.textColor;
-      if (settings.lineWidth) lineWidthSelect.value = String(settings.lineWidth);
+      applySettingsToControls(settings);
       if (settings.widthRules) widthRules = sanitizeWidthRules(settings.widthRules);
       else if (settings.nodeWidth) widthRules = widthRulesFromProfile(settings.nodeWidth);
-      if (settings.spacingHorizontal) spacingHInput.value = String(settings.spacingHorizontal);
-      if (settings.spacingVertical != null) spacingVInput.value = String(settings.spacingVertical);
       if (settings.duration != null) durationInput.value = String(settings.duration);
-      if (settings.theme === 'dark' || settings.theme === 'light') themeSelect.value = settings.theme;
       applyUiSettings();
       updateWidthSummary();
       updateTextSizeSummary();
@@ -680,6 +768,39 @@
       });
     }
 
+    function normalizeText(text) {
+      return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    }
+
+    function clearSearch({ silent = false } = {}) {
+      svg.querySelectorAll('.markmap-node.search-hit').forEach((node) => node.classList.remove('search-hit'));
+      searchSummary.textContent = '';
+      if (!silent) {
+        searchInput.value = '';
+        setStatus('Búsqueda limpia.');
+      }
+    }
+
+    function searchMap({ fitFirst = false } = {}) {
+      const query = normalizeText(searchInput.value.trim());
+      svg.querySelectorAll('.markmap-node.search-hit').forEach((node) => node.classList.remove('search-hit'));
+      if (!query) {
+        searchSummary.textContent = '';
+        return;
+      }
+      const matches = Array.from(svg.querySelectorAll('.markmap-node')).filter((node) => {
+        const text = normalizeText(node.textContent || '');
+        const matched = text.includes(query);
+        node.classList.toggle('search-hit', matched);
+        return matched;
+      });
+      searchSummary.textContent = matches.length ? `${matches.length} resultado${matches.length === 1 ? '' : 's'}` : 'Sin resultados';
+      if (matches.length && fitFirst) mm?.fit();
+      setStatus(matches.length
+        ? `Búsqueda: ${matches.length} nodo${matches.length === 1 ? '' : 's'} resaltado${matches.length === 1 ? '' : 's'}.`
+        : 'No encontré coincidencias visibles. Si una rama está cerrada, abrila o usá Abrir todo.');
+    }
+
     async function render() {
       if (!transformer || !mm) return;
       count.textContent = `${textarea.value.length} caracteres`;
@@ -690,6 +811,7 @@
         const settings = currentSettings();
         await mm.setData(prepareRootForFoldMode(root, settings), markmapOptions(settings));
         configureMapLinks();
+        searchMap();
         await mm.fit();
         setStatus(foldModeSelect.value === 'strict'
           ? 'Despliegue: Forzar nivel. -1 abre todo, 0 deja solo el título, 1 muestra ramas principales.'
@@ -788,6 +910,20 @@
       render();
     }
 
+    function applyVisualPreset() {
+      const preset = visualPresets[presetSelect.value] || visualPresets.lecture;
+      applySettingsToControls(preset);
+      render().then(() => setStatus(`Preset aplicado: ${presetSelect.options[presetSelect.selectedIndex].text}.`));
+    }
+
+    function toggleControls() {
+      document.body.classList.toggle('controls-collapsed');
+      document.querySelector('#toggle-controls').textContent = document.body.classList.contains('controls-collapsed')
+        ? 'Más controles'
+        : 'Menos controles';
+      setTimeout(() => mm?.fit(), 80);
+    }
+
     async function copyMarkdown() {
       try {
         await navigator.clipboard.writeText(textarea.value);
@@ -802,6 +938,14 @@
       document.querySelector('#presentation').textContent = document.body.classList.contains('presentation')
         ? 'Salir presentación'
         : 'Presentación';
+      setTimeout(() => mm?.fit(), 80);
+    }
+
+    function toggleReadingMode() {
+      document.body.classList.toggle('reading');
+      document.querySelector('#reading').textContent = document.body.classList.contains('reading')
+        ? 'Salir lectura'
+        : 'Lectura';
       setTimeout(() => mm?.fit(), 80);
     }
 
@@ -989,9 +1133,18 @@ draw();
       textarea.addEventListener('input', scheduleRender);
       [levelSelect, foldModeSelect, paletteSelect, fontSelect, textSizeSelect, textColorSelect, lineWidthSelect, spacingHInput, spacingVInput, durationInput, themeSelect].forEach((control) => control.addEventListener('change', render));
       [levelSelect, spacingHInput, spacingVInput, durationInput].forEach((control) => control.addEventListener('input', scheduleRender));
+      document.querySelector('#toggle-controls').addEventListener('click', toggleControls);
+      document.querySelector('#apply-preset').addEventListener('click', applyVisualPreset);
+      document.querySelector('#find-map').addEventListener('click', () => searchMap({ fitFirst: true }));
+      document.querySelector('#clear-search').addEventListener('click', () => clearSearch());
+      searchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') searchMap({ fitFirst: true });
+        if (event.key === 'Escape') clearSearch();
+      });
       document.querySelector('#fit').addEventListener('click', () => mm.fit());
       document.querySelector('#sample').addEventListener('click', () => { textarea.value = sample; render(); textarea.focus(); });
       document.querySelector('#reset-visual').addEventListener('click', resetVisualSettings);
+      document.querySelector('#reading').addEventListener('click', toggleReadingMode);
       document.querySelector('#presentation').addEventListener('click', togglePresentation);
       document.querySelector('#apply-level').addEventListener('click', () => render());
       document.querySelector('#open-all').addEventListener('click', () => applyLevel(-1, 'strict'));
