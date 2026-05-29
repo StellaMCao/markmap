@@ -211,9 +211,14 @@
             <option value="serif">Serif</option>
             <option value="mono">Mono</option>
             <option value="rounded">Redondeada</option>
+            <option value="humanist">Humanista</option>
+            <option value="geometric">Geométrica</option>
+            <option value="narrow">Condensada</option>
+            <option value="slab">Slab</option>
+            <option value="book">Libro</option>
           </select>
         </label>
-        <label>Texto
+        <label>Texto global
           <select id="text-size">
             <option value="0.86">Chico</option>
             <option value="1" selected>Normal</option>
@@ -249,6 +254,15 @@
         <button class="secondary" id="set-width" type="button">Aplicar ancho</button>
         <button class="secondary" id="reset-width" type="button">Anchos base</button>
         <span class="summary" id="width-summary"></span>
+        <label>Nivel texto
+          <input id="text-level" type="number" min="1" max="99" step="1" value="1">
+        </label>
+        <label>Texto %
+          <input id="text-percent" type="number" min="40" max="240" step="2" value="118">
+        </label>
+        <button class="secondary" id="set-text-size" type="button">Aplicar texto</button>
+        <button class="secondary" id="reset-text-size" type="button">Textos base</button>
+        <span class="summary" id="text-size-summary"></span>
         <label>Esp. H
           <input id="spacing-h" type="number" min="24" max="220" step="2" value="78">
         </label>
@@ -285,7 +299,7 @@
     <section class="help-panel" id="help-panel" aria-label="Ayuda de Markmap REPL">
       <div><h2>Niveles</h2><p><strong>-1</strong> abre todo, <strong>0</strong> muestra solo el título, <strong>1</strong> muestra ramas principales. En Forzar nivel se limpia la memoria; en Recordar ramas los círculos conservan su estado.</p></div>
       <div><h2>Ramas</h2><p>Clic en un círculo abre o cierra esa rama. Ctrl + clic aplica a toda la rama. Usá Solo título, Abrir todo o Cerrar a nivel 1 para ordenar rápido.</p></div>
-      <div><h2>Ancho</h2><p>Elegí Nivel ancho y Ancho px, luego Aplicar ancho. La regla se aplica desde ese nivel hacia abajo hasta que exista otra regla más profunda.</p></div>
+      <div><h2>Ancho y texto</h2><p>Elegí Nivel ancho o Nivel texto, ajustá el valor y aplicá. Cada regla se hereda hacia niveles más profundos hasta que exista otra regla.</p></div>
       <div><h2>Exportar</h2><p>HTML conserva interactividad. MD guarda la fuente. SVG/PNG exportan imagen. Los nombres salen del título del mapa.</p></div>
     </section>
     <main>
@@ -331,7 +345,12 @@
       system: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       serif: 'Georgia, Cambria, "Times New Roman", serif',
       mono: 'Consolas, "Liberation Mono", Menlo, monospace',
-      rounded: '"Trebuchet MS", "Segoe UI", ui-sans-serif, sans-serif'
+      rounded: '"Trebuchet MS", "Segoe UI", ui-sans-serif, sans-serif',
+      humanist: 'Candara, "Aptos", "Segoe UI", ui-sans-serif, sans-serif',
+      geometric: 'Avenir Next, Avenir, Montserrat, "Segoe UI", ui-sans-serif, sans-serif',
+      narrow: '"Arial Narrow", "Aptos Narrow", "Roboto Condensed", Arial, sans-serif',
+      slab: 'Rockwell, "Roboto Slab", "Courier New", serif',
+      book: 'Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif'
     };
 
     const widthProfiles = {
@@ -341,7 +360,9 @@
     };
 
     const defaultWidthRules = { 1: 420, 2: 360, 3: 320, 4: 280 };
+    const defaultTextSizeRules = { 1: 1.18, 2: 1.08, 3: 1, 4: 0.94, 5: 0.9 };
     let widthRules = { ...defaultWidthRules };
+    let textSizeRules = { ...defaultTextSizeRules };
 
     const textarea = document.querySelector('#markdown');
     const levelSelect = document.querySelector('#level');
@@ -354,6 +375,9 @@
     const widthLevelInput = document.querySelector('#width-level');
     const widthPxInput = document.querySelector('#width-px');
     const widthSummary = document.querySelector('#width-summary');
+    const textLevelInput = document.querySelector('#text-level');
+    const textPercentInput = document.querySelector('#text-percent');
+    const textSizeSummary = document.querySelector('#text-size-summary');
     const spacingHInput = document.querySelector('#spacing-h');
     const spacingVInput = document.querySelector('#spacing-v');
     const durationInput = document.querySelector('#duration');
@@ -380,6 +404,7 @@
         palette: paletteSelect.value,
         font: fontSelect.value,
         textSize: Number(textSizeSelect.value),
+        textSizeRules: { ...textSizeRules },
         textColor: textColorSelect.value,
         lineWidth: Number(lineWidthSelect.value),
         widthRules: { ...widthRules },
@@ -398,6 +423,18 @@
         if (Number.isFinite(numericLevel) && Number.isFinite(numericWidth)) next[numericLevel] = numericWidth;
       });
       return Object.keys(next).length ? next : { ...defaultWidthRules };
+    }
+
+    function sanitizeTextSizeRules(rules) {
+      const next = {};
+      Object.entries(rules || {}).forEach(([level, size]) => {
+        const numericLevel = Math.max(1, Math.round(Number(level)));
+        const numericSize = Math.max(0.4, Math.min(2.4, Number(size)));
+        if (Number.isFinite(numericLevel) && Number.isFinite(numericSize)) {
+          next[numericLevel] = Math.round(numericSize * 100) / 100;
+        }
+      });
+      return Object.keys(next).length ? next : { ...defaultTextSizeRules };
     }
 
     function widthRulesFromProfile(profileName) {
@@ -419,10 +456,31 @@
       }).join('\n');
     }
 
+    function textSizeForDepth(rules, depth) {
+      const sanitized = sanitizeTextSizeRules(rules);
+      const levels = Object.keys(sanitized).map(Number).sort((a, b) => a - b);
+      const matchedLevel = levels.filter((level) => level <= depth).pop() || levels[0];
+      return sanitized[matchedLevel];
+    }
+
+    function textSizeCssFor(rules) {
+      return Array.from({ length: 32 }, (_, index) => {
+        const depth = index + 1;
+        return `.markmap-node[data-depth="${depth}"] .markmap-foreign > div{font-size:calc(var(--map-font-size) * ${textSizeForDepth(rules, depth)})}`;
+      }).join('\n');
+    }
+
     function updateWidthSummary() {
       widthSummary.textContent = Object.entries(sanitizeWidthRules(widthRules))
         .sort(([a], [b]) => Number(a) - Number(b))
         .map(([level, width]) => `N${level}:${width}px`)
+        .join(' ');
+    }
+
+    function updateTextSizeSummary() {
+      textSizeSummary.textContent = Object.entries(sanitizeTextSizeRules(textSizeRules))
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([level, size]) => `N${level}:${Math.round(size * 100)}%`)
         .join(' ');
     }
 
@@ -441,7 +499,7 @@
         color: colorFor(settings.palette),
         lineWidth: (node) => Math.max(1, settings.lineWidth + 2.2 / 2 ** node.state.depth),
         maxWidth: 0,
-        style: () => widthCssFor(settings.widthRules),
+        style: () => `${widthCssFor(settings.widthRules)}\n${textSizeCssFor(settings.textSizeRules)}`,
         spacingHorizontal: settings.spacingHorizontal,
         spacingVertical: settings.spacingVertical
       };
@@ -502,6 +560,7 @@
       if (settings.palette && palettes[settings.palette]) paletteSelect.value = settings.palette;
       if (settings.font && fonts[settings.font]) fontSelect.value = settings.font;
       if (settings.textSize) textSizeSelect.value = String(settings.textSize);
+      if (settings.textSizeRules) textSizeRules = sanitizeTextSizeRules(settings.textSizeRules);
       if (settings.textColor) textColorSelect.value = settings.textColor;
       if (settings.lineWidth) lineWidthSelect.value = String(settings.lineWidth);
       if (settings.widthRules) widthRules = sanitizeWidthRules(settings.widthRules);
@@ -512,6 +571,7 @@
       if (settings.theme === 'dark' || settings.theme === 'light') themeSelect.value = settings.theme;
       applyUiSettings();
       updateWidthSummary();
+      updateTextSizeSummary();
     }
 
     function restore() {
@@ -623,6 +683,24 @@
       render();
     }
 
+    function setTextSizeRule() {
+      const level = Math.max(1, Math.round(Number(textLevelInput.value) || 1));
+      const percent = Math.max(40, Math.min(240, Math.round(Number(textPercentInput.value) || 100)));
+      textLevelInput.value = String(level);
+      textPercentInput.value = String(percent);
+      textSizeRules = sanitizeTextSizeRules({ ...textSizeRules, [level]: percent / 100 });
+      updateTextSizeSummary();
+      render();
+    }
+
+    function resetTextSizeRules() {
+      textSizeRules = { ...defaultTextSizeRules };
+      textLevelInput.value = '1';
+      textPercentInput.value = String(Math.round(textSizeRules[1] * 100));
+      updateTextSizeSummary();
+      render();
+    }
+
     function applyLevel(level, mode = 'strict') {
       levelSelect.value = String(Math.max(-1, Number(level)));
       foldModeSelect.value = mode;
@@ -644,6 +722,9 @@
       textSizeSelect.value = '1';
       textColorSelect.value = 'auto';
       lineWidthSelect.value = '1.6';
+      textSizeRules = { ...defaultTextSizeRules };
+      textLevelInput.value = '1';
+      textPercentInput.value = String(Math.round(textSizeRules[1] * 100));
       spacingHInput.value = '78';
       spacingVInput.value = '7';
       durationInput.value = '180';
@@ -652,6 +733,7 @@
       widthLevelInput.value = '1';
       widthPxInput.value = String(widthRules[1]);
       updateWidthSummary();
+      updateTextSizeSummary();
       document.documentElement.style.setProperty('--editor-width', 'minmax(280px, 38vw)');
       render();
     }
@@ -783,22 +865,26 @@ const markdown = ${safeMarkdown};
 const settings = ${safeSettings};
 const palettes = ${JSON.stringify(palettes)};
 const defaultWidthRules = ${JSON.stringify(defaultWidthRules)};
+const defaultTextSizeRules = ${JSON.stringify(defaultTextSizeRules)};
 const api = window.markmap;
 const svg = document.querySelector('#mindmap');
 function colorFor(name){const colors=palettes[name]||palettes.classic;return node=>colors[Math.max(0,(node.state?.depth||1)-1)%colors.length];}
 function sanitizeWidthRules(rules){const next={};Object.entries(rules||{}).forEach(([level,width])=>{const numericLevel=Math.max(1,Math.round(Number(level)));const numericWidth=Math.max(80,Math.min(1200,Math.round(Number(width))));if(Number.isFinite(numericLevel)&&Number.isFinite(numericWidth))next[numericLevel]=numericWidth});return Object.keys(next).length?next:{...defaultWidthRules}}
+function sanitizeTextSizeRules(rules){const next={};Object.entries(rules||{}).forEach(([level,size])=>{const numericLevel=Math.max(1,Math.round(Number(level)));const numericSize=Math.max(.4,Math.min(2.4,Number(size)));if(Number.isFinite(numericLevel)&&Number.isFinite(numericSize))next[numericLevel]=Math.round(numericSize*100)/100});return Object.keys(next).length?next:{...defaultTextSizeRules}}
 function widthForDepth(rules,depth){const sanitized=sanitizeWidthRules(rules);const levels=Object.keys(sanitized).map(Number).sort((a,b)=>a-b);const matched=levels.filter(level=>level<=depth).pop()||levels[0];return sanitized[matched]}
 function widthCssFor(rules){return Array.from({length:32},(_,i)=>{const depth=i+1;return '.markmap-node[data-depth="'+depth+'"] .markmap-foreign > div{width:'+widthForDepth(rules,depth)+'px}'}).join('\\n')}
+function textSizeForDepth(rules,depth){const sanitized=sanitizeTextSizeRules(rules);const levels=Object.keys(sanitized).map(Number).sort((a,b)=>a-b);const matched=levels.filter(level=>level<=depth).pop()||levels[0];return sanitized[matched]}
+function textSizeCssFor(rules){return Array.from({length:32},(_,i)=>{const depth=i+1;return '.markmap-node[data-depth="'+depth+'"] .markmap-foreign > div{font-size:calc(var(--map-font-size) * '+textSizeForDepth(rules,depth)+')}'}).join('\\n')}
 function cloneWithoutFold(node){const payload=node.payload?{...node.payload}:undefined;if(payload)delete payload.fold;return {...node,payload,children:node.children?.map(cloneWithoutFold)||[]}}
 function cloneWithLevelFold(node,visibleLevel,depth=1){const payload=node.payload?{...node.payload}:{};delete payload.fold;if(visibleLevel>=0&&depth>=visibleLevel+1&&node.children?.length)payload.fold=1;return {...node,payload:Object.keys(payload).length?payload:undefined,children:node.children?.map(child=>cloneWithLevelFold(child,visibleLevel,depth+1))||[]}}
 function prepareRoot(root){return settings.foldMode==='memory'?cloneWithoutFold(root):cloneWithLevelFold(root,settings.level??-1)}
 function configureMapLinks(){svg.querySelectorAll('.markmap-foreign a').forEach(link=>{if(!link.getAttribute('href')?.startsWith('#')){link.setAttribute('target','_blank');link.setAttribute('rel','noopener noreferrer')}if(link.dataset.mapLinkReady)return;link.dataset.mapLinkReady='1';['pointerdown','mousedown','click','dblclick'].forEach(name=>link.addEventListener(name,event=>event.stopPropagation()))})}
 const transformer = new api.Transformer();
 function lineWidth(node){return Math.max(1,(settings.lineWidth||1.6)+2.2/2**node.state.depth)}
-const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
+const mm = api.Markmap.create(svg, { autoFit: true, duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules)+'\\n'+textSizeCssFor(settings.textSizeRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
 async function draw() {
   const { root } = transformer.transform(markdown);
-  await mm.setData(prepareRoot(root), { duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
+  await mm.setData(prepareRoot(root), { duration: settings.duration ?? 180, initialExpandLevel: -1, color: colorFor(settings.palette), lineWidth, maxWidth: 0, style: () => widthCssFor(settings.widthRules)+'\\n'+textSizeCssFor(settings.textSizeRules), spacingHorizontal: settings.spacingHorizontal ?? 78, spacingVertical: settings.spacingVertical ?? 7 });
   configureMapLinks();
   await mm.fit();
 }
@@ -867,8 +953,13 @@ draw();
       document.querySelector('#table').addEventListener('click', () => insertAtCursor(tableSnippet));
       document.querySelector('#set-width').addEventListener('click', setWidthRule);
       document.querySelector('#reset-width').addEventListener('click', resetWidthRules);
+      document.querySelector('#set-text-size').addEventListener('click', setTextSizeRule);
+      document.querySelector('#reset-text-size').addEventListener('click', resetTextSizeRules);
       [widthLevelInput, widthPxInput].forEach((control) => control.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') setWidthRule();
+      }));
+      [textLevelInput, textPercentInput].forEach((control) => control.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') setTextSizeRule();
       }));
       document.querySelector('#import').addEventListener('click', () => fileInput.click());
       document.querySelector('#save-md').addEventListener('click', exportMarkdown);
