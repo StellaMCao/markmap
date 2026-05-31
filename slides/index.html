@@ -826,26 +826,37 @@
       }
     });
 
-    // Make floating windows draggable
+    // Make floating windows draggable (entire panel background grab-draggable)
     function makeElementDraggable(el) {
       if (!el) return;
       let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-      const header = el.querySelector('.tool-row') || el.querySelector('h4') || el;
-      header.style.cursor = 'move';
-      header.onmousedown = dragMouseDown;
-      header.ontouchstart = dragMouseDown;
+      
+      el.style.cursor = 'grab';
+      el.onmousedown = dragMouseDown;
+      el.ontouchstart = dragMouseDown;
 
       function dragMouseDown(e) {
         e = e || window.event;
-        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') {
+        // Exclude interactive elements and color dots from starting a drag
+        if (
+          e.target.tagName === 'BUTTON' || 
+          e.target.tagName === 'SELECT' || 
+          e.target.tagName === 'INPUT' || 
+          e.target.classList.contains('color-dot')
+        ) {
           return;
         }
+        
+        el.style.cursor = 'grabbing';
+        
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         pos3 = clientX;
         pos4 = clientY;
+        
         document.onmouseup = closeDragElement;
         document.onmousemove = elementDrag;
+        
         document.ontouchend = closeDragElement;
         document.ontouchmove = elementDrag;
       }
@@ -865,6 +876,7 @@
       }
 
       function closeDragElement() {
+        el.style.cursor = 'grab';
         document.onmouseup = null;
         document.onmousemove = null;
         document.ontouchend = null;
@@ -1020,7 +1032,7 @@
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
   
   <script>
-    const markdownContent = \`${textarea.value.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+    const markdownContent = \`${textarea.value.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
     window.markdownContent = markdownContent;
     
     // Parse slides structure
