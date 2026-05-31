@@ -849,54 +849,70 @@
             <p><i class="fa-solid fa-hand-pointer" style="color: var(--accent);"></i> **Arrastrar**: Haz clic en cualquier concepto y arrástralo libremente para cambiar su distribución.</p>
             <p><i class="fa-solid fa-folder-open" style="color: var(--accent);"></i> **Contraer/Expandir**: Haz **doble clic** en un concepto con hijos para ocultar o mostrar su sub-árbol completo (las ramas cerradas mostrarán un indicador `[+]` y borde punteado).</p>
             <p><i class="fa-solid fa-lock" style="color: var(--accent);"></i> **Fijar concepto**: Mantén presionado **Ctrl** (o **Shift**) y haz **doble clic** en cualquier concepto para congelar su posición en el lienzo.</p>
-            <p><i class="fa-solid fa-magnifying-glass" style="color: var(--accent);"></i> **Zoom**: Desliza la rueda del ratón o haz gestos táctiles de pinza para alejar o acercar el mapa mental.</p>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- Draggable Help Panel -->
-  <div class="floating-panel" id="help-panel">
+            <p><i class="fa-solid fa-magnifying-glass" style="color: var(--accent);"></i> **Zoom**: Desliza la rueda del ratón o haz gestos táctiles de pinza para alejar  <!-- Draggable Help Panel -->
+  <div class="floating-panel" id="help-panel" style="width: 500px;">
     <div class="drag-header" id="help-drag-header">
-      <span class="drag-title"><i class="fa-solid fa-circle-info"></i> Guía completa de mapas mentales</span>
+      <span class="drag-title"><i class="fa-solid fa-circle-info"></i> Guía completa de mapas mentales interactivos</span>
       <button class="close-btn" onclick="toggleHelpPanel()"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <div class="panel-content">
+    <div class="panel-content" style="max-height: 520px;">
       <h3><i class="fa-solid fa-compass"></i> Filosofía del creador de mapas</h3>
-      <p>Crea mapas mentales interactivos y redes dinámicas con simulación física y múltiples orientaciones en vivo. Puedes redactar tus mapas usando dos métodos muy simples:</p>
+      <p>Crea mapas mentales interactivos y redes dinámicas de conceptos con simulación física y múltiples orientaciones en vivo. Puedes invocar esta guía en cualquier momento escribiendo el comando <code>/ayuda</code> en una línea vacía del editor.</p>
       
-      <h3><i class="fa-solid fa-list-ul"></i> Método 1: Esquema Simple (Outline)</h3>
-      <p>Es el más rápido. Funciona igual que Markmap. Escribe un título principal precedido por <code># </code> y haz una lista estructurada con sangrías usando guiones:</p>
-      
-      <pre># Cerebro Humano 🧠
-- Lóbulo Frontal
-  - Córtex Prefrontal
-  - Funciones Ejecutivas
-- Lóbulo Temporal
-  - Hipocampo</pre>
+      <h3><i class="fa-solid fa-list-ul"></i> Método 1: Esquema simple (Outline)</h3>
+      <p>Es el más rápido y directo. Escribe el título principal precedido por <code># </code> y estructura los subconceptos usando listas con sangrías y guiones:</p>
+      <pre># Cerebro humano 🧠
+- Lóbulo frontal (shape: box, color: #3b82f6)
+  - Córtex prefrontal (font-weight: bold)
+    - Toma de decisiones
+  - Corteza motora
+- Lóbulo temporal
+  - Hipocampo (shape: circularImage, image: "https://upload.wikimedia.org/wikipedia/commons/1/14/Gromet_Neuron.png")</pre>
 
-      <h3><i class="fa-solid fa-network-wired"></i> Método 2: Red Avanzada (Conexiones)</h3>
-      <p>Úsalo para crear flujos con conexiones cruzadas complejas, asignando formas, tamaños, estilos y colores personalizados a nodos y conectores:</p>
-      
-      <pre># Circuito de Dopamina ⚡
+      <h3><i class="fa-solid fa-network-wired"></i> Método 2: Red avanzada (Conexiones)</h3>
+      <p>Úsalo para modelar flujos, diagramas de sistemas o redes complejas con relaciones cruzadas. Se divide en dos secciones:</p>
+      <pre># Circuito de recompensa ⚡
 ## Nodos
-- [vta] Área Tegmental Ventral (shape: circularImage, image: "https://upload.wikimedia.org/wikipedia/commons/1/14/Gromet_Neuron.png", size: 30)
-- [accumbens] Núcleo Accumbens (shape: box, color: #ec4899)
-- [dopamina] Liberación de Dopamina (color: #f59e0b)
+- [vta] Área tegmental ventral (shape: circle, color: #3b82f6)
+- [accumbens] Núcleo accumbens (shape: box, color: #ec4899)
+- [prefrontal] Córtex prefrontal (shape: ellipse)
 
 ## Conexiones
-- vta -> accumbens (label: "Vía Mesolímbica", style: solid, color: #f472b6)
-- accumbens -> dopamina (label: "Placer", style: dashed)</pre>
+- vta -> accumbens (label: "Vía mesolímbica", style: solid, color: #f472b6)
+- accumbens -> prefrontal (label: "Conexión", style: dashed)
+- prefrontal -> vta (label: "Feedback", style: dotted)</pre>
 
-      <h3><i class="fa-solid fa-list-check"></i> Atributos disponibles:</h3>
-      <ul>
-        <li><strong>Nodos</strong>: <code>shape: [circle, box, database, ellipse, image, circularImage]</code>, <code>image: "https://url-imagen.png"</code>, <code>color: [hex]</code>, <code>size: [número]</code>. Puedes usar estos atributos tanto en listas simples (Outline) como en redes avanzadas.</li>
-        <li><strong>Conexiones</strong>: <code>label: "texto"</code>, <code>style: [solid, dashed, dotted]</code>, <code>color: [hex]</code>.</li>
+      <h3><i class="fa-solid fa-tags"></i> Personalización de conceptos (Nodos)</h3>
+      <p>Puedes configurar atributos específicos escribiendo parejas <code>clave: valor</code> dentro de paréntesis al final del concepto:</p>
+      <ul style="margin-left: 18px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
+        <li><code>shape: [circle | box | database | ellipse | image | circularImage]</code>. Las formas <code>image</code> y <code>circularImage</code> renderizan imágenes de forma nativa.</li>
+        <li><code>image: "https://enlace-directo.png"</code>. Especifica la URL de la imagen.</li>
+        <li><code>size: [número]</code>. Define la dimensión del concepto (por defecto, los nodos con imágenes se ven óptimos con tamaño <code>32</code>).</li>
+        <li><code>color: [hexadecimal]</code>. Personaliza el fondo y borde del nodo (ej. <code>color: #ec4899</code>).</li>
       </ul>
+
+      <h3><i class="fa-solid fa-link"></i> Personalización de conectores (Enlaces)</h3>
+      <p>Aplica estilo a las conexiones en el Método 2 añadiendo atributos entre paréntesis:</p>
+      <ul style="margin-left: 18px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
+        <li><code>label: "texto"</code>. Añade una etiqueta de texto sobre la línea de conexión.</li>
+        <li><code>style: [solid | dashed | dotted]</code>. Define el tipo de trazado (sólido, segmentado o punteado).</li>
+        <li><code>color: [hexadecimal]</code>. Personaliza el color del conector de forma individual.</li>
+      </ul>
+
+      <h3><i class="fa-solid fa-hand-pointer"></i> Interacción y gestos en el lienzo</h3>
+      <p>El lienzo interactivo responde a los siguientes gestos táctiles y de ratón:</p>
+      <ul style="margin-left: 18px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
+        <li><strong>Arrastre libre</strong>: Arrastra cualquier concepto con el ratón o el dedo para reubicarlo. ¡Funciona también en las distribuciones jerárquicas!</li>
+        <li><strong>Doble clic (Contraer/Expandir)</strong>: Haz doble clic en un concepto con ramificaciones para ocultar o mostrar su sub-árbol. Las ramas contraídas se identifican con un sufijo <code> [+]</code> y borde punteado.</li>
+        <li><strong>Ctrl (o Shift) + Doble clic (Fijar concepto)</strong>: Congela la posición de un nodo en el espacio para que no se mueva con la gravedad física. Hazlo de nuevo para desbloquearlo.</li>
+        <li><strong>Zoom y Desplazamiento</strong>: Desliza la rueda del ratón o haz pinza táctil para acercar/alejar, y arrastra el lienzo vacío para desplazarte.</li>
+      </ul>
+
+      <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Fondos y contraste automático</h3>
+      <p>Puedes seleccionar entre 5 fondos de alta calidad en la pestaña de <strong>Ajustes del gráfico</strong>. Destaca la opción <code>Blanco minimalista</code>, que activa de forma inteligente un alto contraste adaptando todos los textos, bordes y conectores a colores oscuros legibles.</p>
+
+      <h3><i class="fa-solid fa-file-arrow-down"></i> Conservación del estado y exportación</h3>
+      <p>Cuando utilizas la opción <strong>Exportar mapa (HTML)</strong>, el mapa interactivo conserva exactamente el estado de colapsado (ramas cerradas) y de fijado (físicas bloqueadas) que configuraste en tu editor en el momento de la descarga, asegurando que tus presentaciones inicien exactamente como las diseñaste.</p>
 
       <button class="btn btn-primary copy-template-btn" onclick="copyTemplate()">
         <i class="fa-solid fa-copy"></i> Cargar plantilla didáctica del cerebro
