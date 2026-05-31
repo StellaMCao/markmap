@@ -1899,6 +1899,9 @@
 
       // Add dynamic coloring/styles to nodes that don't have custom ones
       data.nodes.forEach(node => {
+        // Skip edge label intermediary nodes — they manage their own transparent style
+        if (node.isEdgeLabelNode) return;
+
         // Handle image nodes shape and URL loading
         if ((node.shape === 'image' || node.shape === 'circularImage') && node.image) {
           data.nodes.update({
@@ -3501,6 +3504,9 @@
       };
 
       data.nodes.forEach(node => {
+        // Skip edge label intermediary nodes — they manage their own transparent style
+        if (node.isEdgeLabelNode) return;
+
         // Load custom image/circularImage URLs
         if ((node.shape === 'image' || node.shape === 'circularImage') && node.image) {
           data.nodes.update({
