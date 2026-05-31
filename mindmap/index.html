@@ -2249,7 +2249,10 @@
       showToast(isCollapsed ? 'Rama contraída' : 'Rama expandida');
     }
 
-    function setSubtreeVisibility(parentId, visible) {
+    function setSubtreeVisibility(parentId, visible, visited = new Set()) {
+      if (visited.has(parentId)) return;
+      visited.add(parentId);
+      
       const outgoingEdges = edgesDataset.get({
         filter: function(edge) {
           return edge.from === parentId;
@@ -2271,10 +2274,10 @@
           });
           
           if (!visible) {
-            setSubtreeVisibility(childId, false);
+            setSubtreeVisibility(childId, false, visited);
           } else {
             if (!childNode.collapsed) {
-              setSubtreeVisibility(childId, true);
+              setSubtreeVisibility(childId, true, visited);
             } else {
               const childEdges = edgesDataset.get({
                 filter: function(e) { return e.from === childId; }
@@ -3937,7 +3940,10 @@
       setSubtreeVisibility(nodeId, !isCollapsed);
     }
 
-    function setSubtreeVisibility(parentId, visible) {
+    function setSubtreeVisibility(parentId, visible, visited = new Set()) {
+      if (visited.has(parentId)) return;
+      visited.add(parentId);
+      
       const outgoingEdges = edgesDataset.get({
         filter: function(edge) {
           return edge.from === parentId;
@@ -3959,10 +3965,10 @@
           });
           
           if (!visible) {
-            setSubtreeVisibility(childId, false);
+            setSubtreeVisibility(childId, false, visited);
           } else {
             if (!childNode.collapsed) {
-              setSubtreeVisibility(childId, true);
+              setSubtreeVisibility(childId, true, visited);
             } else {
               const childEdges = edgesDataset.get({
                 filter: function(e) { return e.from === childId; }
