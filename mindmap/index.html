@@ -1007,11 +1007,43 @@
 - [conductual] Condicionamiento Operante (shape: box, bgColor: #ef4444, borderColor: #b91c1c, textColor: #ffffff, width: 140)
 - [humanista] Psicología Humanista (shape: circularImage, image: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&h=150&fit=crop&q=80", size: 32, bgColor: #f59e0b, borderColor: #b45309, textColor: #ffffff, width: 130)
 
+// Sub-nodos del Laboratorio de Leipzig
+- [estructuralismo] Estructuralismo (shape: ellipse, size: 18, bgColor: #a7f3d0, borderColor: #059669, textColor: #064e3b, width: 120)
+- [introspeccion] Introspección Analítica (shape: ellipse, size: 18, bgColor: #a7f3d0, borderColor: #059669, textColor: #064e3b, width: 130)
+
+// Sub-nodos de la Psicología Cognitiva
+- [procesamiento] Procesamiento de Información (shape: ellipse, size: 18, bgColor: #ddd6fe, borderColor: #7c3aed, textColor: #2e1065, width: 140)
+- [metacognicion] Metacognición (shape: ellipse, size: 18, bgColor: #ddd6fe, borderColor: #7c3aed, textColor: #2e1065, width: 120)
+
+// Sub-nodos de la Conductual
+- [estimulo] Estímulo-Respuesta (shape: ellipse, size: 18, bgColor: #fecaca, borderColor: #dc2626, textColor: #7f1d1d, width: 120)
+- [refuerzo] Refuerzo y Castigo (shape: ellipse, size: 18, bgColor: #fecaca, borderColor: #dc2626, textColor: #7f1d1d, width: 120)
+
+// Sub-nodos de la Psicología Humanista
+- [autorrealizacion] Autorrealización (shape: ellipse, size: 18, bgColor: #fef3c7, borderColor: #d97706, textColor: #78350f, width: 120)
+- [terapia] Enfoque Centrado en la Persona (shape: ellipse, size: 18, bgColor: #fef3c7, borderColor: #d97706, textColor: #78350f, width: 130)
+
 ## Conexiones
 - psicologia -> laboratorio (label: "1879: Primer laboratorio de Wundt", length: 220, style: solid, color: #10b981)
 - psicologia -> cognitiva (label: "Estudio científico de la mente y sus procesos", length: 250, style: dashed, color: #8b5cf6)
 - psicologia -> conductual (label: "Skinner y el estudio de respuestas", length: 180, style: solid, color: #ef4444)
-- psicologia -> humanista (label: "Maslow y la pirámide de necesidades", length: 210, style: dotted, color: #f59e0b)`,
+- psicologia -> humanista (label: "Maslow y la pirámide de necesidades", length: 210, style: dotted, color: #f59e0b)
+
+// Conexiones de Leipzig
+- laboratorio -> estructuralismo (label: "Edward Titchener difunde las ideas en EE.UU.", length: 150, style: dashed, color: #059669)
+- laboratorio -> introspeccion (label: "Método para auto-observar los estados mentales", length: 160, style: solid, color: #059669)
+
+// Conexiones de la Cognitiva
+- cognitiva -> procesamiento (label: "La mente opera como un procesador de datos", length: 170, style: solid, color: #7c3aed)
+- cognitiva -> metacognicion (label: "Pensar sobre nuestro propio aprendizaje", length: 150, style: dashed, color: #7c3aed)
+
+// Conexiones de la Conductual
+- conductual -> estimulo (label: "Asociación directa", length: 130, style: solid, color: #dc2626)
+- conductual -> refuerzo (label: "Modificación del comportamiento", length: 160, style: dashed, color: #dc2626)
+
+// Conexiones de la Humanista
+- humanista -> autorrealizacion (label: "Desarrollo y expresión del potencial humano máximo", length: 160, style: solid, color: #d97706)
+- humanista -> terapia (label: "Carl Rogers y empatía en la terapia clínica", length: 170, style: solid, color: #d97706)",
 
       dopamine: `# Circuito de Recompensa de la Dopamina ⚡
 
