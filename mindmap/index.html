@@ -856,6 +856,13 @@
               <input type="range" id="edge-label-wrap" class="slider" min="15" max="40" value="25" oninput="editorChanged()">
             </div>
           </div>
+
+          <div class="setting-row">
+            <span>Grosor de conectores</span>
+            <div class="setting-control">
+              <input type="range" id="edge-line-width" class="slider" min="1" max="6" value="2.2" step="0.2" oninput="editorChanged()">
+            </div>
+          </div>
         </div>
 
         <!-- Physical Solvers -->
@@ -909,7 +916,7 @@
     - Toma de decisiones
   - Corteza motora
 - Lóbulo temporal
-  - Hipocampo (shape: circularImage, image: "https://wsrv.nl/?url=upload.wikimedia.org/wikipedia/commons/b/b5/Blausen_0657_MultipolarNeuron.png&w=150&h=150&fit=cover")</pre>
+  - Hipocampo (shape: circularImage, image: "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/b/b5/Blausen_0657_MultipolarNeuron.png&w=150&h=150&fit=cover")</pre>
 
       <h3><i class="fa-solid fa-network-wired"></i> Método 2: Red avanzada (Conexiones)</h3>
       <p>Úsalo para modelar flujos, diagramas de sistemas o redes complejas con relaciones cruzadas. Se divide en dos secciones:</p>
@@ -998,7 +1005,7 @@
 - [laboratorio] Laboratorio de Leipzig (shape: box, bgColor: #10b981, borderColor: #047857, textColor: #ffffff, width: 150)
 - [cognitiva] Psicología Cognitiva (shape: box, bgColor: #8b5cf6, borderColor: #6d28d9, textColor: #ffffff, width: 160)
 - [conductual] Condicionamiento Operante (shape: box, bgColor: #ef4444, borderColor: #b91c1c, textColor: #ffffff, width: 140)
-- [humanista] Psicología Humanista (shape: circularImage, image: "https://wsrv.nl/?url=upload.wikimedia.org/wikipedia/commons/e/e5/Abraham_Maslow.jpg&w=150&h=150&fit=cover", size: 32, bgColor: #f59e0b, borderColor: #b45309, textColor: #ffffff, width: 130)
+- [humanista] Psicología Humanista (shape: circularImage, image: "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/e/e5/Abraham_Maslow.jpg&w=150&h=150&fit=cover", size: 32, bgColor: #f59e0b, borderColor: #b45309, textColor: #ffffff, width: 130)
 
 ## Conexiones
 - psicologia -> laboratorio (label: "1879: Primer laboratorio de Wundt", length: 220, style: solid, color: #10b981)
@@ -1452,6 +1459,7 @@
       const nodeFontSize = Number(document.getElementById('node-font-size').value) || 13;
       const edgeFontSize = Number(document.getElementById('edge-font-size').value) || 11;
       const edgeLabelWrapLimit = Number(document.getElementById('edge-label-wrap').value) || 25;
+      const edgeLineWidth = Number(document.getElementById('edge-line-width').value) || 2.2;
       
       nodesDataset = new vis.DataSet(graphData.nodes);
       edgesDataset = new vis.DataSet(graphData.edges);
@@ -1509,7 +1517,7 @@
           }
         },
         edges: {
-          width: 2.2,
+          width: edgeLineWidth,
           smooth: smoothOpt,
           shadow: {
             enabled: !isLightTheme,
@@ -2007,7 +2015,7 @@
       } else if (type === 'conn') {
         inserted = '\n- c1 -> c2 (label: "Relación", style: dashed)\n';
       } else if (type === 'image') {
-        inserted = '\n- [neuron] Neurona 🧠 (shape: circularImage, image: "https://wsrv.nl/?url=upload.wikimedia.org/wikipedia/commons/b/b5/Blausen_0657_MultipolarNeuron.png&w=150&h=150&fit=cover", size: 32)\n';
+        inserted = '\n- [neuron] Neurona 🧠 (shape: circularImage, image: "https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/b/b5/Blausen_0657_MultipolarNeuron.png&w=150&h=150&fit=cover", size: 32)\n';
       }
       
       editor.value = text.substring(0, start) + inserted + text.substring(end);
@@ -2116,6 +2124,7 @@
       const arrowsToggleValue = document.getElementById('arrows-toggle').checked;
       const canvasBgValue = document.getElementById('canvas-bg-selector').value;
       const levelStylingValue = document.getElementById('level-styling-toggle').checked;
+      const edgeLineWidthValue = document.getElementById('edge-line-width').value || 2.2;
       
       const colorMap = {
         mindmap: { accent: '#3b82f6', rgb: '59, 130, 246', hover: '#2563eb' },
@@ -2197,6 +2206,13 @@
     .bg-theme-minimal {
       background-color: #111317;
       background-image: none;
+    }
+
+    .bg-theme-light {
+      background-color: #ffffff;
+      background-image: 
+        radial-gradient(rgba(15, 23, 42, 0.08) 1.2px, transparent 1.2px);
+      background-size: 20px 20px;
     }
 
     header {
@@ -2413,8 +2429,13 @@
       </div>
 
       <div class="control-row" id="row-edge-wrap">
-        <span>Ancho enlaces</span>
+        <span>Ancho texto enlaces</span>
         <input type="range" id="edge-label-wrap" class="slider" min="15" max="40" value="25" oninput="renderGraph()">
+      </div>
+
+      <div class="control-row" id="row-edge-width">
+        <span>Grosor conectores</span>
+        <input type="range" id="edge-line-width" class="slider" min="1" max="6" value="${edgeLineWidthValue}" step="0.2" oninput="renderGraph()">
       </div>
 
       <div class="control-row" id="row-smooth">
@@ -2725,6 +2746,7 @@
       const nodeFontSize = Number(document.getElementById('node-font-size').value) || 13;
       const edgeFontSize = Number(document.getElementById('edge-font-size').value) || 11;
       const edgeLabelWrapLimit = Number(document.getElementById('edge-label-wrap').value) || 25;
+      const edgeLineWidth = Number(document.getElementById('edge-line-width').value) || 2.2;
       const parsedData = parseMindmap(rawMarkdown);
       
       nodesDataset = new vis.DataSet(parsedData.nodes);
@@ -2794,7 +2816,7 @@
           }
         },
         edges: {
-          width: 2.2,
+          width: edgeLineWidth,
           smooth: smoothOpt,
           shadow: { enabled: !isLightTheme, color: 'rgba(0,0,0,0.08)', size: 3, x: 0, y: 2 },
           font: { 
