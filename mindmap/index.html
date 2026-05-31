@@ -3216,7 +3216,7 @@
               const hasLabel = attrs.label && attrs.label.trim();
               const edgeLen = attrs.length ? Number(attrs.length) : springLength;
               if (movableEdges && hasLabel) {
-                const labelNodeId = `edge-label-\${from}-\${to}-\${nodeIdCounter++}`;
+                const labelNodeId = \`edge-label-\${from}-\${to}-\${nodeIdCounter++}\`;
                 
                 nodes.push({
                   id: labelNodeId,
@@ -3347,7 +3347,7 @@
             const attrStr = attrMatch[2] || '';
             const attrs = parseAttributes(attrStr);
             
-            const id = `node-\${nodeIdCounter++}`;
+            const id = \`node-\${nodeIdCounter++}\`;
             
             if (!rootNode) {
               rootNode = {
