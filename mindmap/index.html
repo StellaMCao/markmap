@@ -1916,7 +1916,19 @@
       const isPhysicsEnabled = document.getElementById('physics-toggle').checked;
       const springLength = Number(document.getElementById('spring-length').value) || 150;
       
-      const activeColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      const themeSelector = document.getElementById('theme-selector');
+      const themeVal = themeSelector ? themeSelector.value : 'mindmap';
+      const themeColors = {
+        mindmap: { accent: '#3b82f6', rgb: '59, 130, 246' },
+        neuro: { accent: '#8b5cf6', rgb: '139, 92, 246' },
+        classic: { accent: '#10b981', rgb: '16, 185, 129' },
+        clinical: { accent: '#06b6d4', rgb: '6, 182, 212' },
+        child: { accent: '#f59e0b', rgb: '245, 158, 11' },
+        social: { accent: '#ef4444', rgb: '239, 68, 68' }
+      };
+      const activeTheme = themeColors[themeVal] || themeColors.mindmap;
+      const activeColor = activeTheme.accent;
+      const activeRgb = activeTheme.rgb;
       
       const smoothSelector = document.getElementById('edge-smooth-selector');
       const smoothVal = smoothSelector ? smoothSelector.value : 'smooth';
@@ -2072,7 +2084,7 @@
                 shape: node.shape || 'circle',
                 size: 28,
                 color: { background: activeColor, border: activeColor },
-                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
+                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3), multi: 'md' },
                 label: formattedLabel
               });
             } else if (node.depth === 1) {
@@ -2081,10 +2093,10 @@
                 shape: node.shape || 'box',
                 size: 22,
                 color: { 
-                  background: isLightTheme ? `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()}, 0.08)` : `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()}, 0.15)`, 
+                  background: isLightTheme ? `rgba(${activeRgb}, 0.08)` : `rgba(${activeRgb}, 0.15)`, 
                   border: activeColor 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || (nodeFontSize + 1) },
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || (nodeFontSize + 1), multi: 'md' },
                 label: formattedLabel
               });
             } else if (node.depth === 2) {
@@ -2094,9 +2106,9 @@
                 size: 18,
                 color: { 
                   background: isLightTheme ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.06)', 
-                  border: isLightTheme ? 'rgba(15,23,42,0.12)' : `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()}, 0.4)` 
+                  border: isLightTheme ? 'rgba(15,23,42,0.12)' : `rgba(${activeRgb}, 0.4)` 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#334155' : '#e5e7eb', size: fontSize || nodeFontSize },
+                font: { face: fontFace, color: isLightTheme ? '#334155' : '#e5e7eb', size: fontSize || nodeFontSize, multi: 'md' },
                 label: formattedLabel
               });
             } else {
@@ -2104,7 +2116,7 @@
               data.nodes.update({
                 id: node.id,
                 shape: node.shape || 'text',
-                font: { face: fontFace, color: isLightTheme ? '#475569' : '#d1d5db', size: fontSize || (nodeFontSize - 1) },
+                font: { face: fontFace, color: isLightTheme ? '#475569' : '#d1d5db', size: fontSize || (nodeFontSize - 1), multi: 'md' },
                 label: formattedLabel
               });
             }
@@ -2114,7 +2126,7 @@
               data.nodes.update({
                 id: node.id,
                 color: { background: activeColor, border: activeColor },
-                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
+                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3), multi: 'md' },
                 label: formattedLabel
               });
             } else if (node.shape === 'box') {
@@ -2124,7 +2136,7 @@
                   background: isLightTheme ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.08)', 
                   border: activeColor 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize },
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize, multi: 'md' },
                 label: formattedLabel
               });
             } else {
@@ -2134,7 +2146,7 @@
                   background: isLightTheme ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.04)', 
                   border: isLightTheme ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)' 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize },
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize, multi: 'md' },
                 label: formattedLabel
               });
             }
@@ -2151,7 +2163,7 @@
                 border: node.borderColor || node.color || activeColor
               }
             },
-            font: { face: fontFace, color: node.textColor || (isLightTheme ? '#0f172a' : '#ffffff'), size: fontSize || nodeFontSize },
+            font: { face: fontFace, color: node.textColor || (isLightTheme ? '#0f172a' : '#ffffff'), size: fontSize || nodeFontSize, multi: 'md' },
             label: formattedLabel
           });
         }
@@ -3589,8 +3601,8 @@
       const edgeLabelWrapLimit = Number(document.getElementById('edge-label-wrap').value) || 25;
       const edgeLineWidth = Number(document.getElementById('edge-line-width').value) || 2.2;
       
-      const activeColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-      const activeColorRgb = getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim();
+      const activeColor = '${themeConfig.accent}';
+      const activeColorRgb = '${themeConfig.rgb}';
       
       const bgColors = {
         deep: '#0b0f19',
