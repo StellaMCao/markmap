@@ -655,6 +655,7 @@
             <option value="brain">Estructura del cerebro (Outline radial)</option>
             <option value="dopamine">Circuito de la dopamina (Red avanzada)</option>
             <option value="piaget">Teoría del desarrollo de Piaget (Jerárquico)</option>
+            <option value="memory">Modelo de memoria de Atkinson-Shiffrin (Flujo de red)</option>
             <option value="custom">Proyecto vacío</option>
           </select>
         </div>
@@ -868,6 +869,29 @@
   - Razonamiento Hipotético-Deductivo
   - Pensamiento Abstracto`,
 
+      memory: `# Modelo de Memoria de Atkinson-Shiffrin 🧠
+
+## Nodos
+- [estimulo] Entrada sensorial (shape: circle, color: #3b82f6)
+- [sensorial] Registro sensorial (shape: box, color: #06b6d4)
+- [corto] Memoria a corto plazo (shape: box, color: #8b5cf6, size: 24)
+- [largo] Memoria a largo plazo (shape: box, color: #10b981, size: 24)
+- [ensayo] Ensayo / Repetición (shape: circle, color: #ec4899)
+- [olvido1] Decaimiento rápido (shape: ellipse, color: #ef4444)
+- [olvido2] Desplazamiento / Olvido (shape: ellipse, color: #ef4444)
+- [olvido3] Interferencia / Fallo de recuperación (shape: ellipse, color: #ef4444)
+
+## Conexiones
+- estimulo -> sensorial (label: "Estímulos ambientales")
+- sensorial -> olvido1 (label: "Falta de atención", style: dashed, color: #f87171)
+- sensorial -> corto (label: "Atención selectiva", color: #a78bfa)
+- corto -> olvido2 (label: "Falta de repaso", style: dashed, color: #f87171)
+- corto -> ensayo (label: "Repetición asociativa", color: #f472b6)
+- ensayo -> corto (label: "Mantenimiento activo")
+- corto -> largo (label: "Codificación y consolidación", color: #34d399)
+- largo -> corto (label: "Recuperación y evocación", color: #60a5fa)
+- largo -> olvido3 (label: "Olvido por desuso o interferencia", style: dotted, color: #f87171)`,
+
       custom: `# Nuevo Mapa Mental 🧠
 
 - Idea Central
@@ -967,7 +991,7 @@
         // Auto-change layout to Hierarchical for Piaget to preserve order
         if (selected === 'piaget') {
           document.getElementById('layout-selector').value = 'hierarchical-v';
-        } else if (selected === 'dopamine') {
+        } else if (selected === 'dopamine' || selected === 'memory') {
           document.getElementById('layout-selector').value = 'force';
         } else {
           document.getElementById('layout-selector').value = 'force';
@@ -2044,7 +2068,7 @@
       a.download = 'mapa_mental.png';
       a.click();
     }
-  </script>
+  ${'</' + 'script>'}
 </body>
 </html>`;
 
