@@ -2522,128 +2522,119 @@
         const tempNetwork = new vis.Network(exportDiv, tempData, tempOptions);
 
         tempNetwork.once('afterDrawing', function() {
-          // Allow layout initialization to settle
-          setTimeout(function() {
+          // Trigger view fitting to center and scale nodes
+          tempNetwork.fit();
+          
+          // Capture on the very next drawing pass, ensuring no timing race conditions!
+          tempNetwork.once('afterDrawing', function() {
             try {
-              // Center and scale map perfectly inside 3000x2000 canvas boundary
-              tempNetwork.fit();
+              const visCanvas = exportDiv.querySelector('canvas');
+              if (!visCanvas) {
+                showToast('Error al generar la imagen.', 'error');
+                document.body.removeChild(exportDiv);
+                tempNetwork.destroy();
+                return;
+              }
               
-              // Short delay to draw the resized nodes
-              setTimeout(function() {
-                try {
-                  const visCanvas = exportDiv.querySelector('canvas');
-                  if (!visCanvas) {
-                    showToast('Error al generar la imagen.', 'error');
-                    document.body.removeChild(exportDiv);
-                    tempNetwork.destroy();
-                    return;
+              // Setup composed canvas
+              const bgCanvas = document.createElement('canvas');
+              bgCanvas.width = 3000;
+              bgCanvas.height = 2000;
+              const bgCtx = bgCanvas.getContext('2d');
+              
+              const w = 3000;
+              const h = 2000;
+              
+              // Render premium backgrounds according to active selection
+              if (currentBgVal === 'deep') {
+                bgCtx.fillStyle = '#0b0f19';
+                bgCtx.fillRect(0, 0, w, h);
+                
+                const grad1 = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.6);
+                grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.12)');
+                grad1.addColorStop(1, 'transparent');
+                bgCtx.fillStyle = grad1;
+                bgCtx.fillRect(0, 0, w, h);
+                
+                const grad2 = bgCtx.createRadialGradient(w * 0.9, h * 0.8, 0, w * 0.9, h * 0.8, Math.max(w, h) * 0.6);
+                grad2.addColorStop(0, 'rgba(31, 41, 55, 0.5)');
+                grad2.addColorStop(1, 'transparent');
+                bgCtx.fillStyle = grad2;
+                bgCtx.fillRect(0, 0, w, h);
+                
+              } else if (currentBgVal === 'grid') {
+                bgCtx.fillStyle = '#080b11';
+                bgCtx.fillRect(0, 0, w, h);
+                
+                const grad = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.5);
+                grad.addColorStop(0, 'rgba(' + accentRgb + ', 0.06)');
+                grad.addColorStop(1, 'transparent');
+                bgCtx.fillStyle = grad;
+                bgCtx.fillRect(0, 0, w, h);
+                
+                bgCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                const gap = 36;
+                for (let x = 0; x < w; x += gap) {
+                  for (let y = 0; y < h; y += gap) {
+                    bgCtx.beginPath();
+                    bgCtx.arc(x, y, 1.5, 0, 2 * Math.PI);
+                    bgCtx.fill();
                   }
-                  
-                  // Setup composed canvas
-                  const bgCanvas = document.createElement('canvas');
-                  bgCanvas.width = 3000;
-                  bgCanvas.height = 2000;
-                  const bgCtx = bgCanvas.getContext('2d');
-                  
-                  const w = 3000;
-                  const h = 2000;
-                  
-                  // Render premium backgrounds according to active selection
-                  if (currentBgVal === 'deep') {
-                    bgCtx.fillStyle = '#0b0f19';
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    const grad1 = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.6);
-                    grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.12)');
-                    grad1.addColorStop(1, 'transparent');
-                    bgCtx.fillStyle = grad1;
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    const grad2 = bgCtx.createRadialGradient(w * 0.9, h * 0.8, 0, w * 0.9, h * 0.8, Math.max(w, h) * 0.6);
-                    grad2.addColorStop(0, 'rgba(31, 41, 55, 0.5)');
-                    grad2.addColorStop(1, 'transparent');
-                    bgCtx.fillStyle = grad2;
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                  } else if (currentBgVal === 'grid') {
-                    bgCtx.fillStyle = '#080b11';
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    const grad = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.5);
-                    grad.addColorStop(0, 'rgba(' + accentRgb + ', 0.06)');
-                    grad.addColorStop(1, 'transparent');
-                    bgCtx.fillStyle = grad;
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    bgCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-                    const gap = 36;
-                    for (let x = 0; x < w; x += gap) {
-                      for (let y = 0; y < h; y += gap) {
-                        bgCtx.beginPath();
-                        bgCtx.arc(x, y, 1.5, 0, 2 * Math.PI);
-                        bgCtx.fill();
-                      }
-                    }
-                    
-                  } else if (currentBgVal === 'neuro') {
-                    bgCtx.fillStyle = '#0a0518';
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    const grad1 = bgCtx.createRadialGradient(w * 0.5, h * 0.5, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.7);
-                    grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.15)');
-                    grad1.addColorStop(1, 'transparent');
-                    bgCtx.fillStyle = grad1;
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    const grad2 = bgCtx.createRadialGradient(w * 0.2, h * 0.8, 0, w * 0.2, h * 0.8, Math.max(w, h) * 0.6);
-                    grad2.addColorStop(0, 'rgba(236, 72, 153, 0.1)');
-                    grad2.addColorStop(1, 'transparent');
-                    bgCtx.fillStyle = grad2;
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                  } else if (currentBgVal === 'minimal') {
-                    bgCtx.fillStyle = '#111317';
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                  } else if (currentBgVal === 'light') {
-                    bgCtx.fillStyle = '#ffffff';
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    bgCtx.fillStyle = 'rgba(15, 23, 42, 0.08)';
-                    const gap = 30;
-                    for (let x = 0; x < w; x += gap) {
-                      for (let y = 0; y < h; y += gap) {
-                        bgCtx.beginPath();
-                        bgCtx.arc(x, y, 1.8, 0, 2 * Math.PI);
-                        bgCtx.fill();
-                      }
-                    }
-                  }
-                  
-                  // Draw mindmap graphics over composing canvas
-                  bgCtx.drawImage(visCanvas, 0, 0);
-                  
-                  // Download high-resolution PNG
-                  const a = document.createElement('a');
-                  a.href = bgCanvas.toDataURL('image/png');
-                  a.download = 'mapa_mental_hd.png';
-                  a.click();
-                  
-                  showToast('Imagen PNG en alta resolución descargada con éxito.');
-                } catch (e) {
-                  console.error('Error al componer imagen:', e);
-                  showToast('Error al componer la imagen final.', 'error');
-                } finally {
-                  document.body.removeChild(exportDiv);
-                  tempNetwork.destroy();
                 }
-              }, 150);
+                
+              } else if (currentBgVal === 'neuro') {
+                bgCtx.fillStyle = '#0a0518';
+                bgCtx.fillRect(0, 0, w, h);
+                
+                const grad1 = bgCtx.createRadialGradient(w * 0.5, h * 0.5, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.7);
+                grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.15)');
+                grad1.addColorStop(1, 'transparent');
+                bgCtx.fillStyle = grad1;
+                bgCtx.fillRect(0, 0, w, h);
+                
+                const grad2 = bgCtx.createRadialGradient(w * 0.2, h * 0.8, 0, w * 0.2, h * 0.8, Math.max(w, h) * 0.6);
+                grad2.addColorStop(0, 'rgba(236, 72, 153, 0.1)');
+                grad2.addColorStop(1, 'transparent');
+                bgCtx.fillStyle = grad2;
+                bgCtx.fillRect(0, 0, w, h);
+                
+              } else if (currentBgVal === 'minimal') {
+                bgCtx.fillStyle = '#111317';
+                bgCtx.fillRect(0, 0, w, h);
+                
+              } else if (currentBgVal === 'light') {
+                bgCtx.fillStyle = '#ffffff';
+                bgCtx.fillRect(0, 0, w, h);
+                
+                bgCtx.fillStyle = 'rgba(15, 23, 42, 0.08)';
+                const gap = 30;
+                for (let x = 0; x < w; x += gap) {
+                  for (let y = 0; y < h; y += gap) {
+                    bgCtx.beginPath();
+                    bgCtx.arc(x, y, 1.8, 0, 2 * Math.PI);
+                    bgCtx.fill();
+                  }
+                }
+              }
+              
+              // Draw mindmap graphics over composing canvas
+              bgCtx.drawImage(visCanvas, 0, 0);
+              
+              // Download high-resolution PNG
+              const a = document.createElement('a');
+              a.href = bgCanvas.toDataURL('image/png');
+              a.download = 'mapa_mental_hd.png';
+              a.click();
+              
+              showToast('Imagen PNG en alta resolución descargada con éxito.');
             } catch (e) {
-              console.error(e);
+              console.error('Error al componer imagen:', e);
+              showToast('Error al componer la imagen final.', 'error');
+            } finally {
               document.body.removeChild(exportDiv);
               tempNetwork.destroy();
             }
-          }, 150);
+          });
         });
       } catch (e) {
         console.error('Error exportando PNG:', e);
@@ -4230,117 +4221,109 @@
         const tempNetwork = new vis.Network(exportDiv, tempData, tempOptions);
 
         tempNetwork.once('afterDrawing', function() {
-          setTimeout(function() {
+          tempNetwork.fit();
+          
+          tempNetwork.once('afterDrawing', function() {
             try {
-              tempNetwork.fit();
+              const visCanvas = exportDiv.querySelector('canvas');
+              if (!visCanvas) {
+                document.body.removeChild(exportDiv);
+                tempNetwork.destroy();
+                return;
+              }
               
-              setTimeout(function() {
-                try {
-                  const visCanvas = exportDiv.querySelector('canvas');
-                  if (!visCanvas) {
-                    document.body.removeChild(exportDiv);
-                    tempNetwork.destroy();
-                    return;
+              const bgCanvas = document.createElement('canvas');
+              bgCanvas.width = 3000;
+              bgCanvas.height = 2000;
+              const bgCtx = bgCanvas.getContext('2d');
+              
+              const w = 3000;
+              const h = 2000;
+              
+              if (currentBgVal === 'deep') {
+                bgCtx.fillStyle = '#0b0f19';
+                bgCtx.fillRect(0, 0, w, h);
+                
+                const grad1 = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.6);
+                grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.12)');
+                grad1.addColorStop(1, 'transparent');
+                bgCtx.fillStyle = grad1;
+                bgCtx.fillRect(0, 0, w, h);
+                
+                const grad2 = bgCtx.createRadialGradient(w * 0.9, h * 0.8, 0, w * 0.9, h * 0.8, Math.max(w, h) * 0.6);
+                grad2.addColorStop(0, 'rgba(31, 41, 55, 0.5)');
+                grad2.addColorStop(1, 'transparent');
+                bgCtx.fillStyle = grad2;
+                bgCtx.fillRect(0, 0, w, h);
+                
+              } else if (currentBgVal === 'grid') {
+                bgCtx.fillStyle = '#080b11';
+                bgCtx.fillRect(0, 0, w, h);
+                
+                const grad = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.5);
+                grad.addColorStop(0, 'rgba(' + accentRgb + ', 0.06)');
+                grad.addColorStop(1, 'transparent');
+                bgCtx.fillStyle = grad;
+                bgCtx.fillRect(0, 0, w, h);
+                
+                bgCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                const gap = 36;
+                for (let x = 0; x < w; x += gap) {
+                  for (let y = 0; y < h; y += gap) {
+                    bgCtx.beginPath();
+                    bgCtx.arc(x, y, 1.5, 0, 2 * Math.PI);
+                    bgCtx.fill();
                   }
-                  
-                  const bgCanvas = document.createElement('canvas');
-                  bgCanvas.width = 3000;
-                  bgCanvas.height = 2000;
-                  const bgCtx = bgCanvas.getContext('2d');
-                  
-                  const w = 3000;
-                  const h = 2000;
-                  
-                  if (currentBgVal === 'deep') {
-                    bgCtx.fillStyle = '#0b0f19';
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    const grad1 = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.6);
-                    grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.12)');
-                    grad1.addColorStop(1, 'transparent');
-                    bgCtx.fillStyle = grad1;
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    const grad2 = bgCtx.createRadialGradient(w * 0.9, h * 0.8, 0, w * 0.9, h * 0.8, Math.max(w, h) * 0.6);
-                    grad2.addColorStop(0, 'rgba(31, 41, 55, 0.5)');
-                    grad2.addColorStop(1, 'transparent');
-                    bgCtx.fillStyle = grad2;
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                  } else if (currentBgVal === 'grid') {
-                    bgCtx.fillStyle = '#080b11';
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    const grad = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.5);
-                    grad.addColorStop(0, 'rgba(' + accentRgb + ', 0.06)');
-                    grad.addColorStop(1, 'transparent');
-                    bgCtx.fillStyle = grad;
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    bgCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-                    const gap = 36;
-                    for (let x = 0; x < w; x += gap) {
-                      for (let y = 0; y < h; y += gap) {
-                        bgCtx.beginPath();
-                        bgCtx.arc(x, y, 1.5, 0, 2 * Math.PI);
-                        bgCtx.fill();
-                      }
-                    }
-                    
-                  } else if (currentBgVal === 'neuro') {
-                    bgCtx.fillStyle = '#0a0518';
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    const grad1 = bgCtx.createRadialGradient(w * 0.5, h * 0.5, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.7);
-                    grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.15)');
-                    grad1.addColorStop(1, 'transparent');
-                    bgCtx.fillStyle = grad1;
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    const grad2 = bgCtx.createRadialGradient(w * 0.2, h * 0.8, 0, w * 0.2, h * 0.8, Math.max(w, h) * 0.6);
-                    grad2.addColorStop(0, 'rgba(236, 72, 153, 0.1)');
-                    grad2.addColorStop(1, 'transparent');
-                    bgCtx.fillStyle = grad2;
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                  } else if (currentBgVal === 'minimal') {
-                    bgCtx.fillStyle = '#111317';
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                  } else if (currentBgVal === 'light') {
-                    bgCtx.fillStyle = '#ffffff';
-                    bgCtx.fillRect(0, 0, w, h);
-                    
-                    bgCtx.fillStyle = 'rgba(15, 23, 42, 0.08)';
-                    const gap = 30;
-                    for (let x = 0; x < w; x += gap) {
-                      for (let y = 0; y < h; y += gap) {
-                        bgCtx.beginPath();
-                        bgCtx.arc(x, y, 1.8, 0, 2 * Math.PI);
-                        bgCtx.fill();
-                      }
-                    }
-                  }
-                  
-                  bgCtx.drawImage(visCanvas, 0, 0);
-                  
-                  const a = document.createElement('a');
-                  a.href = bgCanvas.toDataURL('image/png');
-                  a.download = 'mapa_mental_hd.png';
-                  a.click();
-                } catch (e) {
-                  console.error('Error al componer imagen:', e);
-                } finally {
-                  document.body.removeChild(exportDiv);
-                  tempNetwork.destroy();
                 }
-              }, 150);
+                
+              } else if (currentBgVal === 'neuro') {
+                bgCtx.fillStyle = '#0a0518';
+                bgCtx.fillRect(0, 0, w, h);
+                
+                const grad1 = bgCtx.createRadialGradient(w * 0.5, h * 0.5, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.7);
+                grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.15)');
+                grad1.addColorStop(1, 'transparent');
+                bgCtx.fillStyle = grad1;
+                bgCtx.fillRect(0, 0, w, h);
+                
+                const grad2 = bgCtx.createRadialGradient(w * 0.2, h * 0.8, 0, w * 0.2, h * 0.8, Math.max(w, h) * 0.6);
+                grad2.addColorStop(0, 'rgba(236, 72, 153, 0.1)');
+                grad2.addColorStop(1, 'transparent');
+                bgCtx.fillStyle = grad2;
+                bgCtx.fillRect(0, 0, w, h);
+                
+              } else if (currentBgVal === 'minimal') {
+                bgCtx.fillStyle = '#111317';
+                bgCtx.fillRect(0, 0, w, h);
+                
+              } else if (currentBgVal === 'light') {
+                bgCtx.fillStyle = '#ffffff';
+                bgCtx.fillRect(0, 0, w, h);
+                
+                bgCtx.fillStyle = 'rgba(15, 23, 42, 0.08)';
+                const gap = 30;
+                for (let x = 0; x < w; x += gap) {
+                  for (let y = 0; y < h; y += gap) {
+                    bgCtx.beginPath();
+                    bgCtx.arc(x, y, 1.8, 0, 2 * Math.PI);
+                    bgCtx.fill();
+                  }
+                }
+              }
+              
+              bgCtx.drawImage(visCanvas, 0, 0);
+              
+              const a = document.createElement('a');
+              a.href = bgCanvas.toDataURL('image/png');
+              a.download = 'mapa_mental_hd.png';
+              a.click();
             } catch (e) {
-              console.error(e);
+              console.error('Error al componer imagen:', e);
+            } finally {
               document.body.removeChild(exportDiv);
               tempNetwork.destroy();
             }
-          }, 150);
+          });
         });
       } catch (e) {
         console.error('Error exportando PNG:', e);
