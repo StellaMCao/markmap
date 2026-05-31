@@ -1516,6 +1516,11 @@
 
     // Hybrid outlines and arrow nodes parsing
     function parseMindmap(text) {
+      function safeNumber(val, fallback = undefined) {
+        if (val === undefined || val === null || val === '') return fallback;
+        const num = Number(val);
+        return isNaN(num) ? fallback : num;
+      }
       const lines = text.split('\n');
       const nodes = [];
       const edges = [];
@@ -1576,17 +1581,17 @@
                 bgColor: attrs.bgcolor || attrs.background || undefined,
                 borderColor: attrs.bordercolor || attrs.border || undefined,
                 textColor: attrs.textcolor || attrs.fontcolor || undefined,
-                size: attrs.size ? Number(attrs.size) : undefined,
+                size: attrs.size ? safeNumber(attrs.size) : undefined,
                 image: attrs.image || undefined,
-                widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
-                fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+                widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
+                fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
                 fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
                 fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-                borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-                borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+                borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
+                borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
                 shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-                mass: attrs.mass ? Number(attrs.mass) : undefined,
-                margin: attrs.margin ? Number(attrs.margin) : undefined
+                mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
+                margin: attrs.margin ? safeNumber(attrs.margin) : undefined
               };
               if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
                 nodeObj.shapeProperties = {
@@ -1618,7 +1623,7 @@
               }
               
               const hasLabel = attrs.label && attrs.label.trim();
-              const edgeLen = attrs.length ? Number(attrs.length) : springLength;
+              const edgeLen = attrs.length ? safeNumber(attrs.length) : springLength;
               if (movableEdges && hasLabel) {
                 const labelNodeId = `edge-label-${from}-${to}-${nodeIdCounter++}`;
                 
@@ -1723,17 +1728,17 @@
               bgColor: attrs.bgcolor || attrs.background || undefined,
               borderColor: attrs.bordercolor || attrs.border || undefined,
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
-              size: attrs.size ? Number(attrs.size) : 28,
+              size: attrs.size ? safeNumber(attrs.size) : 28,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
-              fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+              widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
+              fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
               fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
               fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-              borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-              borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
+              borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
               shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-              mass: attrs.mass ? Number(attrs.mass) : undefined,
-              margin: attrs.margin ? Number(attrs.margin) : undefined,
+              mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
+              margin: attrs.margin ? safeNumber(attrs.margin) : undefined,
               font: { size: 16, bold: true }
             };
             if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
@@ -1803,17 +1808,17 @@
               bgColor: attrs.bgcolor || attrs.background || undefined,
               borderColor: attrs.bordercolor || attrs.border || undefined,
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
-              size: attrs.size ? Number(attrs.size) : size,
+              size: attrs.size ? safeNumber(attrs.size) : size,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
-              fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+              widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
+              fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
               fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
               fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-              borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-              borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
+              borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
               shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-              mass: attrs.mass ? Number(attrs.mass) : undefined,
-              margin: attrs.margin ? Number(attrs.margin) : undefined
+              mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
+              margin: attrs.margin ? safeNumber(attrs.margin) : undefined
             };
             if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
               nodeObj.shapeProperties = {
@@ -3162,6 +3167,11 @@
     });
 
     function parseMindmap(text) {
+      function safeNumber(val, fallback = undefined) {
+        if (val === undefined || val === null || val === '') return fallback;
+        const num = Number(val);
+        return isNaN(num) ? fallback : num;
+      }
       const lines = text.split('\\n');
       const nodes = [];
       const edges = [];
@@ -3218,17 +3228,17 @@
                 bgColor: attrs.bgcolor || attrs.background || undefined,
                 borderColor: attrs.bordercolor || attrs.border || undefined,
                 textColor: attrs.textcolor || attrs.fontcolor || undefined,
-                size: attrs.size ? Number(attrs.size) : undefined,
+                size: attrs.size ? safeNumber(attrs.size) : undefined,
                 image: attrs.image || undefined,
-                widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
-                fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+                widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
+                fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
                 fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
                 fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-                borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-                borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+                borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
+                borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
                 shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-                mass: attrs.mass ? Number(attrs.mass) : undefined,
-                margin: attrs.margin ? Number(attrs.margin) : undefined
+                mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
+                margin: attrs.margin ? safeNumber(attrs.margin) : undefined
               };
               if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
                 nodeObj.shapeProperties = {
@@ -3260,7 +3270,7 @@
               }
               
               const hasLabel = attrs.label && attrs.label.trim();
-              const edgeLen = attrs.length ? Number(attrs.length) : springLength;
+              const edgeLen = attrs.length ? safeNumber(attrs.length) : springLength;
               if (movableEdges && hasLabel) {
                 const labelNodeId = \`edge-label-\${from}-\${to}-\${nodeIdCounter++}\`;
                 
@@ -3364,17 +3374,17 @@
               bgColor: attrs.bgcolor || attrs.background || undefined,
               borderColor: attrs.bordercolor || attrs.border || undefined,
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
-              size: attrs.size ? Number(attrs.size) : 28,
+              size: attrs.size ? safeNumber(attrs.size) : 28,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
-              fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+              widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
+              fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
               fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
               fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-              borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-              borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
+              borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
               shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-              mass: attrs.mass ? Number(attrs.mass) : undefined,
-              margin: attrs.margin ? Number(attrs.margin) : undefined,
+              mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
+              margin: attrs.margin ? safeNumber(attrs.margin) : undefined,
               font: { size: 16, bold: true }
             };
             if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
@@ -3443,17 +3453,17 @@
               bgColor: attrs.bgcolor || attrs.background || undefined,
               borderColor: attrs.bordercolor || attrs.border || undefined,
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
-              size: attrs.size ? Number(attrs.size) : size,
+              size: attrs.size ? safeNumber(attrs.size) : size,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
-              fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+              widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
+              fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
               fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
               fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-              borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-              borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
+              borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
               shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-              mass: attrs.mass ? Number(attrs.mass) : undefined,
-              margin: attrs.margin ? Number(attrs.margin) : undefined
+              mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
+              margin: attrs.margin ? safeNumber(attrs.margin) : undefined
             };
             if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
               nodeObj.shapeProperties = {
