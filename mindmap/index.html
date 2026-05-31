@@ -858,6 +858,16 @@
           </div>
 
           <div class="setting-row">
+            <span>Texto de enlaces movible</span>
+            <div class="setting-control">
+              <label class="switch-label">
+                <input type="checkbox" id="movable-edges-toggle" checked onchange="editorChanged()">
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="setting-row">
             <span>Grosor de conectores</span>
             <div class="setting-control">
               <input type="range" id="edge-line-width" class="slider" min="1" max="6" value="2.2" step="0.2" oninput="editorChanged()">
@@ -1496,6 +1506,14 @@
       const edges = [];
       const hasArrows = text.includes('->');
       
+      const movableEdgesToggle = document.getElementById('movable-edges-toggle');
+      const movableEdges = movableEdgesToggle ? movableEdgesToggle.checked : true;
+      const isLightTheme = (document.getElementById('canvas-bg-selector')?.value === 'light');
+      const globalFont = document.getElementById('font-family-selector')?.value || 'Inter';
+      const edgeFontSize = Number(document.getElementById('edge-font-size')?.value) || 11;
+      
+      let nodeIdCounter = 0;
+      
       if (hasArrows) {
         // Mode 2: Custom Networks
         let currentSection = 'nodes';
@@ -1557,22 +1575,69 @@
                 nodeIds.add(to);
               }
               
-              const edge = {
-                from: from,
-                to: to,
-                label: attrs.label || undefined,
-                color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                arrows: 'to',
-                length: attrs.length ? Number(attrs.length) : undefined
-              };
-              
-              if (attrs.style === 'dashed') {
-                edge.dashes = [5, 5];
-              } else if (attrs.style === 'dotted') {
-                edge.dashes = [2, 5];
+              const hasLabel = attrs.label && attrs.label.trim();
+              if (movableEdges && hasLabel) {
+                const labelNodeId = `edge-label-${from}-${to}-${nodeIdCounter++}`;
+                
+                nodes.push({
+                  id: labelNodeId,
+                  label: attrs.label,
+                  originalLabel: attrs.label,
+                  shape: 'box',
+                  isEdgeLabelNode: true,
+                  physics: true,
+                  color: {
+                    background: isLightTheme ? '#ffffff' : '#1e293b',
+                    border: isLightTheme ? '#cbd5e1' : '#334155'
+                  },
+                  font: {
+                    size: edgeFontSize,
+                    face: globalFont,
+                    color: isLightTheme ? '#475569' : '#d1d5db'
+                  },
+                  shadow: { enabled: true, color: 'rgba(0,0,0,0.1)', size: 4, x: 0, y: 2 }
+                });
+                
+                const edge1 = {
+                  from: from,
+                  to: labelNodeId,
+                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
+                  arrows: '',
+                  length: attrs.length ? Number(attrs.length)/2 : undefined
+                };
+                if (attrs.style === 'dashed') edge1.dashes = [5, 5];
+                else if (attrs.style === 'dotted') edge1.dashes = [2, 5];
+                
+                const edge2 = {
+                  from: labelNodeId,
+                  to: to,
+                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
+                  arrows: 'to',
+                  length: attrs.length ? Number(attrs.length)/2 : undefined
+                };
+                if (attrs.style === 'dashed') edge2.dashes = [5, 5];
+                else if (attrs.style === 'dotted') edge2.dashes = [2, 5];
+                
+                edges.push(edge1);
+                edges.push(edge2);
+              } else {
+                const edge = {
+                  from: from,
+                  to: to,
+                  label: attrs.label || undefined,
+                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
+                  arrows: 'to',
+                  length: attrs.length ? Number(attrs.length) : undefined
+                };
+                
+                if (attrs.style === 'dashed') {
+                  edge.dashes = [5, 5];
+                } else if (attrs.style === 'dotted') {
+                  edge.dashes = [2, 5];
+                }
+                
+                edges.push(edge);
               }
-              
-              edges.push(edge);
             }
           }
         });
@@ -2406,6 +2471,7 @@
       const canvasBgValue = document.getElementById('canvas-bg-selector').value;
       const levelStylingValue = document.getElementById('level-styling-toggle').checked;
       const edgeLineWidthValue = document.getElementById('edge-line-width').value || 2.2;
+      const movableEdgesValue = document.getElementById('movable-edges-toggle').checked;
       
       const colorMap = {
         mindmap: { accent: '#3b82f6', rgb: '59, 130, 246', hover: '#2563eb' },
@@ -2714,6 +2780,14 @@
         <input type="range" id="edge-label-wrap" class="slider" min="15" max="40" value="25" oninput="renderGraph()">
       </div>
 
+      <div class="control-row" id="row-movable-edges">
+        <span>Enlaces movibles</span>
+        <label class="switch-label">
+          <input type="checkbox" id="movable-edges-toggle" ${movableEdgesValue ? 'checked' : ''} onchange="renderGraph()">
+          <span class="slider-switch"></span>
+        </label>
+      </div>
+
       <div class="control-row" id="row-edge-width">
         <span>Grosor conectores</span>
         <input type="range" id="edge-line-width" class="slider" min="1" max="6" value="${edgeLineWidthValue}" step="0.2" oninput="renderGraph()">
@@ -3008,6 +3082,14 @@
       const edges = [];
       const hasArrows = text.includes('->');
       
+      const movableEdgesToggle = document.getElementById('movable-edges-toggle');
+      const movableEdges = movableEdgesToggle ? movableEdgesToggle.checked : true;
+      const isLightTheme = (document.getElementById('canvas-bg-selector')?.value === 'light');
+      const globalFont = document.getElementById('font-family-selector')?.value || 'Inter';
+      const edgeFontSize = Number(document.getElementById('edge-font-size')?.value) || 11;
+      
+      let nodeIdCounter = 0;
+      
       if (hasArrows) {
         let currentSection = 'nodes';
         const nodeIds = new Set();
@@ -3065,22 +3147,69 @@
                 nodeIds.add(to);
               }
               
-              const edge = {
-                from: from,
-                to: to,
-                label: attrs.label || undefined,
-                color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                arrows: 'to',
-                length: attrs.length ? Number(attrs.length) : undefined
-              };
-              
-              if (attrs.style === 'dashed') {
-                edge.dashes = [5, 5];
-              } else if (attrs.style === 'dotted') {
-                edge.dashes = [2, 5];
+              const hasLabel = attrs.label && attrs.label.trim();
+              if (movableEdges && hasLabel) {
+                const labelNodeId = \`edge-label-\${from}-\${to}-\${nodeIdCounter++}\`;
+                
+                nodes.push({
+                  id: labelNodeId,
+                  label: attrs.label,
+                  originalLabel: attrs.label,
+                  shape: 'box',
+                  isEdgeLabelNode: true,
+                  physics: true,
+                  color: {
+                    background: isLightTheme ? '#ffffff' : '#1e293b',
+                    border: isLightTheme ? '#cbd5e1' : '#334155'
+                  },
+                  font: {
+                    size: edgeFontSize,
+                    face: globalFont,
+                    color: isLightTheme ? '#475569' : '#d1d5db'
+                  },
+                  shadow: { enabled: true, color: 'rgba(0,0,0,0.1)', size: 4, x: 0, y: 2 }
+                });
+                
+                const edge1 = {
+                  from: from,
+                  to: labelNodeId,
+                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
+                  arrows: '',
+                  length: attrs.length ? Number(attrs.length)/2 : undefined
+                };
+                if (attrs.style === 'dashed') edge1.dashes = [5, 5];
+                else if (attrs.style === 'dotted') edge1.dashes = [2, 5];
+                
+                const edge2 = {
+                  from: labelNodeId,
+                  to: to,
+                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
+                  arrows: 'to',
+                  length: attrs.length ? Number(attrs.length)/2 : undefined
+                };
+                if (attrs.style === 'dashed') edge2.dashes = [5, 5];
+                else if (attrs.style === 'dotted') edge2.dashes = [2, 5];
+                
+                edges.push(edge1);
+                edges.push(edge2);
+              } else {
+                const edge = {
+                  from: from,
+                  to: to,
+                  label: attrs.label || undefined,
+                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
+                  arrows: 'to',
+                  length: attrs.length ? Number(attrs.length) : undefined
+                };
+                
+                if (attrs.style === 'dashed') {
+                  edge.dashes = [5, 5];
+                } else if (attrs.style === 'dotted') {
+                  edge.dashes = [2, 5];
+                }
+                
+                edges.push(edge);
               }
-              
-              edges.push(edge);
             }
           }
         });
