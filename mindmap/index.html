@@ -689,6 +689,7 @@
           <span style="font-size: 11px; color: var(--text-muted);">Plantilla:</span>
           <select class="preset-select" id="preset-selector" onchange="loadPreset()">
             <option value="brain">Estructura del cerebro (Outline radial)</option>
+            <option value="psychology">Historia de la psicología (Red premium completa)</option>
             <option value="dopamine">Circuito de la dopamina (Red avanzada)</option>
             <option value="piaget">Teoría del desarrollo de Piaget (Jerárquico)</option>
             <option value="memory">Modelo de memoria de Atkinson-Shiffrin (Flujo de red)</option>
@@ -949,6 +950,21 @@
   - Corteza Somatosensorial
     - Procesamiento del Tacto`,
 
+      psychology: `# Historia de la Psicología 🧠
+
+## Nodos
+- [psicologia] Historia y Ramas de la Psicología (shape: circle, size: 28, bgColor: #3b82f6, borderColor: #1d4ed8, textColor: #ffffff, width: 140)
+- [laboratorio] Laboratorio de Leipzig (shape: box, bgColor: #10b981, borderColor: #047857, textColor: #ffffff, width: 150)
+- [cognitiva] Psicología Cognitiva (shape: box, bgColor: #8b5cf6, borderColor: #6d28d9, textColor: #ffffff, width: 160)
+- [conductual] Condicionamiento Operante (shape: box, bgColor: #ef4444, borderColor: #b91c1c, textColor: #ffffff, width: 140)
+- [humanista] Psicología Humanista (shape: circularImage, image: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Abraham_Maslow.png", size: 32, bgColor: #f59e0b, borderColor: #b45309, textColor: #ffffff, width: 130)
+
+## Conexiones
+- psicologia -> laboratorio (label: "1879: Primer laboratorio de Wundt", length: 220, style: solid, color: #10b981)
+- psicologia -> cognitiva (label: "Estudio científico de la mente y sus procesos", length: 250, style: dashed, color: #8b5cf6)
+- psicologia -> conductual (label: "Skinner y el estudio de respuestas", length: 180, style: solid, color: #ef4444)
+- psicologia -> humanista (label: "Maslow y la pirámide de necesidades", length: 210, style: dotted, color: #f59e0b)`,
+
       dopamine: `# Circuito de Recompensa de la Dopamina ⚡
 
 ## Nodos
@@ -1118,7 +1134,7 @@
         // Auto-change layout to Hierarchical for Piaget to preserve order
         if (selected === 'piaget') {
           document.getElementById('layout-selector').value = 'hierarchical-v';
-        } else if (selected === 'dopamine' || selected === 'memory') {
+        } else if (selected === 'dopamine' || selected === 'memory' || selected === 'psychology') {
           document.getElementById('layout-selector').value = 'force';
         } else {
           document.getElementById('layout-selector').value = 'force';
@@ -1194,8 +1210,12 @@
                 originalLabel: label || id,
                 shape: attrs.shape || 'ellipse',
                 color: attrs.color || undefined,
+                bgColor: attrs.bgcolor || attrs.background || undefined,
+                borderColor: attrs.bordercolor || attrs.border || undefined,
+                textColor: attrs.textcolor || attrs.fontcolor || undefined,
                 size: attrs.size ? Number(attrs.size) : undefined,
-                image: attrs.image || undefined
+                image: attrs.image || undefined,
+                widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
               });
               nodeIds.add(id);
             }
@@ -1221,7 +1241,8 @@
                 to: to,
                 label: attrs.label || undefined,
                 color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                arrows: 'to'
+                arrows: 'to',
+                length: attrs.length ? Number(attrs.length) : undefined
               };
               
               if (attrs.style === 'dashed') {
@@ -1259,8 +1280,12 @@
               depth: 0,
               shape: attrs.shape || 'circle',
               color: attrs.color || undefined,
+              bgColor: attrs.bgcolor || attrs.background || undefined,
+              borderColor: attrs.bordercolor || attrs.border || undefined,
+              textColor: attrs.textcolor || attrs.fontcolor || undefined,
               size: attrs.size ? Number(attrs.size) : 28,
               image: attrs.image || undefined,
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined),
               font: { size: 16, bold: true }
             };
             nodes.push(rootNode);
@@ -1317,8 +1342,12 @@
               depth: depth,
               shape: attrs.shape || shape,
               color: attrs.color || undefined,
+              bgColor: attrs.bgcolor || attrs.background || undefined,
+              borderColor: attrs.bordercolor || attrs.border || undefined,
+              textColor: attrs.textcolor || attrs.fontcolor || undefined,
               size: attrs.size ? Number(attrs.size) : size,
-              image: attrs.image || undefined
+              image: attrs.image || undefined,
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
             });
             
             const arrowsToggle = document.getElementById('arrows-toggle');
@@ -1405,6 +1434,9 @@
             x: 0,
             y: 4
           },
+          widthConstraint: {
+            maximum: 180
+          },
           font: {
             face: 'Inter',
             size: 13,
@@ -1467,8 +1499,16 @@
             image: node.image
           });
         }
+        
+        // Handle individual widthConstraint
+        if (node.widthConstraint) {
+          data.nodes.update({
+            id: node.id,
+            widthConstraint: node.widthConstraint
+          });
+        }
 
-        if (!node.color) {
+        if (!node.color && !node.bgColor && !node.borderColor) {
           if (isLevelStylingEnabled && node.depth !== undefined) {
             // Apply depth-based styling
             if (node.depth === 0) {
@@ -1538,10 +1578,25 @@
             }
           }
         } else {
-          // Keep custom background color, style border nicely
+          // Keep custom colors
           data.nodes.update({
             id: node.id,
-            color: { background: node.color, border: node.color }
+            color: { 
+              background: node.bgColor || node.color || activeColor, 
+              border: node.borderColor || node.color || activeColor,
+              highlight: {
+                background: node.bgColor || node.color || activeColor, 
+                border: node.borderColor || node.color || activeColor
+              }
+            }
+          });
+        }
+
+        // Apply custom text color if set
+        if (node.textColor) {
+          data.nodes.update({
+            id: node.id,
+            font: { color: node.textColor }
           });
         }
       });
@@ -2321,8 +2376,12 @@
                 originalLabel: label || id,
                 shape: attrs.shape || 'ellipse',
                 color: attrs.color || undefined,
+                bgColor: attrs.bgcolor || attrs.background || undefined,
+                borderColor: attrs.bordercolor || attrs.border || undefined,
+                textColor: attrs.textcolor || attrs.fontcolor || undefined,
                 size: attrs.size ? Number(attrs.size) : undefined,
-                image: attrs.image || undefined
+                image: attrs.image || undefined,
+                widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
               });
               nodeIds.add(id);
             }
@@ -2348,7 +2407,8 @@
                 to: to,
                 label: attrs.label || undefined,
                 color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                arrows: 'to'
+                arrows: 'to',
+                length: attrs.length ? Number(attrs.length) : undefined
               };
               
               if (attrs.style === 'dashed') {
@@ -2385,8 +2445,12 @@
               depth: 0,
               shape: attrs.shape || 'circle',
               color: attrs.color || undefined,
+              bgColor: attrs.bgcolor || attrs.background || undefined,
+              borderColor: attrs.bordercolor || attrs.border || undefined,
+              textColor: attrs.textcolor || attrs.fontcolor || undefined,
               size: attrs.size ? Number(attrs.size) : 28,
               image: attrs.image || undefined,
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined),
               font: { size: 16, bold: true }
             };
             nodes.push(rootNode);
@@ -2442,8 +2506,12 @@
               depth: depth,
               shape: attrs.shape || shape,
               color: attrs.color || undefined,
+              bgColor: attrs.bgcolor || attrs.background || undefined,
+              borderColor: attrs.bordercolor || attrs.border || undefined,
+              textColor: attrs.textcolor || attrs.fontcolor || undefined,
               size: attrs.size ? Number(attrs.size) : size,
-              image: attrs.image || undefined
+              image: attrs.image || undefined,
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
             });
             
             edges.push({
@@ -2552,6 +2620,7 @@
         nodes: {
           borderWidth: 2,
           shadow: { enabled: !isLightTheme, color: 'rgba(0,0,0,0.15)', size: 6, x: 0, y: 4 },
+          widthConstraint: { maximum: 180 },
           font: { face: 'Inter', size: 13, color: isLightTheme ? '#0f172a' : '#ffffff' }
         },
         edges: {
@@ -2589,7 +2658,15 @@
           });
         }
         
-        if (!node.color) {
+        // Handle individual widthConstraint
+        if (node.widthConstraint) {
+          data.nodes.update({
+            id: node.id,
+            widthConstraint: node.widthConstraint
+          });
+        }
+
+        if (!node.color && !node.bgColor && !node.borderColor) {
           if (isLevelStylingEnabled && node.depth !== undefined) {
             if (node.depth === 0) {
               data.nodes.update({
@@ -2658,7 +2735,22 @@
         } else {
           data.nodes.update({
             id: node.id,
-            color: { background: node.color, border: node.color }
+            color: { 
+              background: node.bgColor || node.color || 'var(--accent)', 
+              border: node.borderColor || node.color || 'var(--accent)',
+              highlight: {
+                background: node.bgColor || node.color || 'var(--accent)', 
+                border: node.borderColor || node.color || 'var(--accent)'
+              }
+            }
+          });
+        }
+
+        // Apply custom text color if set
+        if (node.textColor) {
+          data.nodes.update({
+            id: node.id,
+            font: { color: node.textColor }
           });
         }
       });
