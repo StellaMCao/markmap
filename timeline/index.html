@@ -522,7 +522,7 @@
     const charCount = document.getElementById('char-count');
     const splitter = document.getElementById('splitter');
     
-    let activeCategory = 'all';
+    let activeCategories = new Set(['all']);
     let currentEvents = [];
     let activeHzIndex = 0;
 
@@ -668,23 +668,40 @@
         if (e.category) categories.add(e.category);
       });
 
-      // Rebuild filter buttons preserving active state
-      filterBar.innerHTML = `<button class="tag-btn ${activeCategory === 'all' ? 'active' : ''}" data-category="all">Todas las categorías</button>`;
+      // Rebuild filter buttons preserving active states for multi-select
+      const isAllActive = activeCategories.has('all');
+      filterBar.innerHTML = `<button class="tag-btn ${isAllActive ? 'active' : ''}" data-category="all">Todas las categorías</button>`;
       
       categories.forEach(cat => {
         const btn = document.createElement('button');
-        btn.className = `tag-btn ${activeCategory === cat ? 'active' : ''}`;
+        const isActive = activeCategories.has(cat);
+        btn.className = `tag-btn ${isActive ? 'active' : ''}`;
         btn.dataset.category = cat;
         btn.textContent = cat;
         filterBar.appendChild(btn);
       });
 
-      // Bind events to tags
+      // Bind events to tags for multi-select!
       document.querySelectorAll('.tag-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          activeCategory = btn.dataset.category;
+          const cat = btn.dataset.category;
+          if (cat === 'all') {
+            activeCategories.clear();
+            activeCategories.add('all');
+          } else {
+            if (activeCategories.has('all')) {
+              activeCategories.delete('all');
+            }
+            if (activeCategories.has(cat)) {
+              activeCategories.delete(cat);
+              if (activeCategories.size === 0) {
+                activeCategories.add('all');
+              }
+            } else {
+              activeCategories.add(cat);
+            }
+          }
+          updateCategoryFilters();
           renderTimeline();
         });
       });
@@ -693,12 +710,15 @@
     function renderTimeline() {
       timelineContainer.innerHTML = '';
       
-      const query = searchInput.value.toLowerCase().trim();
-      const layout = layoutSelect.value;
+      const searchEl = document.getElementById('search');
+      const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
+      
+      const layoutEl = document.getElementById('layout');
+      const layout = layoutEl ? layoutEl.value : (window.staticLayout || 'vertical');
 
-      // Filter events
+      // Filter events using activeCategories set (multi-select)
       const filtered = currentEvents.filter(e => {
-        const matchCategory = activeCategory === 'all' || e.category === activeCategory;
+        const matchCategory = activeCategories.has('all') || activeCategories.has(e.category);
         const matchSearch = !query || e.title.toLowerCase().includes(query) || e.date.toLowerCase().includes(query) || e.description.toLowerCase().includes(query);
         return matchCategory && matchSearch;
       });
@@ -903,11 +923,11 @@
   
   <script>
     const markdownContent = \`${markdownArea.value.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
-    const layout = "${layoutSelect.value}";
+    window.staticLayout = "${layoutSelect.value}";
     
     // Embed the functional logic
     const currentEvents = (${parseMarkdownTimeline.toString()})(markdownContent);
-    let activeCategory = "all";
+    let activeCategories = new Set(["all"]);
     let activeHzIndex = 0;
     
     const timelineContainer = document.getElementById('timeline-container');
