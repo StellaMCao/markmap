@@ -584,8 +584,8 @@
     }
 
     // Markdown parse slide splitting
-    function parseSlides() {
-      const content = textarea.value;
+    function parseSlides(customContent) {
+      const content = customContent !== undefined ? customContent : (typeof textarea !== 'undefined' ? textarea.value : (window.markdownContent || ''));
       // Split by --- keeping in mind double newlines
       const rawSlides = content.split(/\n\s*---\s*\n/);
       
@@ -644,9 +644,11 @@
       slideContainer.innerHTML = renderSlideHtml(slide);
       slideNumber.textContent = `Slide ${currentSlideIndex + 1} / ${slides.length}`;
       
-      // Update Speaker Notes panel
+      // Update Speaker Notes panel safely
       const notesContent = document.getElementById('notes-content');
-      notesContent.textContent = slide.notes || 'Sin notas para esta diapositiva.';
+      if (notesContent) {
+        notesContent.textContent = slide.notes || 'Sin notas para esta diapositiva.';
+      }
 
       // Clear drawings on slide change (optional, or we keep slide specific cache)
       clearWhiteboard();
@@ -816,11 +818,59 @@
       }
     });
 
-    // Notes Toggle
+    // Notes Toggle safely
     document.getElementById('btn-toggle-notes').addEventListener('click', () => {
       const panel = document.getElementById('notes-panel');
-      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+      if (panel) {
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+      }
     });
+
+    // Make floating windows draggable
+    function makeElementDraggable(el) {
+      if (!el) return;
+      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      const header = el.querySelector('.tool-row') || el.querySelector('h4') || el;
+      header.style.cursor = 'move';
+      header.onmousedown = dragMouseDown;
+      header.ontouchstart = dragMouseDown;
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') {
+          return;
+        }
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        pos3 = clientX;
+        pos4 = clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+        document.ontouchend = closeDragElement;
+        document.ontouchmove = elementDrag;
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        pos1 = pos3 - clientX;
+        pos2 = pos4 - clientY;
+        pos3 = clientX;
+        pos4 = clientY;
+        el.style.top = (el.offsetTop - pos2) + "px";
+        el.style.left = (el.offsetLeft - pos1) + "px";
+        el.style.right = 'auto';
+        el.style.bottom = 'auto';
+      }
+
+      function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+        document.ontouchend = null;
+        document.ontouchmove = null;
+      }
+    }
 
     // Persistance
     function persist() {
@@ -955,8 +1005,15 @@
       <div class="color-white color-dot" data-color="#ffffff"></div>
     </div>
     <div class="tool-row">
-      <button class="secondary" id="btn-clear-draw" style="width: 100%; padding: 3px; font-size: 11px;">Limpiar Pizarra</button>
+      <button class="secondary" id="btn-clear-draw" style="width: 50%; padding: 3px; font-size: 11px;">Limpiar</button>
+      <button class="secondary" id="btn-toggle-notes" style="width: 50%; padding: 3px; font-size: 11px;">Notas</button>
     </div>
+  </div>
+
+  <!-- Draggable speaker notes container in exported HTML -->
+  <div class="notes-panel" id="notes-panel">
+    <h4>Notas del Orador</h4>
+    <p id="notes-content">Sin notas para esta diapositiva.</p>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script>
@@ -964,13 +1021,15 @@
   
   <script>
     const markdownContent = \`${textarea.value.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+    window.markdownContent = markdownContent;
     
     // Parse slides structure
     let slides = [];
     let currentSlideIndex = 0;
     
     // Embed the functional logic
-    (${parseSlides.toString()})();
+    ${parseSlides.toString()}
+    parseSlides(markdownContent);
     
     const slideContainer = document.getElementById('slide-container');
     const slideNumber = document.getElementById('slide-number');
@@ -1034,6 +1093,18 @@
     canvas.addEventListener('touchmove', drawFlow);
     window.addEventListener('touchend', () => isDrawing = false);
 
+    // Notes Toggle inside static HTML
+    document.getElementById('btn-toggle-notes').addEventListener('click', () => {
+      const panel = document.getElementById('notes-panel');
+      if (panel) {
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+      }
+    });
+
+    ${makeElementDraggable.toString()}
+    makeElementDraggable(document.getElementById('whiteboard-tools'));
+    makeElementDraggable(document.getElementById('notes-panel'));
+
     // Initial setups
     resizeCanvas();
     renderCurrentSlide();
@@ -1053,6 +1124,8 @@
 
     // Start Up
     restore();
+    makeElementDraggable(document.getElementById('whiteboard-tools'));
+    makeElementDraggable(document.getElementById('notes-panel'));
   </script>
 </body>
 </html>
