@@ -754,6 +754,8 @@
             <option value="trolley">Dilema del Tranvía (Neurociencia)</option>
             <option value="milgram">Experimento de Milgram (Obediencia - Psicología Social)</option>
             <option value="bystander">Efecto Espectador (Apatía - Psicología Social)</option>
+            <option value="prisoner">Dilema del Prisionero (Teoría de Juegos - Cooperación)</option>
+            <option value="peer">Dilema de la Presión de Grupo (Psicología del Adolescente)</option>
             <option value="custom">Proyecto Vacío</option>
           </select>
         </div>
@@ -1112,6 +1114,159 @@ Decides seguir caminando. Piensas que con tanta gente alrededor, seguramente hay
 Este es el caso clásico del **Efecto Espectador**, estudiado por Latané y Darley tras el asesinato de Kitty Genovese en Nueva York.
 
 El razonamiento demuestra la **difusión de la responsabilidad**: cuanta más gente presencia una emergencia, *menor* es la probabilidad de que alguien actúe, ya que la responsabilidad percibida se divide entre todos los presentes ("alguien más lo hará").
+
+- [Volver al inicio] -> #inicio`,
+
+      prisoner: `# #inicio
+## El Dilema del Prisionero 🚔
+Tú y tu cómplice han sido arrestados por la policía por un delito menor. Sin embargo, el fiscal sospecha que cometieron un delito mucho más grave, pero no tiene pruebas suficientes para condenarlos. 
+
+Los han encerrado en celdas separadas, totalmente incomunicados. El fiscal les ofrece a ambos el mismo trato por separado:
+- Si tú **traicionas** a tu compañero y él se mantiene en silencio, tú quedarás **libre** y él recibirá **10 años** de prisión.
+- Si ambos se mantienen en **silencio (cooperación mutua)**, ambos recibirán solo **1 año** de prisión por el cargo menor.
+- Si ambos se **traicionan mutuamente**, ambos recibirán **5 años** de prisión.
+
+¿Qué decides hacer?
+
+- [Mantener el silencio (Cooperar con tu cómplice)] -> #cooperar
+- [Traicionar a tu cómplice (Delatarlo)] -> #traicionar
+
+---
+
+# #cooperar
+## 🤝 Decisión: Cooperación (Altruismo Recíproco)
+Decides mantener el silencio, confiando en tu compañero.
+
+¿Qué crees que decidirá él?
+- [Confío en que él también cooperará y se mantendrá en silencio] -> #cooperacion-exitosa
+- [Tengo miedo de que él me traicione para quedar libre] -> #traicionado
+
+---
+
+# #traicionar
+## 🦊 Decisión: Traición (Estrategia Egoísta Dominante)
+Decides delatar a tu compañero para salvar tu propio pellejo o buscar la libertad inmediata.
+
+¿Qué crees que decidió él?
+- [Él cooperó y se mantuvo en silencio] -> #traicion-exitosa
+- [Él también me traicionó y me delató] -> #traicion-mutua
+
+---
+
+# #cooperacion-exitosa
+## 🏆 Nivel Óptimo Social: Cooperación Mutua
+¡Ambos se mantuvieron en silencio! Reciben solo **1 año de prisión**.
+
+En psicología evolutiva y economía conductual, esto demuestra el **Altruismo Recíproco**. Aunque la opción racional egoísta individual tienta a traicionar, la confianza mutua logra el mejor resultado colectivo a largo plazo.
+
+Esta cooperación es el pilar de la cohesión social y el desarrollo de comunidades humanas sustentables.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #traicionado
+## 💔 El Peor Escenario: Cooperador Explotado
+¡Tu compañero te traicionó! Él queda **libre** y tú eres condenado a **10 años de prisión**.
+
+En la Teoría de Juegos, has sido la víctima de una estrategia dominante egoísta. Tu altruismo fue explotado. 
+
+Esto demuestra por qué la cooperación social es frágil: el miedo a ser explotado por "parásitos libres" (free riders) a menudo impulsa a las personas a actuar de forma egoísta, incluso cuando preferirían cooperar.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #traicion-exitosa
+## 🦅 Explotación Exitosa (Ganancia Individual Máxima)
+¡Tu compañero confió en ti y guardó silencio, pero tú lo delataste! Tú quedas **libre** y él pasa **10 años en prisión**.
+
+Has obtenido el beneficio individual máximo a expensas de la confianza de otro.
+
+Aunque en un encuentro único esto parece "exitoso", en la psicología de las relaciones repetidas, esta conducta destruye tu reputación social. Nadie volverá a cooperar contigo, lo que te llevará a la exclusión a largo plazo.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #traicion-mutua
+## 💥 Equilibrio de Nash: Destrucción Mutua
+¡Ambos se traicionaron y delataron! Ambos reciben **5 años de prisión**.
+
+Este es el clásico **Equilibrio de Nash** en situaciones no cooperativas. Al actuar bajo un razonamiento puramente egoísta individual ("no puedo confiar en él, debo protegerme"), ambos terminan en una situación significativamente peor que si hubieran cooperado (5 años de prisión en vez de 1 año).
+
+Esto ilustra cómo el egoísmo racional individual puede conducir a tragedias irracionales a nivel colectivo.
+
+- [Volver al inicio] -> #inicio`,
+
+      peer: `# #inicio
+## Dilema de la Presión de Grupo (Psicología Educativa) 👥
+Eres un estudiante de secundaria de 16 años. Tu grupo de amigos íntimos ha planeado ingresar a escondidas por la noche al laboratorio de computación del colegio para "hacer una broma" y sabotear el sistema informático escolar antes de un examen final importante. 
+
+Tú no estás de acuerdo y te sientes incómodo, pero el líder del grupo te dice delante de todos: *"Si no vienes, es que eres un cobarde y un soplón. No eres uno de los nuestros"*.
+
+¿Qué decides hacer?
+
+- [Ceder a la presión e ir con ellos] -> #ceder
+- [Negarte a ir y retirarte] -> #negarse
+
+---
+
+# #ceder
+## 👤 Decisión: Ceder a la Presión (Identidad Difusa)
+Decides acompañarlos para no perder tu estatus social y evitar el rechazo de tus pares. Durante la incursión, la alarma se activa y la policía llega al lugar.
+
+¿Cómo respondes ante el director del colegio al día siguiente?
+- [Asumo la culpa junto a mis amigos y no delato a nadie más] -> #lealtad-grupal
+- [Explico que yo no quería ir y que ellos me obligaron a participar] -> #externalizar-culpa
+
+---
+
+# #negarse
+## 🛡️ Decisión: Autonomía y Autoestima
+Te niegas firmemente a acompañarlos, asumiendo el riesgo de que te llamen cobarde o te excluyan temporalmente de sus actividades. Al día siguiente te enteras de que fueron capturados por las cámaras de seguridad.
+
+¿Qué actitud tomas ahora?
+- [Me mantengo al margen, respetando sus decisiones pero enfocado en mis propios valores] -> #identidad-lograda
+- [Trato de hablar con ellos para apoyarlos emocionalmente ante las sanciones] -> #apoyo-empatico
+
+---
+
+# #lealtad-grupal
+## 👥 Nivel II de Kohlberg (Moralidad de "Buen Chico / Buena Chica")
+Priorizas la **lealtad intragrupal** y el sentido de pertenencia por encima de las normas de la institución o tu propia ética personal. 
+
+En el desarrollo de la identidad adolescente (Erikson), te encuentras en una etapa de **Moratoria o Difusión de Identidad**, donde la opinión del grupo de pares ejerce un control casi total sobre tu autoconcepto y tus decisiones morales.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #externalizar-culpa
+## 🧸 Nivel I de Kohlberg (Orientación al Castigo y Evitación)
+Tu justificación se centra en **evitar el castigo personal** delegando la responsabilidad moral en otros ("ellos me obligaron"). 
+
+En psicología del desarrollo, esto representa un **Locus de Control Externo**, donde percibes que tus acciones son controladas puramente por las fuerzas ambientales y la presión social, sin asumir la responsabilidad de tu propia agencia personal.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #identidad-lograda
+## 🧠 Logro de Identidad (Erik Erikson)
+Has demostrado un **Logro de Identidad** sólido y un Locus de Control Interno. Tus decisiones están alíneadas con tus propios principios éticos auto-elegidos, resistiendo de manera asertiva la conformidad social irracional.
+
+En términos de desarrollo cerebral, esta autoregulación e inhibición del impulso gregario se asocia con la maduración gradual de las conexiones entre el **córtex prefrontal** y el sistema límbico.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #apoyo-empatico
+## 🤝 Empatía y Razonamiento Prosocial (Nancy Eisenberg)
+Tu postura no es solo de rechazo a la mala acción, sino de **comprensión prosocial** y empatía. Logras separar el acto (que estuvo mal) de las personas (tus amigos que cometieron un error de juicio), ofreciendo un soporte ético no condenatorio.
+
+Este es el nivel más alto del razonamiento moral prosocial, donde la orientación hacia las necesidades emocionales del otro prima sobre el simple castigo formal.
 
 - [Volver al inicio] -> #inicio`
     };
