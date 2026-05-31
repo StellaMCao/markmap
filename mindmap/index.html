@@ -853,7 +853,7 @@
           <div class="setting-row">
             <span>Ancho etiquetas de enlaces</span>
             <div class="setting-control">
-              <input type="range" id="edge-label-wrap" class="slider" min="15" max="40" value="25" oninput="editorChanged()">
+              <input type="range" id="edge-label-wrap" class="slider" min="10" max="40" value="18" oninput="editorChanged()">
             </div>
           </div>
 
@@ -1514,6 +1514,8 @@
       const canvasBgColor = bgColorMap[currentBgVal] || '#0b0f19';
       const globalFont = document.getElementById('font-family-selector')?.value || 'Inter';
       const edgeFontSize = Number(document.getElementById('edge-font-size')?.value) || 11;
+      const edgeLabelWrapLimit = Number(document.getElementById('edge-label-wrap')?.value) || 18;
+      const labelNodeMaxWidth = edgeLabelWrapLimit * 5;
       
       let nodeIdCounter = 0;
       
@@ -1596,6 +1598,7 @@
                     hover: { background: canvasBgColor, border: canvasBgColor }
                   },
                   borderWidth: 0,
+                  widthConstraint: { maximum: labelNodeMaxWidth },
                   font: {
                     size: edgeFontSize,
                     face: globalFont,
@@ -2786,7 +2789,7 @@
 
       <div class="control-row" id="row-edge-wrap">
         <span>Ancho texto enlaces</span>
-        <input type="range" id="edge-label-wrap" class="slider" min="15" max="40" value="25" oninput="renderGraph()">
+        <input type="range" id="edge-label-wrap" class="slider" min="10" max="40" value="18" oninput="renderGraph()">
       </div>
 
       <div class="control-row" id="row-movable-edges">
@@ -3099,6 +3102,8 @@
       const canvasBgColor = bgColorMap[currentBgVal] || '#0b0f19';
       const globalFont = document.getElementById('font-family-selector')?.value || 'Inter';
       const edgeFontSize = Number(document.getElementById('edge-font-size')?.value) || 11;
+      const edgeLabelWrapLimit = Number(document.getElementById('edge-label-wrap')?.value) || 18;
+      const labelNodeMaxWidth = edgeLabelWrapLimit * 5;
       
       let nodeIdCounter = 0;
       
@@ -3177,6 +3182,7 @@
                     hover: { background: canvasBgColor, border: canvasBgColor }
                   },
                   borderWidth: 0,
+                  widthConstraint: { maximum: labelNodeMaxWidth },
                   font: {
                     size: edgeFontSize,
                     face: globalFont,
