@@ -23,6 +23,7 @@
       --accent-studio: #ec4899;
       --accent-timeline: #f59e0b;
       --accent-slides: #10b981;
+      --accent-dilemmas: #8b5cf6;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -119,6 +120,11 @@
     a.card.studio::before { background: var(--accent-studio); }
     a.card.timeline::before { background: var(--accent-timeline); }
     a.card.slides::before { background: var(--accent-slides); }
+    a.card.dilemmas::before { background: var(--accent-dilemmas); }
+
+    a.card.dilemmas {
+      grid-column: span 2;
+    }
 
     a.card:hover {
       transform: translateY(-6px);
@@ -138,6 +144,9 @@
     }
     a.card.slides:hover {
       box-shadow: 0 15px 35px rgba(16, 185, 129, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    a.card.dilemmas:hover {
+      box-shadow: 0 15px 35px rgba(139, 92, 246, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
     }
 
     .card-top {
@@ -164,11 +173,13 @@
     a.card.studio strong { color: #fdf2f8; }
     a.card.timeline strong { color: #fffbeb; }
     a.card.slides strong { color: #ecfdf5; }
+    a.card.dilemmas strong { color: #f5f3ff; }
 
     a.card.markmap:hover strong { color: var(--accent-markmap); }
     a.card.studio:hover strong { color: var(--accent-studio); }
     a.card.timeline:hover strong { color: var(--accent-timeline); }
     a.card.slides:hover strong { color: var(--accent-slides); }
+    a.card.dilemmas:hover strong { color: var(--accent-dilemmas); }
 
     span.desc {
       color: var(--text-muted);
@@ -193,6 +204,7 @@
     a.card.studio .go { color: var(--accent-studio); }
     a.card.timeline .go { color: var(--accent-timeline); }
     a.card.slides .go { color: var(--accent-slides); }
+    a.card.dilemmas .go { color: var(--accent-dilemmas); }
 
     .arrow {
       transform: translateX(0);
@@ -218,6 +230,7 @@
     @media (max-width: 820px) {
       .grid { grid-template-columns: 1fr; }
       a.card { min-height: 200px; padding: 26px; }
+      a.card.dilemmas { grid-column: span 1; }
       body { padding: 30px 16px; }
     }
   </style>
@@ -226,7 +239,7 @@
   <main>
     <header>
       <h1>Suite de Herramientas Visuales</h1>
-      <p>Cuatro espacios interactivos para crear mapas conceptuales, diagramar flujos, estructurar líneas de tiempo e impartir presentaciones dinámicas.</p>
+      <p>Cinco espacios interactivos para crear mapas conceptuales, diagramar flujos, estructurar líneas de tiempo, impartir presentaciones dinámicas y diseñar dilemas éticos ramificados.</p>
     </header>
     
     <section class="grid" aria-label="Aplicaciones disponibles">
@@ -276,6 +289,18 @@
         </div>
         <div class="card-bottom">
           <span class="go">Abrir Presentador <span class="arrow">→</span></span>
+        </div>
+      </a>
+
+      <!-- CARD 5: DILEMMAS -->
+      <a href="./dilemmas/" class="card dilemmas">
+        <div class="card-top">
+          <div class="card-icon">🧠</div>
+          <strong>Creador de Dilemas</strong>
+          <span class="desc">Redacta árboles de decisión cognitivos y dilemas éticos en Markdown. Genera simuladores ramificados interactivos, mapas de decisión en SVG e hilos de recorrido.</span>
+        </div>
+        <div class="card-bottom">
+          <span class="go">Diseñar Dilemas <span class="arrow">→</span></span>
         </div>
       </a>
       

@@ -1,0 +1,2305 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Creador de Dilemas y Árboles de Decisiones Morales</title>
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Marked.js (Markdown Parser) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    /* CSS Variables based on active theme */
+    :root {
+      --bg: #0b0f19;
+      --panel-bg: rgba(17, 24, 39, 0.7);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      
+      /* Theme styles (updated dynamically) */
+      --accent: #8b5cf6; /* default neuro-cognitive */
+      --accent-rgb: 139, 92, 246;
+      --accent-glow: rgba(139, 92, 246, 0.2);
+      --accent-hover: #7c3aed;
+    }
+
+    /* Core Styles */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(var(--accent-rgb), 0.12) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(31, 41, 55, 0.5) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background-image 0.5s ease;
+    }
+
+    /* Header / Navbar */
+    header {
+      background: rgba(10, 15, 26, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      font-size: 24px;
+      background: linear-gradient(135deg, var(--accent) 30%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .select-theme {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    .select-theme:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Split Screen Layout */
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .editor-pane {
+      width: 48%;
+      border-right: 1px solid var(--panel-border);
+      display: flex;
+      flex-direction: column;
+      background: rgba(10, 15, 26, 0.4);
+      flex-shrink: 0;
+    }
+
+    .preview-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(8, 11, 19, 0.95);
+    }
+
+    /* Panel Headers */
+    .pane-header {
+      background: rgba(15, 23, 42, 0.6);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .pane-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Tab styles */
+    .tab-container {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+    /* Editor Layout */
+    .editor-toolbar {
+      display: flex;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(10, 15, 26, 0.2);
+      border-bottom: 1px solid var(--panel-border);
+      flex-shrink: 0;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .preset-select {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .preset-select:hover {
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .editor-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    textarea#markdown-editor {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      color: #e5e7eb;
+      font-family: 'Consolas', 'Courier New', Courier, monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 20px;
+      resize: none;
+      outline: none;
+      tab-size: 4;
+    }
+
+    .editor-footer {
+      padding: 8px 16px;
+      border-top: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: rgba(10, 15, 26, 0.3);
+      flex-shrink: 0;
+    }
+
+    .helper-alert {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      font-weight: 500;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+
+    /* Player View Tab */
+    .player-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 40px;
+      gap: 28px;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .player-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      animation: slideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Markdown styling inside player */
+    .dilemma-content {
+      line-height: 1.6;
+      font-size: 16px;
+      color: #e5e7eb;
+    }
+
+    .dilemma-content h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #fff;
+      background: linear-gradient(135deg, #fff 50%, rgba(var(--accent-rgb), 0.8) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .dilemma-content p {
+      margin-bottom: 16px;
+    }
+
+    .dilemma-content blockquote {
+      border-left: 4px solid var(--accent);
+      background: rgba(var(--accent-rgb), 0.05);
+      padding: 12px 18px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+      font-style: italic;
+      color: #d1d5db;
+    }
+
+    /* Player Options */
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .option-button {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      padding: 16px 20px;
+      border-radius: 12px;
+      color: #fff;
+      text-align: left;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .option-button::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: var(--accent);
+      transform: scaleY(0);
+      transition: transform 0.25s ease;
+    }
+
+    .option-button:hover {
+      background: rgba(var(--accent-rgb), 0.07);
+      border-color: rgba(var(--accent-rgb), 0.4);
+      transform: translateX(4px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-button:hover::before {
+      transform: scaleY(1);
+    }
+
+    .option-icon {
+      font-size: 14px;
+      color: var(--accent);
+      opacity: 0.7;
+      transition: all 0.25s ease;
+    }
+
+    .option-button:hover .option-icon {
+      transform: translateX(4px);
+      opacity: 1;
+    }
+
+    /* Breadcrumbs / Path History */
+    .path-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(10, 15, 26, 0.5);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 10px;
+      flex-shrink: 0;
+    }
+
+    .path-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .path-list {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .path-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--panel-border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .path-item:hover {
+      background: rgba(var(--accent-rgb), 0.1);
+      color: #fff;
+      border-color: rgba(var(--accent-rgb), 0.3);
+    }
+
+    .path-item.active {
+      background: rgba(var(--accent-rgb), 0.2);
+      color: #fff;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .path-separator {
+      color: var(--text-muted);
+      font-size: 10px;
+      opacity: 0.5;
+    }
+
+    /* Tree Map View Tab */
+    .map-container {
+      flex: 1;
+      overflow: auto;
+      padding: 40px;
+      background: #080b13;
+      position: relative;
+      min-height: 400px;
+    }
+
+    .map-wrapper {
+      position: relative;
+    }
+
+    /* Flowchart Node Cards */
+    .map-node-card {
+      background: rgba(17, 24, 39, 0.85);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .map-node-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(var(--accent-rgb), 0.4);
+      box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.15);
+      background: rgba(22, 30, 49, 0.95);
+    }
+
+    .map-node-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.3);
+      background: rgba(var(--accent-rgb), 0.1);
+    }
+
+    .node-id {
+      font-family: 'Consolas', monospace;
+      font-size: 9px;
+      color: var(--accent);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .node-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Floating Draggable Help Panel */
+    .floating-panel {
+      position: absolute;
+      top: 100px;
+      left: 100px;
+      width: 440px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .drag-header {
+      background: rgba(10, 15, 26, 0.9);
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+
+    .drag-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .close-btn:hover {
+      color: #ef4444;
+    }
+
+    .panel-content {
+      padding: 20px;
+      overflow-y: auto;
+      max-height: 480px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #d1d5db;
+    }
+
+    .panel-content h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      color: #fff;
+      margin: 16px 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .panel-content h3:first-child {
+      margin-top: 0;
+    }
+
+    .panel-content p {
+      margin-bottom: 10px;
+    }
+
+    .panel-content code {
+      font-family: 'Consolas', monospace;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #e5e7eb;
+      font-size: 12px;
+    }
+
+    .panel-content pre {
+      font-family: 'Consolas', monospace;
+      background: rgba(10, 15, 26, 0.6);
+      border: 1px solid var(--panel-border);
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 8px 0;
+      font-size: 11.5px;
+      color: #e5e7eb;
+    }
+
+    .copy-template-btn {
+      width: 100%;
+      margin-top: 14px;
+      justify-content: center;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--panel-border);
+      border-left: 4px solid var(--accent);
+      padding: 14px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 200;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(12px);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast-icon {
+      color: var(--accent);
+      font-size: 18px;
+    }
+
+    .toast-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(10, 15, 26, 0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .workspace { flex-direction: column; }
+      .editor-pane { width: 100%; height: 50%; border-right: none; border-bottom: 1px solid var(--panel-border); }
+      .preview-pane { height: 50%; }
+      .floating-panel { width: 90%; left: 5% !important; top: 15% !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-container">
+      <span class="logo-icon"><i class="fa-solid fa-network-wired"></i></span>
+      <h1>Dilemas y Decisiones REPL</h1>
+    </div>
+    
+    <div class="header-actions">
+      <!-- Theme Selector -->
+      <select class="select-theme" id="theme-selector" onchange="updateTheme()">
+        <option value="neuro">🧠 Neuro-Cognitivo (Kohlberg)</option>
+        <option value="classic">🌲 Clásico (Ético)</option>
+        <option value="clinical">💎 Psicología Clínica</option>
+        <option value="child">🧸 Desarrollo Infantil</option>
+      </select>
+
+      <!-- Help Button -->
+      <button class="btn" onclick="toggleHelpPanel()">
+        <i class="fa-solid fa-circle-question"></i> Ayuda
+      </button>
+
+      <!-- Back to Landing Button -->
+      <a href="../index.html" class="btn" style="text-decoration: none;">
+        <i class="fa-solid fa-house"></i> Volver
+      </a>
+
+      <!-- Export Button -->
+      <button class="btn btn-primary" onclick="exportDilema()">
+        <i class="fa-solid fa-file-arrow-down"></i> Exportar Dilema (HTML)
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace split screen -->
+  <div class="workspace">
+    
+    <!-- LEFT PANE: Editor -->
+    <div class="editor-pane">
+      <div class="pane-header">
+        <span class="pane-title"><i class="fa-solid fa-pen-nib"></i> Editor Markdown</span>
+        <!-- Preset dropdown -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 11px; color: var(--text-muted);">Plantilla:</span>
+          <select class="preset-select" id="preset-selector" onchange="loadPreset()">
+            <option value="heinz">Dilema de Heinz (Moral - Kohlberg)</option>
+            <option value="trolley">Dilema del Tranvía (Neurociencia)</option>
+            <option value="custom">Proyecto Vacío</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Quick insertion Toolbar -->
+      <div class="editor-toolbar">
+        <button class="btn btn-xs" onclick="insertSyntax('separator')" style="padding: 4px 8px; font-size: 11px;">
+          <i class="fa-solid fa-minus"></i> Separador (---)
+        </button>
+        <button class="btn btn-xs" onclick="insertSyntax('anchor')" style="padding: 4px 8px; font-size: 11px;">
+          <i class="fa-solid fa-hashtag"></i> Anclaje (# #id)
+        </button>
+        <button class="btn btn-xs" onclick="insertSyntax('option')" style="padding: 4px 8px; font-size: 11px;">
+          <i class="fa-solid fa-circle-dot"></i> Opción (- [Txt] -> #id)
+        </button>
+      </div>
+
+      <div class="editor-container">
+        <textarea id="markdown-editor" placeholder="Escribe tu dilema o árbol de decisiones aquí... (Usa /ayuda en una línea vacía para abrir la guía)" oninput="editorChanged()"></textarea>
+      </div>
+
+      <div class="editor-footer">
+        <div class="helper-alert">
+          <i class="fa-solid fa-lightbulb"></i> Escribe <code>/ayuda</code> en el editor para abrir el tutorial
+        </div>
+        <div id="word-counter">Caracteres: 0</div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE: Simulator & Tree Map -->
+    <div class="preview-pane">
+      <div class="pane-header">
+        <span class="pane-title"><i class="fa-solid fa-eye"></i> Vista Previa</span>
+        <div class="tab-container">
+          <button class="tab-btn active" id="tab-player" onclick="switchTab('player')">
+            <i class="fa-solid fa-gamepad"></i> 🎮 Simulador
+          </button>
+          <button class="tab-btn" id="tab-map" onclick="switchTab('map')">
+            <i class="fa-solid fa-diagram-project"></i> 📊 Mapa de Decisiones
+          </button>
+        </div>
+      </div>
+
+      <!-- PLAYER VIEW -->
+      <div id="player-tab-content" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+        <div class="player-container">
+          
+          <!-- Screen content card -->
+          <div class="player-card" id="player-card">
+            <div class="dilemma-content" id="player-html">
+              <!-- Rendered Markdown goes here -->
+            </div>
+          </div>
+
+          <!-- Clickable Action Buttons -->
+          <div class="options-container" id="player-options">
+            <!-- Rendered buttons go here -->
+          </div>
+
+        </div>
+
+        <!-- Breadcrumbs Footer inside Player tab -->
+        <div class="path-container">
+          <div class="path-header">
+            <span>Tu Recorrido Cognitivo / Hilo de Decisiones</span>
+            <button class="btn" style="padding: 2px 6px; font-size: 10px;" onclick="resetSimulation()">
+              <i class="fa-solid fa-rotate-left"></i> Reiniciar
+            </button>
+          </div>
+          <div class="path-list" id="path-list">
+            <!-- Breadcrumbs go here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- MAP VIEW -->
+      <div id="map-tab-content" class="map-container" style="display: none;">
+        <div id="tree-map-container">
+          <!-- Flowchart generated dynamically -->
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Draggable Help Panel -->
+  <div class="floating-panel" id="help-panel">
+    <div class="drag-header" id="help-drag-header">
+      <span class="drag-title"><i class="fa-solid fa-circle-info"></i> Guía Completa de Dilemas Morales</span>
+      <button class="close-btn" onclick="toggleHelpPanel()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="panel-content">
+      <h3><i class="fa-solid fa-compass"></i> Filosofía del Creador de Dilemas</h3>
+      <p>Diseña flujos interactivos de ramificación (árboles de decisión). Los alumnos leen el escenario principal y responden preguntas eligiendo opciones. Es ideal para evaluar el <strong>Desarrollo Moral de Kohlberg</strong>, sopesar <strong>sesgos cognitivos</strong> o realizar simulaciones en <strong>psicología y neurociencia</strong>.</p>
+      
+      <h3><i class="fa-solid fa-code"></i> Sintaxis del Documento</h3>
+      <p>El formato es simple y estructurado en Markdown puro:</p>
+      
+      <pre># #inicio
+## Escenario Principal 🔬
+Este es el inicio de la simulación. 
+
+¿Qué decides hacer?
+- [Ir por el camino A] -> #camino-a
+- [Ir por el camino B] -> #camino-b
+
+---
+
+# #camino-a
+## Has elegido el Camino A
+Aquí describes las consecuencias...
+
+- [Volver a empezar] -> #inicio</pre>
+
+      <h3><i class="fa-solid fa-list-check"></i> Reglas Clave:</h3>
+      <ul>
+        <li><code>---</code> (tres guiones) separan una pantalla de otra.</li>
+        <li>La primera línea de cada bloque define su identificador con <code># #mi-id</code> (ej: <code># #inicio</code>). La pantalla inicial siempre debe llamarse <code>#inicio</code>.</li>
+        <li>Los botones se crean en forma de lista: <code>- [Texto del Botón] -> #id-destino</code>.</li>
+        <li>Puedes enriquecer el texto con cursiva (<code>*texto*</code>), negrita (<code>**negrita**</code>) y citas reflexivas (<code>> Frase citada</code>).</li>
+      </ul>
+
+      <button class="btn btn-primary copy-template-btn" onclick="copyTemplate()">
+        <i class="fa-solid fa-copy"></i> Cargar Plantilla de Kohlberg en Editor
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <span class="toast-icon"><i class="fa-solid fa-circle-check"></i></span>
+    <span class="toast-text" id="toast-message">Texto copiado con éxito</span>
+  </div>
+
+  <script>
+    // PRESETS DATA
+    const presets = {
+      heinz: `# #inicio
+## El Dilema de Heinz 🧪
+La esposa de Heinz padece un tipo especial de cáncer y morirá pronto si no consigue un nuevo medicamento descubierto por un farmacéutico local. La fórmula cuesta $200 producirla, pero el farmacéutico la vende por $2,000. 
+
+Heinz no tiene el dinero y el farmacéutico se niega a vendérsela más barata o dejarle pagar a plazos. Desesperado, Heinz contempla **robar la medicina** para salvar la vida de su esposa.
+
+¿Qué crees que debería hacer Heinz?
+
+- [Robar la medicina] -> #robar
+- [No robar la medicina] -> #no-robar
+
+---
+
+# #robar
+## ⚖️ Decisión: Robar la medicina
+Heinz roba la medicina y salva la vida de su esposa. Ahora debe enfrentar las consecuencias y explicar su postura ética. 
+
+¿Cuál de las siguientes afirmaciones refleja mejor por qué justificas su acto?
+
+- [Está bien porque su deber moral de proteger la vida de su esposa está por encima de las leyes de propiedad] -> #posconvencional-robar
+- [Está bien porque un buen esposo debe hacer todo lo posible por su familia ante los demás] -> #convencional-robar
+- [Está bien porque si la deja morir, él se sentirá terriblemente culpable y solo] -> #preconvencional-robar
+
+---
+
+# #no-robar
+## 🛑 Decisión: No robar la medicina
+Heinz decide no violar la ley. Su esposa fallece semanas después. Heinz debe vivir con el peso de esta decisión.
+
+¿Cuál de las siguientes afirmaciones justifica mejor esta decisión?
+
+- [No debe robar porque, aunque la pérdida sea trágica, la ley debe respetarse universalmente para evitar el colapso social] -> #convencional-no-robar
+- [No debe robar porque irá a prisión, y ser castigado demuestra que hacer eso está mal] -> #preconvencional-no-robar
+- [No debe robar porque la ley debe proteger los derechos individuales de propiedad, aunque en este caso el sistema falló en garantizar la salud] -> #posconvencional-no-robar
+
+---
+
+# #preconvencional-robar
+## 🧸 Nivel I: Moral Preconvencional (Etapa 2: Individualismo e Intercambio)
+Justificas el robo en base a **consecuencias egoístas o instrumentales** ("si ella muere, él sufrirá"). Tu razonamiento se centra en el interés propio y los afectos inmediatos, sin comprender aún las leyes como parte de un contrato social.
+
+> *Kohlberg explica:* En esta etapa del desarrollo infantil, las reglas se siguen sólo si benefician el propio interés inmediato.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #preconvencional-no-robar
+## 🧸 Nivel I: Moral Preconvencional (Etapa 1: Castigo y Obediencia)
+Justificas no robar en base al **miedo al castigo físico o penal** ("irá a la cárcel"). Para ti, la gravedad de un acto se mide directamente por el tamaño del castigo, no por principios morales abstractos.
+
+> *Kohlberg explica:* El infante asume que autoridades poderosas imponen reglas que deben obedecerse sin cuestionar para evitar el dolor físico.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #convencional-robar
+## 👥 Nivel II: Moral Convencional (Etapa 3: Expectativas Interpersonales)
+Justificas el robo porque deseas **ser aprobado por los demás** como un "buen esposo" que actúa por amor. Te importa la lealtad grupal y cumplir las expectativas afectivas de tu rol familiar.
+
+> *Kohlberg explica:* Es la etapa de la orientación del "buen chico/buena chica", donde el comportamiento se juzga por las intenciones y por cómo ayuda a mantener la armonía familiar.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #convencional-no-robar
+## 👥 Nivel II: Moral Convencional (Etapa 4: Orden Social y Deber)
+Justificas no robar porque crees que **las leyes de la sociedad deben respetarse a toda costa** para evitar el caos. Pones el deber social general por encima de los sentimientos personales o las tragedias individuales.
+
+> *Kohlberg explica:* Es la etapa de "ley y orden". El individuo siente la obligación moral de mantener el funcionamiento del sistema social tal como está.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #posconvencional-robar
+## 🧠 Nivel III: Moral Posconvencional (Etapa 6: Principios Éticos Universales)
+Justificas el robo apelando a la **prioridad absoluta de la vida humana sobre la propiedad privada**. Entiendes que la justicia se basa en principios éticos universales auto-elegidos que guían la conciencia más allá del código legal escrito.
+
+> *Kohlberg explica:* Se alcanza una perspectiva moral autónoma basada en la dignidad y el valor intrínseco de cada ser humano.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #posconvencional-no-robar
+## 🧠 Nivel III: Moral Posconvencional (Etapa 5: Contrato Social y Derechos Individuales)
+Justificas no robar reconociendo la **importancia de la ley civil como un acuerdo mutuo**, pero señalas el dilema crítico de que el derecho a la vida entró en conflicto trágico con el derecho a la propiedad. Razonas en términos de utilidad social y justicia redistributiva.
+
+> *Kohlberg explica:* Se comprende la ley como un contrato social flexible que debe procurar el mayor bien para el mayor número de personas.
+
+- [Volver al inicio] -> #inicio`,
+
+      trolley: `# #inicio
+## El Dilema del Tranvía 🚋
+Un tranvía corre sin control por una vía. En su camino se encuentran **cinco personas** atadas a los rieles, quienes morirán si el tranvía continúa. 
+
+Tú estás en un puente sobre la vía junto a un **hombre muy robusto**. La única forma de detener el tranvía es empujar a este hombre a las vías. Él morirá, pero su cuerpo detendrá el vehículo, salvando a las cinco personas.
+
+¿Qué decides hacer?
+
+- [Empujar al hombre] -> #empujar
+- [No hacer nada] -> #no-empujar
+
+---
+
+# #empujar
+## 🧠 Decisión Utilitarista (Córtex Prefrontal)
+Decides empujar al hombre. Muere una persona para salvar a cinco.
+
+Esta elección refleja un **criterio utilitarista**: maximizar el bienestar general (*el fin justifica los medios*).
+
+En estudios de neurociencia con fMRI, esta decisión activa el **córtex prefrontal dorsolateral**, asociado con el cálculo cognitivo, la lógica y el control ejecutivo frío. Sopesas los números fríamente.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #no-empujar
+## 💔 Decisión Deontológica (Activación de la Amígdala)
+Decides no empujar al hombre. El tranvía sigue su curso y las cinco personas mueren.
+
+Esta elección refleja una postura **deontológica**: ciertos actos son intrínsecamente malos (como empujar activamente a alguien a su muerte, independientemente de las consecuencias trágicas indirectas).
+
+En neurociencia, la idea de dañar físicamente de forma directa a alguien activa intensamente la **amígdala y el córtex prefrontal ventromedial**, disparando una fuerte respuesta emocional aversiva que bloquea la acción utilitaria.
+
+- [Volver al inicio] -> #inicio`,
+
+      custom: `# #inicio
+## Nuevo Dilema Cognitivo
+Escribe aquí tu introducción didáctica.
+
+¿Qué decisión tomará el estudiante?
+- [Tomar opción A] -> #opcion-a
+- [Tomar opción B] -> #opcion-b
+
+---
+
+# #opcion-a
+## Consecuencia A
+Detalla el resultado de la opción A.
+
+- [Volver a empezar] -> #inicio
+
+---
+
+# #opcion-b
+## Consecuencia B
+Detalla el resultado de la opción B.
+
+- [Volver a empezar] -> #inicio`
+    };
+
+    // State Variables
+    let activeNodeId = 'inicio';
+    let simulationHistory = ['inicio'];
+    let currentTab = 'player';
+    let nodes = {};
+
+    // Get DOM nodes
+    const editor = document.getElementById('markdown-editor');
+    const playerHtml = document.getElementById('player-html');
+    const playerOptions = document.getElementById('player-options');
+    const pathList = document.getElementById('path-list');
+    const wordCounter = document.getElementById('word-counter');
+    const helpPanel = document.getElementById('help-panel');
+
+    // On Load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Load Heinz Dilemma as default
+      editor.value = presets.heinz;
+      
+      // Update Themes & Parser
+      updateTheme();
+      editorChanged();
+      
+      // Dragging Panel initializer
+      makeElementDraggable(helpPanel);
+
+      // Listener in editor for slash command /ayuda or /help
+      editor.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          setTimeout(() => {
+            const cursorPosition = editor.selectionStart;
+            const textBeforeCursor = editor.value.substring(0, cursorPosition);
+            const lines = textBeforeCursor.split('\n');
+            const lastLine = lines[lines.length - 2] || ''; // line before Enter
+            if (lastLine.trim() === '/ayuda' || lastLine.trim() === '/help') {
+              // Strip command
+              const newContent = editor.value.substring(0, cursorPosition - lastLine.length - 1) + editor.value.substring(cursorPosition);
+              editor.value = newContent;
+              editor.selectionStart = editor.selectionEnd = cursorPosition - lastLine.length - 1;
+              toggleHelpPanel(true);
+              showToast('Comando /ayuda detectado. Abriendo guía.');
+              editorChanged();
+            }
+          }, 50);
+        }
+      });
+    });
+
+    // Theme Customizer
+    function updateTheme() {
+      const theme = document.getElementById('theme-selector').value;
+      const root = document.documentElement;
+      
+      if (theme === 'neuro') {
+        root.style.setProperty('--accent', '#8b5cf6');
+        root.style.setProperty('--accent-rgb', '139, 92, 246');
+        root.style.setProperty('--accent-glow', 'rgba(139, 92, 246, 0.25)');
+        root.style.setProperty('--accent-hover', '#7c3aed');
+      } else if (theme === 'classic') {
+        root.style.setProperty('--accent', '#10b981');
+        root.style.setProperty('--accent-rgb', '16, 185, 129');
+        root.style.setProperty('--accent-glow', 'rgba(16, 185, 129, 0.2)');
+        root.style.setProperty('--accent-hover', '#059669');
+      } else if (theme === 'clinical') {
+        root.style.setProperty('--accent', '#06b6d4');
+        root.style.setProperty('--accent-rgb', '6, 182, 212');
+        root.style.setProperty('--accent-glow', 'rgba(6, 182, 212, 0.2)');
+        root.style.setProperty('--accent-hover', '#0891b2');
+      } else if (theme === 'child') {
+        root.style.setProperty('--accent', '#f59e0b');
+        root.style.setProperty('--accent-rgb', '245, 158, 11');
+        root.style.setProperty('--accent-glow', 'rgba(245, 158, 11, 0.2)');
+        root.style.setProperty('--accent-hover', '#d97706');
+      }
+      
+      // Update UI elements color
+      editorChanged();
+    }
+
+    // Load presets
+    function loadPreset() {
+      const selected = document.getElementById('preset-selector').value;
+      if (presets[selected]) {
+        editor.value = presets[selected];
+        resetSimulation();
+        editorChanged();
+        showToast('Cargada plantilla: ' + document.getElementById('preset-selector').options[document.getElementById('preset-selector').selectedIndex].text);
+      }
+    }
+
+    // Live Markdown parser & compiler
+    function editorChanged() {
+      const text = editor.value;
+      wordCounter.textContent = `Caracteres: ${text.length}`;
+      
+      // Parsing
+      nodes = parseDilemma(text);
+      
+      // Update interactive views
+      renderActiveNode();
+      renderBreadcrumbs();
+      
+      if (currentTab === 'map') {
+        renderTreeMap();
+      }
+    }
+
+    // Parser function
+    function parseDilemma(markdownText) {
+      // Split by ---
+      const sections = markdownText.split(/\n---\n|\r\n---\r\n|\n---|\r\n---/);
+      const parsedNodes = {};
+      
+      sections.forEach((section, index) => {
+        const lines = section.split('\n');
+        let id = '';
+        let title = '';
+        let contentLines = [];
+        let options = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) {
+            contentLines.push(lines[i]);
+            continue;
+          }
+          
+          // ID anchor: e.g. # #inicio or # inicio
+          const idMatch = line.match(/^#+\s+#?([a-zA-Z0-9_-]+)/) || line.match(/^#\s*([a-zA-Z0-9_-]+)$/);
+          if (idMatch && !id) {
+            id = idMatch[1].toLowerCase();
+            continue;
+          }
+          
+          // Title
+          if (line.startsWith('##')) {
+            title = line.replace(/^##+\s*/, '');
+            contentLines.push(line);
+            continue;
+          }
+          
+          // Option: - [Text] -> #target
+          const optionMatch = line.match(/^[-*+]\s+\[(.*?)\]\s*->\s*#?([a-zA-Z0-9_-]+)/);
+          if (optionMatch) {
+            options.push({
+              text: optionMatch[1],
+              target: optionMatch[2].toLowerCase()
+            });
+          } else {
+            contentLines.push(lines[i]);
+          }
+        }
+        
+        // Fallback id & titles
+        if (!id) {
+          id = index === 0 ? 'inicio' : `paso-${index}`;
+        }
+        if (!title) {
+          title = id.charAt(0).toUpperCase() + id.slice(1);
+        }
+        
+        parsedNodes[id] = {
+          id: id,
+          title: title,
+          content: contentLines.join('\n'),
+          options: options
+        };
+      });
+      
+      return parsedNodes;
+    }
+
+    // Render active node on the Player
+    function renderActiveNode() {
+      // If activeNodeId is not found, fall back to "inicio" or first available
+      if (!nodes[activeNodeId]) {
+        activeNodeId = Object.keys(nodes)[0] || 'inicio';
+      }
+      
+      const node = nodes[activeNodeId];
+      if (!node) {
+        playerHtml.innerHTML = `<div style="color: var(--text-muted); font-style: italic;">No se ha definido ningún nodo. Escribe una cabecera de anclaje (ej. # #inicio) para iniciar tu dilema.</div>`;
+        playerOptions.innerHTML = '';
+        return;
+      }
+      
+      // Render Content via marked
+      playerHtml.innerHTML = marked.parse(node.content);
+      
+      // Render Options/Buttons
+      playerOptions.innerHTML = '';
+      if (node.options && node.options.length > 0) {
+        node.options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'option-button';
+          btn.innerHTML = `
+            <span>${opt.text}</span>
+            <span class="option-icon"><i class="fa-solid fa-circle-arrow-right"></i></span>
+          `;
+          btn.onclick = () => {
+            navigateToNode(opt.target);
+          };
+          playerOptions.appendChild(btn);
+        });
+      } else {
+        // No options mean terminal node
+        const btn = document.createElement('button');
+        btn.className = 'option-button';
+        btn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        btn.innerHTML = `
+          <span>🔄 Volver a empezar (Fin del recorrido)</span>
+          <span class="option-icon" style="color: #ef4444;"><i class="fa-solid fa-rotate-left"></i></span>
+        `;
+        btn.onclick = () => {
+          resetSimulation();
+        };
+        playerOptions.appendChild(btn);
+      }
+    }
+
+    // Switch Tabs
+    function switchTab(tab) {
+      currentTab = tab;
+      
+      const tabPlayer = document.getElementById('tab-player');
+      const tabMap = document.getElementById('tab-map');
+      
+      const contentPlayer = document.getElementById('player-tab-content');
+      const contentMap = document.getElementById('map-tab-content');
+      
+      if (tab === 'player') {
+        tabPlayer.classList.add('active');
+        tabMap.classList.remove('active');
+        contentPlayer.style.display = 'flex';
+        contentMap.style.display = 'none';
+        renderActiveNode();
+      } else {
+        tabPlayer.classList.remove('active');
+        tabMap.classList.add('active');
+        contentPlayer.style.display = 'none';
+        contentMap.style.display = 'block';
+        renderTreeMap();
+      }
+    }
+
+    // Navigate to Node
+    function navigateToNode(nodeId) {
+      if (nodes[nodeId]) {
+        activeNodeId = nodeId;
+        
+        // Add to history
+        simulationHistory.push(nodeId);
+        
+        // Render
+        renderActiveNode();
+        renderBreadcrumbs();
+        
+        // Animation
+        const card = document.getElementById('player-card');
+        card.style.animation = 'none';
+        card.offsetHeight; // trigger reflow
+        card.style.animation = 'slideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
+      } else {
+        showToast(`Nodo de destino #${nodeId} no encontrado en el Markdown.`, 'error');
+      }
+    }
+
+    // Breadcrumbs path history
+    function renderBreadcrumbs() {
+      pathList.innerHTML = '';
+      
+      simulationHistory.forEach((id, index) => {
+        const node = nodes[id];
+        const title = node ? node.title : id;
+        
+        const item = document.createElement('div');
+        item.className = `path-item ${index === simulationHistory.length - 1 ? 'active' : ''}`;
+        item.textContent = title;
+        item.onclick = () => {
+          // Go back in history
+          simulationHistory = simulationHistory.slice(0, index + 1);
+          activeNodeId = id;
+          renderActiveNode();
+          renderBreadcrumbs();
+        };
+        
+        pathList.appendChild(item);
+        
+        if (index < simulationHistory.length - 1) {
+          const sep = document.createElement('span');
+          sep.className = 'path-separator';
+          sep.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+          pathList.appendChild(sep);
+        }
+      });
+    }
+
+    // Reset Simulation
+    function resetSimulation() {
+      activeNodeId = 'inicio';
+      simulationHistory = ['inicio'];
+      renderActiveNode();
+      renderBreadcrumbs();
+    }
+
+    // Render tree map (flowchart) using SVG and HTML layout
+    function renderTreeMap() {
+      const container = document.getElementById('tree-map-container');
+      container.innerHTML = '';
+      
+      if (Object.keys(nodes).length === 0) {
+        container.innerHTML = `<div style="color: var(--text-muted); font-style: italic;">Añade contenido en el editor para graficar el árbol.</div>`;
+        return;
+      }
+      
+      // Calculate depths using BFS
+      const depths = {};
+      const queue = ['inicio'];
+      depths['inicio'] = 0;
+      
+      const visited = new Set(['inicio']);
+      
+      while (queue.length > 0) {
+        const current = queue.shift();
+        const currentDepth = depths[current];
+        const node = nodes[current];
+        
+        if (node && node.options) {
+          node.options.forEach(opt => {
+            const target = opt.target;
+            if (!visited.has(target)) {
+              visited.add(target);
+              depths[target] = currentDepth + 1;
+              queue.push(target);
+            }
+          });
+        }
+      }
+      
+      // Assign default depth to unvisited (disconnected) nodes
+      Object.keys(nodes).forEach(id => {
+        if (depths[id] === undefined) {
+          depths[id] = 0;
+        }
+      });
+      
+      // Group by depth
+      const columns = {};
+      Object.keys(nodes).forEach(id => {
+        const d = depths[id];
+        if (!columns[d]) columns[d] = [];
+        columns[d].push(id);
+      });
+      
+      const colWidth = 240;
+      const rowHeight = 120;
+      
+      const nodePositions = {};
+      
+      const mapWrapper = document.createElement('div');
+      mapWrapper.className = 'map-wrapper';
+      mapWrapper.style.position = 'relative';
+      container.appendChild(mapWrapper);
+      
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.style.position = 'absolute';
+      svg.style.top = '0';
+      svg.style.left = '0';
+      svg.style.width = '100%';
+      svg.style.height = '100%';
+      svg.style.pointerEvents = 'none';
+      svg.style.zIndex = '1';
+      mapWrapper.appendChild(svg);
+      
+      // Render columns and nodes
+      const maxDepth = Math.max(...Object.keys(columns).map(Number), 0);
+      let totalWidth = (maxDepth + 1) * colWidth + 100;
+      let maxHeight = 0;
+      
+      Object.keys(columns).forEach(colStr => {
+        const col = Number(colStr);
+        const colNodes = columns[col];
+        const colHeight = colNodes.length * rowHeight;
+        if (colHeight > maxHeight) maxHeight = colHeight;
+        
+        colNodes.forEach((id, rowIndex) => {
+          const node = nodes[id];
+          const x = col * colWidth + 40;
+          const y = rowIndex * rowHeight + 40;
+          
+          nodePositions[id] = { x: x + 90, y: y + 30 }; // save card center coords
+          
+          const card = document.createElement('div');
+          card.className = `map-node-card ${activeNodeId === id ? 'active' : ''}`;
+          card.style.position = 'absolute';
+          card.style.left = `${x}px`;
+          card.style.top = `${y}px`;
+          card.style.width = '180px';
+          card.style.height = '60px';
+          card.style.zIndex = '2';
+          card.innerHTML = `
+            <div class="node-id">#${id}</div>
+            <div class="node-title" title="${node.title}">${node.title}</div>
+          `;
+          card.onclick = () => {
+            // Jump player and preview node
+            activeNodeId = id;
+            renderActiveNode();
+            
+            // Highlight selected in map
+            document.querySelectorAll('.map-node-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+          };
+          mapWrapper.appendChild(card);
+        });
+      });
+      
+      // Draw path connections
+      Object.keys(nodes).forEach(id => {
+        const node = nodes[id];
+        if (node && node.options && nodePositions[id]) {
+          const startPos = nodePositions[id];
+          node.options.forEach(opt => {
+            const target = opt.target;
+            const endPos = nodePositions[target];
+            if (endPos) {
+              const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              const dx = endPos.x - startPos.x;
+              
+              // Curve coordinates
+              const cp1x = startPos.x + dx / 2;
+              const cp1y = startPos.y;
+              const cp2x = startPos.x + dx / 2;
+              const cp2y = endPos.y;
+              
+              const dStr = `M ${startPos.x} ${startPos.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endPos.x} ${endPos.y}`;
+              
+              path.setAttribute('d', dStr);
+              path.setAttribute('stroke', 'rgba(139, 92, 246, 0.45)');
+              path.setAttribute('stroke-width', '2');
+              path.setAttribute('fill', 'none');
+              path.setAttribute('marker-end', 'url(#map-arrow)');
+              svg.appendChild(path);
+            }
+          });
+        }
+      });
+      
+      // Set sizes
+      mapWrapper.style.width = `${totalWidth}px`;
+      mapWrapper.style.height = `${maxHeight + 100}px`;
+      svg.setAttribute('width', `${totalWidth}`);
+      svg.setAttribute('height', `${maxHeight + 100}`);
+      
+      // Marker setup
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+      marker.setAttribute('id', 'map-arrow');
+      marker.setAttribute('viewBox', '0 0 10 10');
+      marker.setAttribute('refX', '8');
+      marker.setAttribute('refY', '5');
+      marker.setAttribute('markerWidth', '5');
+      marker.setAttribute('markerHeight', '5');
+      marker.setAttribute('orient', 'auto-start-reverse');
+      
+      const markerPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      markerPath.setAttribute('d', 'M 0 1 L 10 5 L 0 9 z');
+      markerPath.setAttribute('fill', 'rgba(139, 92, 246, 0.8)');
+      
+      marker.appendChild(markerPath);
+      defs.appendChild(marker);
+      svg.appendChild(defs);
+    }
+
+    // Draggable element utility
+    function makeElementDraggable(elmnt) {
+      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      const header = document.getElementById(elmnt.id + '-drag-header') || elmnt;
+      header.style.cursor = 'grab';
+      header.onmousedown = dragMouseDown;
+      header.ontouchstart = dragMouseDown;
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        // Don't drag on buttons
+        if (e.target.closest('button, select, input, textarea')) return;
+        
+        e.preventDefault();
+        header.style.cursor = 'grabbing';
+        
+        pos3 = e.clientX || e.touches[0].clientX;
+        pos4 = e.clientY || e.touches[0].clientY;
+        
+        document.onmouseup = closeDragElement;
+        document.ontouchend = closeDragElement;
+        
+        document.onmousemove = elementDrag;
+        document.ontouchmove = elementDrag;
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        var clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        var clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        if (!clientX || !clientY) return;
+        
+        e.preventDefault();
+        pos1 = pos3 - clientX;
+        pos2 = pos4 - clientY;
+        pos3 = clientX;
+        pos4 = clientY;
+        
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      }
+
+      function closeDragElement() {
+        header.style.cursor = 'grab';
+        document.onmouseup = null;
+        document.onmousemove = null;
+        document.ontouchend = null;
+        document.ontouchmove = null;
+      }
+    }
+
+    // Toggle help panel
+    function toggleHelpPanel(forceShow = false) {
+      if (forceShow || helpPanel.style.display !== 'flex') {
+        helpPanel.style.display = 'flex';
+        // Center panel on window
+        helpPanel.style.top = '120px';
+        helpPanel.style.left = '80px';
+      } else {
+        helpPanel.style.display = 'none';
+      }
+    }
+
+    // Copy template to editor
+    function copyTemplate() {
+      editor.value = presets.heinz;
+      resetSimulation();
+      editorChanged();
+      helpPanel.style.display = 'none';
+      showToast('Cargada la plantilla de Kohlberg en el editor.');
+    }
+
+    // Insertion Helper
+    function insertSyntax(type) {
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      const text = editor.value;
+      let inserted = '';
+      
+      if (type === 'separator') {
+        inserted = '\n\n---\n\n';
+      } else if (type === 'anchor') {
+        inserted = '# #nuevo-anclaje\n## Título de la sección\n';
+      } else if (type === 'option') {
+        inserted = '- [Texto de la Opción] -> #destino\n';
+      }
+      
+      editor.value = text.substring(0, start) + inserted + text.substring(end);
+      editor.selectionStart = editor.selectionEnd = start + inserted.length;
+      editor.focus();
+      editorChanged();
+    }
+
+    // Show Toast Alert
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      
+      toastMsg.textContent = message;
+      if (type === 'error') {
+        toast.style.borderLeftColor = '#ef4444';
+      } else {
+        const theme = document.getElementById('theme-selector').value;
+        const colorMap = { neuro: '#8b5cf6', classic: '#10b981', clinical: '#06b6d4', child: '#f59e0b' };
+        toast.style.borderLeftColor = colorMap[theme] || '#8b5cf6';
+      }
+      
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    // Offline Exporter HTML Generator
+    function exportDilema() {
+      const markdown = editor.value.replace(/\\/g, '\\\\'); // Escape backslashes for LaTeX/KaTeX if any
+      const themeValue = document.getElementById('theme-selector').value;
+      const themeLabel = document.getElementById('theme-selector').options[document.getElementById('theme-selector').selectedIndex].text;
+      
+      const colorMap = {
+        neuro: { accent: '#8b5cf6', rgb: '139, 92, 246', hover: '#7c3aed' },
+        classic: { accent: '#10b981', rgb: '16, 185, 129', hover: '#059669' },
+        clinical: { accent: '#06b6d4', rgb: '6, 182, 212', hover: '#0891b2' },
+        child: { accent: '#f59e0b', rgb: '245, 158, 11', hover: '#d97706' }
+      };
+      
+      const themeConfig = colorMap[themeValue] || colorMap.neuro;
+
+      const htmlContent = `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dilema Interactivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --panel-bg: rgba(17, 24, 39, 0.7);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: ${themeConfig.accent};
+      --accent-rgb: ${themeConfig.rgb};
+      --accent-glow: rgba(${themeConfig.rgb}, 0.25);
+      --accent-hover: ${themeConfig.hover};
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(var(--accent-rgb), 0.12) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(31, 41, 55, 0.5) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      background: rgba(10, 15, 26, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 10px var(--accent-glow);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 30px 20px;
+      gap: 24px;
+    }
+
+    .player-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+    }
+
+    .dilemma-content {
+      line-height: 1.65;
+      font-size: 16px;
+      color: #e5e7eb;
+    }
+
+    .dilemma-content h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #fff;
+      background: linear-gradient(135deg, #fff 50%, rgba(var(--accent-rgb), 0.8) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .dilemma-content p {
+      margin-bottom: 16px;
+    }
+
+    .dilemma-content blockquote {
+      border-left: 4px solid var(--accent);
+      background: rgba(var(--accent-rgb), 0.05);
+      padding: 12px 18px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+      font-style: italic;
+      color: #d1d5db;
+    }
+
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option-button {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      padding: 16px 20px;
+      border-radius: 12px;
+      color: #fff;
+      text-align: left;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+    }
+
+    .option-button:hover {
+      background: rgba(var(--accent-rgb), 0.08);
+      border-color: rgba(var(--accent-rgb), 0.4);
+      transform: translateX(4px);
+    }
+
+    .option-icon {
+      color: var(--accent);
+      opacity: 0.7;
+    }
+
+    .path-container {
+      background: rgba(10, 15, 26, 0.5);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .path-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .path-list {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .path-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--panel-border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .path-item:hover {
+      background: rgba(var(--accent-rgb), 0.1);
+      color: #fff;
+    }
+
+    .path-item.active {
+      background: rgba(var(--accent-rgb), 0.2);
+      color: #fff;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .path-separator {
+      color: var(--text-muted);
+      opacity: 0.5;
+      font-size: 10px;
+    }
+
+    .map-container {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 24px;
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      overflow: auto;
+    }
+
+    .map-wrapper {
+      position: relative;
+    }
+
+    .map-node-card {
+      background: rgba(17, 24, 39, 0.85);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .map-node-card:hover {
+      border-color: rgba(var(--accent-rgb), 0.4);
+      background: rgba(22, 30, 49, 0.95);
+    }
+
+    .map-node-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.3);
+      background: rgba(var(--accent-rgb), 0.1);
+    }
+
+    .node-id {
+      font-family: 'Consolas', monospace;
+      font-size: 9px;
+      color: var(--accent);
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .node-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .view-selector {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Dilema Moral Interactivo</h1>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-primary" id="btn-show-player" onclick="toggleView('player')"><i class="fa-solid fa-gamepad"></i> Jugar</button>
+      <button class="btn" id="btn-show-map" onclick="toggleView('map')"><i class="fa-solid fa-diagram-project"></i> Mapa de Flujos</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="player-view">
+      <div class="player-card">
+        <div class="dilemma-content" id="dilemma-html"></div>
+      </div>
+      <div class="options-container" id="dilemma-options" style="margin-top: 24px;"></div>
+      <div class="path-container" style="margin-top: 32px;">
+        <div class="path-header">
+          <span>Decisiones Tomadas</span>
+          <button class="btn" style="padding: 2px 6px; font-size: 10px;" onclick="resetSimulation()"><i class="fa-solid fa-rotate-left"></i> Reiniciar</button>
+        </div>
+        <div class="path-list" id="path-list"></div>
+      </div>
+    </div>
+
+    <div id="map-view" class="map-container">
+      <div style="font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #fff;"><i class="fa-solid fa-sitemap"></i> Mapa Completo del Árbol de Decisiones</div>
+      <div id="tree-map-container" style="position: relative;"></div>
+    </div>
+  </main>
+
+  <!-- Embedded Markdown Data -->
+  <script id="markdown-data" type="text/markdown">${markdown}<\/script>
+
+  <script>
+    const rawMarkdown = document.getElementById('markdown-data').textContent;
+    let activeNodeId = 'inicio';
+    let simulationHistory = ['inicio'];
+    let nodes = {};
+
+    window.addEventListener('DOMContentLoaded', () => {
+      nodes = parseDilemma(rawMarkdown);
+      renderActiveNode();
+      renderBreadcrumbs();
+    });
+
+    function parseDilemma(markdownText) {
+      const sections = markdownText.split(/\\n---\\n|\\r\\n---\\r\\n|\\n---|\\r\\n---/);
+      const parsedNodes = {};
+      
+      sections.forEach((section, index) => {
+        const lines = section.split('\\n');
+        let id = '';
+        let title = '';
+        let contentLines = [];
+        let options = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) {
+            contentLines.push(lines[i]);
+            continue;
+          }
+          
+          const idMatch = line.match(/^#+\\s+#?([a-zA-Z0-9_-]+)/) || line.match(/^#\\s*([a-zA-Z0-9_-]+)$/);
+          if (idMatch && !id) {
+            id = idMatch[1].toLowerCase();
+            continue;
+          }
+          
+          if (line.startsWith('##')) {
+            title = line.replace(/^##+\\s*/, '');
+            contentLines.push(line);
+            continue;
+          }
+          
+          const optionMatch = line.match(/^[-*+]\\s+\\[(.*?)\\]\\s*->\\s*#?([a-zA-Z0-9_-]+)/);
+          if (optionMatch) {
+            options.push({
+              text: optionMatch[1],
+              target: optionMatch[2].toLowerCase()
+            });
+          } else {
+            contentLines.push(lines[i]);
+          }
+        }
+        
+        if (!id) id = index === 0 ? 'inicio' : \`paso-\${index}\`;
+        if (!title) title = id.charAt(0).toUpperCase() + id.slice(1);
+        
+        parsedNodes[id] = {
+          id: id,
+          title: title,
+          content: contentLines.join('\\n'),
+          options: options
+        };
+      });
+      
+      return parsedNodes;
+    }
+
+    function renderActiveNode() {
+      if (!nodes[activeNodeId]) activeNodeId = Object.keys(nodes)[0] || 'inicio';
+      const node = nodes[activeNodeId];
+      if (!node) return;
+      
+      document.getElementById('dilemma-html').innerHTML = marked.parse(node.content);
+      
+      const optContainer = document.getElementById('dilemma-options');
+      optContainer.innerHTML = '';
+      
+      if (node.options && node.options.length > 0) {
+        node.options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'option-button';
+          btn.innerHTML = \`
+            <span>\${opt.text}</span>
+            <span class="option-icon"><i class="fa-solid fa-circle-arrow-right"></i></span>
+          \`;
+          btn.onclick = () => navigateToNode(opt.target);
+          optContainer.appendChild(btn);
+        });
+      } else {
+        const btn = document.createElement('button');
+        btn.className = 'option-button';
+        btn.innerHTML = \`
+          <span>🔄 Volver a empezar (Fin de la simulación)</span>
+          <span class="option-icon"><i class="fa-solid fa-rotate-left"></i></span>
+        \`;
+        btn.onclick = () => resetSimulation();
+        optContainer.appendChild(btn);
+      }
+    }
+
+    function navigateToNode(nodeId) {
+      if (nodes[nodeId]) {
+        activeNodeId = nodeId;
+        simulationHistory.push(nodeId);
+        renderActiveNode();
+        renderBreadcrumbs();
+      }
+    }
+
+    function renderBreadcrumbs() {
+      const list = document.getElementById('path-list');
+      list.innerHTML = '';
+      
+      simulationHistory.forEach((id, index) => {
+        const node = nodes[id];
+        const title = node ? node.title : id;
+        
+        const item = document.createElement('div');
+        item.className = \`path-item \${index === simulationHistory.length - 1 ? 'active' : ''}\`;
+        item.textContent = title;
+        item.onclick = () => {
+          simulationHistory = simulationHistory.slice(0, index + 1);
+          activeNodeId = id;
+          renderActiveNode();
+          renderBreadcrumbs();
+        };
+        
+        list.appendChild(item);
+        
+        if (index < simulationHistory.length - 1) {
+          const sep = document.createElement('span');
+          sep.className = 'path-separator';
+          sep.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+          list.appendChild(sep);
+        }
+      });
+    }
+
+    function resetSimulation() {
+      activeNodeId = 'inicio';
+      simulationHistory = ['inicio'];
+      renderActiveNode();
+      renderBreadcrumbs();
+    }
+
+    function toggleView(view) {
+      const btnPlayer = document.getElementById('btn-show-player');
+      const btnMap = document.getElementById('btn-show-map');
+      const viewPlayer = document.getElementById('player-view');
+      const viewMap = document.getElementById('map-view');
+      
+      if (view === 'player') {
+        btnPlayer.classList.add('btn-primary');
+        btnMap.classList.remove('btn-primary');
+        viewPlayer.style.display = 'block';
+        viewMap.style.display = 'none';
+      } else {
+        btnPlayer.classList.remove('btn-primary');
+        btnMap.classList.add('btn-primary');
+        viewPlayer.style.display = 'none';
+        viewMap.style.display = 'flex';
+        renderTreeMap();
+      }
+    }
+
+    function renderTreeMap() {
+      const container = document.getElementById('tree-map-container');
+      container.innerHTML = '';
+      
+      const depths = {};
+      const queue = ['inicio'];
+      depths['inicio'] = 0;
+      const visited = new Set(['inicio']);
+      
+      while (queue.length > 0) {
+        const current = queue.shift();
+        const currentDepth = depths[current];
+        const node = nodes[current];
+        
+        if (node && node.options) {
+          node.options.forEach(opt => {
+            const target = opt.target;
+            if (!visited.has(target)) {
+              visited.add(target);
+              depths[target] = currentDepth + 1;
+              queue.push(target);
+            }
+          });
+        }
+      }
+      
+      Object.keys(nodes).forEach(id => {
+        if (depths[id] === undefined) depths[id] = 0;
+      });
+      
+      const columns = {};
+      Object.keys(nodes).forEach(id => {
+        const d = depths[id];
+        if (!columns[d]) columns[d] = [];
+        columns[d].push(id);
+      });
+      
+      const colWidth = 240;
+      const rowHeight = 120;
+      const nodePositions = {};
+      
+      const mapWrapper = document.createElement('div');
+      mapWrapper.className = 'map-wrapper';
+      mapWrapper.style.position = 'relative';
+      container.appendChild(mapWrapper);
+      
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.style.position = 'absolute';
+      svg.style.top = '0';
+      svg.style.left = '0';
+      svg.style.width = '100%';
+      svg.style.height = '100%';
+      svg.style.pointerEvents = 'none';
+      svg.style.zIndex = '1';
+      mapWrapper.appendChild(svg);
+      
+      const maxDepth = Math.max(...Object.keys(columns).map(Number), 0);
+      let totalWidth = (maxDepth + 1) * colWidth + 80;
+      let maxHeight = 0;
+      
+      Object.keys(columns).forEach(colStr => {
+        const col = Number(colStr);
+        const colNodes = columns[col];
+        const colHeight = colNodes.length * rowHeight;
+        if (colHeight > maxHeight) maxHeight = colHeight;
+        
+        colNodes.forEach((id, rowIndex) => {
+          const node = nodes[id];
+          const x = col * colWidth + 20;
+          const y = rowIndex * rowHeight + 20;
+          
+          nodePositions[id] = { x: x + 90, y: y + 30 };
+          
+          const card = document.createElement('div');
+          card.className = \`map-node-card \${activeNodeId === id ? 'active' : ''}\`;
+          card.style.position = 'absolute';
+          card.style.left = \`\${x}px\`;
+          card.style.top = \`\${y}px\`;
+          card.style.width = '180px';
+          card.style.height = '60px';
+          card.style.zIndex = '2';
+          card.innerHTML = \`
+            <div class="node-id">#\${id}</div>
+            <div class="node-title" title="\${node.title}">\${node.title}</div>
+          \`;
+          card.onclick = () => {
+            activeNodeId = id;
+            renderActiveNode();
+            document.querySelectorAll('.map-node-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            toggleView('player');
+          };
+          mapWrapper.appendChild(card);
+        });
+      });
+      
+      Object.keys(nodes).forEach(id => {
+        const node = nodes[id];
+        if (node && node.options && nodePositions[id]) {
+          const startPos = nodePositions[id];
+          node.options.forEach(opt => {
+            const target = opt.target;
+            const endPos = nodePositions[target];
+            if (endPos) {
+              const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              const dx = endPos.x - startPos.x;
+              
+              const cp1x = startPos.x + dx / 2;
+              const cp1y = startPos.y;
+              const cp2x = startPos.x + dx / 2;
+              const cp2y = endPos.y;
+              
+              const dStr = \`M \${startPos.x} \${startPos.y} C \${cp1x} \${cp1y}, \${cp2x} \${cp2y}, \${endPos.x} \${endPos.y}\`;
+              
+              path.setAttribute('d', dStr);
+              path.setAttribute('stroke', 'rgba(${themeConfig.rgb}, 0.45)');
+              path.setAttribute('stroke-width', '2');
+              path.setAttribute('fill', 'none');
+              path.setAttribute('marker-end', 'url(#map-arrow-export)');
+              svg.appendChild(path);
+            }
+          });
+        }
+      });
+      
+      mapWrapper.style.width = \`\${totalWidth}px\`;
+      mapWrapper.style.height = \`\${maxHeight + 80}px\`;
+      svg.setAttribute('width', \`\${totalWidth}\`);
+      svg.setAttribute('height', \`\${maxHeight + 80}\`);
+      
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+      marker.setAttribute('id', 'map-arrow-export');
+      marker.setAttribute('viewBox', '0 0 10 10');
+      marker.setAttribute('refX', '8');
+      marker.setAttribute('refY', '5');
+      marker.setAttribute('markerWidth', '5');
+      marker.setAttribute('markerHeight', '5');
+      marker.setAttribute('orient', 'auto-start-reverse');
+      
+      const markerPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      markerPath.setAttribute('d', 'M 0 1 L 10 5 L 0 9 z');
+      markerPath.setAttribute('fill', 'rgba(${themeConfig.rgb}, 0.8)');
+      
+      marker.appendChild(markerPath);
+      defs.appendChild(marker);
+      svg.appendChild(defs);
+    }
+  <\/script>
+</body>
+</html>`;
+
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `dilema_${activeNodeId}.html`;
+      a.click();
+      showToast('Dilema exportado con éxito como HTML auto-contenido.');
+    }
+  </script>
+</body>
+</html>
