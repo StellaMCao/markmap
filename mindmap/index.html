@@ -302,6 +302,35 @@
       flex: 1;
       position: relative;
       overflow: hidden;
+      transition: background 0.3s ease;
+    }
+
+    /* Background themes for canvas container */
+    .bg-theme-deep {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(var(--accent-rgb), 0.12) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(31, 41, 55, 0.5) 0px, transparent 50%);
+    }
+    
+    .bg-theme-grid {
+      background-color: #080b11;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        radial-gradient(at 10% 20%, rgba(var(--accent-rgb), 0.06) 0px, transparent 40%);
+      background-size: 24px 24px, 100% 100%;
+    }
+    
+    .bg-theme-neuro {
+      background-color: #0a0518;
+      background-image: 
+        radial-gradient(at 50% 50%, rgba(var(--accent-rgb), 0.15) 0px, transparent 60%),
+        radial-gradient(at 20% 80%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
+    }
+    
+    .bg-theme-minimal {
+      background-color: #111317;
+      background-image: none;
     }
 
     #mindmap-canvas {
@@ -666,6 +695,9 @@
         <button class="btn btn-xs" onclick="insertSyntax('node')" style="padding: 4px 8px; font-size: 11px;">
           <i class="fa-solid fa-circle-dot"></i> Añadir concepto Outline
         </button>
+        <button class="btn btn-xs" onclick="insertSyntax('image')" style="padding: 4px 8px; font-size: 11px;">
+          <i class="fa-solid fa-image"></i> Añadir concepto con imagen
+        </button>
         <button class="btn btn-xs" onclick="insertSyntax('conn')" style="padding: 4px 8px; font-size: 11px;">
           <i class="fa-solid fa-link"></i> Enlace cruzado (id1 -> id2)
         </button>
@@ -687,13 +719,21 @@
     <div class="viewer-pane">
       <div class="pane-header">
         <span class="pane-title"><i class="fa-solid fa-eye"></i> Vista previa</span>
-        <div class="tab-container">
-          <button class="tab-btn active" id="tab-canvas" onclick="switchTab('canvas')">
-            <i class="fa-solid fa-diagram-project"></i> 🗺️ Mapa mental
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn" onclick="collapseAllNodes()" style="padding: 5px 10px; font-size: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);" title="Contraer todas las ramas">
+            <i class="fa-solid fa-folder"></i> Contraer todo
           </button>
-          <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">
-            <i class="fa-solid fa-sliders"></i> ⚙️ Ajustes del gráfico
+          <button class="btn" onclick="expandAllNodes()" style="padding: 5px 10px; font-size: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);" title="Expandir todas las ramas">
+            <i class="fa-solid fa-folder-open"></i> Expandir todo
           </button>
+          <div class="tab-container">
+            <button class="tab-btn active" id="tab-canvas" onclick="switchTab('canvas')">
+              <i class="fa-solid fa-diagram-project"></i> 🗺️ Mapa mental
+            </button>
+            <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">
+              <i class="fa-solid fa-sliders"></i> ⚙️ Ajustes del gráfico
+            </button>
+          </div>
         </div>
       </div>
 
@@ -718,6 +758,52 @@
                 <option value="hierarchical-v">📐 Jerárquico vertical (Árbol)</option>
                 <option value="hierarchical-h">📐 Jerárquico horizontal (Organigrama)</option>
               </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <span>Curvatura de conectores</span>
+            <div class="setting-control">
+              <select class="preset-select" id="edge-smooth-selector" onchange="editorChanged()">
+                <option value="smooth">〰️ Curvas suaves</option>
+                <option value="straight">📐 Líneas rectas</option>
+                <option value="dynamic">🌀 Curvas dinámicas</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <span>Mostrar flechas de dirección</span>
+            <div class="setting-control">
+              <label class="switch-label">
+                <input type="checkbox" id="arrows-toggle" onchange="editorChanged()">
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aesthetics and Style -->
+        <div class="settings-group">
+          <div class="settings-group-title">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Estética y personalización
+          </div>
+          <div class="setting-row">
+            <span>Estilo de fondo del lienzo</span>
+            <div class="setting-control">
+              <select class="preset-select" id="canvas-bg-selector" onchange="updateCanvasBg()">
+                <option value="deep">🌌 Espacio profundo</option>
+                <option value="grid">🩻 Rejilla técnica (Grid)</option>
+                <option value="neuro">🧠 Neuro-activa (Luz suave)</option>
+                <option value="minimal">🌚 Gris minimalista</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <span>Estructura visual por niveles</span>
+            <div class="setting-control">
+              <label class="switch-label">
+                <input type="checkbox" id="level-styling-toggle" checked onchange="editorChanged()">
+                <span class="slider-switch"></span>
+              </label>
             </div>
           </div>
         </div>
@@ -790,7 +876,7 @@
       
       <pre># Circuito de Dopamina ⚡
 ## Nodos
-- [vta] Área Tegmental Ventral (shape: circle, color: #3b82f6, size: 26)
+- [vta] Área Tegmental Ventral (shape: circularImage, image: "https://upload.wikimedia.org/wikipedia/commons/1/14/Gromet_Neuron.png", size: 30)
 - [accumbens] Núcleo Accumbens (shape: box, color: #ec4899)
 - [dopamina] Liberación de Dopamina (color: #f59e0b)
 
@@ -800,7 +886,7 @@
 
       <h3><i class="fa-solid fa-list-check"></i> Atributos disponibles:</h3>
       <ul>
-        <li><strong>Nodos</strong>: <code>shape: [circle, box, database, ellipse]</code>, <code>color: [hex]</code>, <code>size: [número]</code>.</li>
+        <li><strong>Nodos</strong>: <code>shape: [circle, box, database, ellipse, image, circularImage]</code>, <code>image: "https://url-imagen.png"</code>, <code>color: [hex]</code>, <code>size: [número]</code>. Puedes usar estos atributos tanto en listas simples (Outline) como en redes avanzadas.</li>
         <li><strong>Conexiones</strong>: <code>label: "texto"</code>, <code>style: [solid, dashed, dotted]</code>, <code>color: [hex]</code>.</li>
       </ul>
 
@@ -919,6 +1005,9 @@
       // Update themes, sizes & render Vis
       updateTheme();
       
+      // Update canvas background style
+      updateCanvasBg();
+      
       // Dragging Panel initializer
       makeElementDraggable(helpPanel);
 
@@ -981,6 +1070,16 @@
       }
       
       editorChanged();
+    }
+
+    function updateCanvasBg() {
+      const bgSelector = document.getElementById('canvas-bg-selector');
+      const val = bgSelector ? bgSelector.value : 'deep';
+      const container = document.getElementById('canvas-tab-content');
+      if (!container) return;
+      
+      container.className = 'canvas-container';
+      container.classList.add(`bg-theme-${val}`);
     }
 
     // Load presets
@@ -1068,7 +1167,8 @@
                 originalLabel: label || id,
                 shape: attrs.shape || 'ellipse',
                 color: attrs.color || undefined,
-                size: attrs.size ? Number(attrs.size) : undefined
+                size: attrs.size ? Number(attrs.size) : undefined,
+                image: attrs.image || undefined
               });
               nodeIds.add(id);
             }
@@ -1118,14 +1218,22 @@
           if (!trimmed) return;
           
           if (line.startsWith('# ')) {
-            const label = line.substring(2).trim();
+            const rawLabel = line.substring(2).trim();
+            const attrMatch = rawLabel.match(/^(.*?)(?:\s*\((.*?)\))?$/);
+            const label = attrMatch[1].trim();
+            const attrStr = attrMatch[2] || '';
+            const attrs = parseAttributes(attrStr);
             const id = 'root';
+            
             rootNode = {
               id: id,
               label: label,
               originalLabel: label,
-              shape: 'circle',
-              size: 28,
+              depth: 0,
+              shape: attrs.shape || 'circle',
+              color: attrs.color || undefined,
+              size: attrs.size ? Number(attrs.size) : 28,
+              image: attrs.image || undefined,
               font: { size: 16, bold: true }
             };
             nodes.push(rootNode);
@@ -1136,7 +1244,14 @@
           const listMatch = line.match(/^(\s*)[-*+]\s+(.*?)$/);
           if (listMatch) {
             const indent = listMatch[1].length;
-            const label = listMatch[2].trim();
+            const rawLabel = listMatch[2].trim();
+            
+            // Extract optional custom attributes in Outline Mode
+            const attrMatch = rawLabel.match(/^(.*?)(?:\s*\((.*?)\))?$/);
+            const label = attrMatch[1].trim();
+            const attrStr = attrMatch[2] || '';
+            const attrs = parseAttributes(attrStr);
+            
             const id = `node-${nodeIdCounter++}`;
             
             if (!rootNode) {
@@ -1144,6 +1259,7 @@
                 id: 'root',
                 label: 'Mapa mental',
                 originalLabel: 'Mapa mental',
+                depth: 0,
                 shape: 'circle',
                 size: 28,
                 font: { size: 16, bold: true }
@@ -1171,14 +1287,20 @@
               id: id,
               label: label,
               originalLabel: label,
-              shape: shape,
-              size: size
+              depth: depth,
+              shape: attrs.shape || shape,
+              color: attrs.color || undefined,
+              size: attrs.size ? Number(attrs.size) : size,
+              image: attrs.image || undefined
             });
+            
+            const arrowsToggle = document.getElementById('arrows-toggle');
+            const showArrows = arrowsToggle ? arrowsToggle.checked : false;
             
             edges.push({
               from: parent.id,
               to: id,
-              arrows: '' // Radial mindmap usually has no arrows
+              arrows: showArrows ? 'to' : ''
             });
             
             parentStack.push({ id: id, indent: indent, label: label });
@@ -1224,6 +1346,27 @@
       
       const activeColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
       
+      const smoothSelector = document.getElementById('edge-smooth-selector');
+      const smoothVal = smoothSelector ? smoothSelector.value : 'smooth';
+      
+      let smoothOpt = false;
+      if (smoothVal === 'smooth') {
+        smoothOpt = {
+          enabled: true,
+          type: 'cubicBezier',
+          forceDirection: 'none',
+          roundness: 0.5
+        };
+      } else if (smoothVal === 'dynamic') {
+        smoothOpt = {
+          enabled: true,
+          type: 'dynamic',
+          roundness: 0.5
+        };
+      } else {
+        smoothOpt = false;
+      }
+
       const options = {
         nodes: {
           borderWidth: 2,
@@ -1243,6 +1386,7 @@
         },
         edges: {
           width: 2.2,
+          smooth: smoothOpt,
           shadow: {
             enabled: true,
             color: 'rgba(0,0,0,0.3)',
@@ -1282,25 +1426,74 @@
         }
       };
 
+      const levelStylingToggle = document.getElementById('level-styling-toggle');
+      const isLevelStylingEnabled = levelStylingToggle ? levelStylingToggle.checked : true;
+
       // Add dynamic coloring/styles to nodes that don't have custom ones
       data.nodes.forEach(node => {
+        // Handle image nodes shape and URL loading
+        if ((node.shape === 'image' || node.shape === 'circularImage') && node.image) {
+          data.nodes.update({
+            id: node.id,
+            shape: node.shape,
+            image: node.image
+          });
+        }
+
         if (!node.color) {
-          if (node.id === 'root') {
-            data.nodes.update({
-              id: node.id,
-              color: { background: activeColor, border: activeColor },
-              font: { color: '#ffffff', bold: true }
-            });
-          } else if (node.shape === 'box') {
-            data.nodes.update({
-              id: node.id,
-              color: { background: 'rgba(255,255,255,0.08)', border: activeColor }
-            });
+          if (isLevelStylingEnabled && node.depth !== undefined) {
+            // Apply depth-based styling
+            if (node.depth === 0) {
+              data.nodes.update({
+                id: node.id,
+                shape: node.shape || 'circle',
+                size: 28,
+                color: { background: activeColor, border: activeColor },
+                font: { color: '#ffffff', bold: true, size: 16 }
+              });
+            } else if (node.depth === 1) {
+              data.nodes.update({
+                id: node.id,
+                shape: node.shape || 'box',
+                size: 22,
+                color: { background: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()}, 0.15)`, border: activeColor },
+                font: { color: '#ffffff', bold: true, size: 14 }
+              });
+            } else if (node.depth === 2) {
+              data.nodes.update({
+                id: node.id,
+                shape: node.shape || 'ellipse',
+                size: 18,
+                color: { background: 'rgba(255,255,255,0.06)', border: `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()}, 0.4)` },
+                font: { color: '#e5e7eb', size: 13 }
+              });
+            } else {
+              // Level 3+ gets pure text for a clean modern minimal outline look!
+              data.nodes.update({
+                id: node.id,
+                shape: node.shape || 'text',
+                font: { color: '#d1d5db', size: 12 }
+              });
+            }
           } else {
-            data.nodes.update({
-              id: node.id,
-              color: { background: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.18)' }
-            });
+            // Default styling if level styling is disabled or depth is undefined
+            if (node.id === 'root') {
+              data.nodes.update({
+                id: node.id,
+                color: { background: activeColor, border: activeColor },
+                font: { color: '#ffffff', bold: true }
+              });
+            } else if (node.shape === 'box') {
+              data.nodes.update({
+                id: node.id,
+                color: { background: 'rgba(255,255,255,0.08)', border: activeColor }
+              });
+            } else {
+              data.nodes.update({
+                id: node.id,
+                color: { background: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.18)' }
+              });
+            }
           }
         } else {
           // Keep custom background color, style border nicely
@@ -1430,6 +1623,111 @@
       });
     }
 
+    function expandAllNodes() {
+      if (!nodesDataset) return;
+      
+      const allNodes = nodesDataset.get();
+      allNodes.forEach(node => {
+        const origLabel = node.originalLabel || node.label;
+        nodesDataset.update({
+          id: node.id,
+          collapsed: false,
+          originalLabel: origLabel,
+          label: origLabel,
+          hidden: false,
+          borderWidth: 2,
+          shapeProperties: {
+            borderDashes: false
+          }
+        });
+      });
+      
+      const allEdges = edgesDataset.get();
+      allEdges.forEach(edge => {
+        edgesDataset.update({
+          id: edge.id,
+          hidden: false
+        });
+      });
+      
+      showToast('Todo el mapa ha sido expandido.');
+    }
+
+    function collapseAllNodes() {
+      if (!nodesDataset || !edgesDataset) return;
+      
+      const allNodes = nodesDataset.get();
+      const allEdges = edgesDataset.get();
+      
+      const hasDepth = allNodes.some(n => n.depth !== undefined);
+      
+      allNodes.forEach(node => {
+        const origLabel = node.originalLabel || node.label;
+        const hasChildren = allEdges.some(e => e.from === node.id);
+        
+        let shouldHide = false;
+        let setCollapsed = false;
+        
+        if (hasDepth) {
+          if (node.depth === 0) {
+            shouldHide = false;
+            setCollapsed = hasChildren;
+          } else if (node.depth === 1) {
+            shouldHide = false;
+            setCollapsed = hasChildren;
+          } else {
+            shouldHide = true;
+            setCollapsed = hasChildren;
+          }
+        } else {
+          const hasParents = allEdges.some(e => e.to === node.id);
+          if (!hasParents) {
+            shouldHide = false;
+            setCollapsed = hasChildren;
+          } else {
+            const connectedFromSource = allEdges.some(e => {
+              if (e.to !== node.id) return false;
+              const parentHasParents = allEdges.some(pe => pe.to === e.from);
+              return !parentHasParents;
+            });
+            
+            if (connectedFromSource) {
+              shouldHide = false;
+              setCollapsed = hasChildren;
+            } else {
+              shouldHide = true;
+              setCollapsed = hasChildren;
+            }
+          }
+        }
+        
+        nodesDataset.update({
+          id: node.id,
+          collapsed: setCollapsed,
+          originalLabel: origLabel,
+          label: setCollapsed ? `${origLabel} [+]` : origLabel,
+          hidden: shouldHide,
+          borderWidth: setCollapsed ? 3 : 2,
+          shapeProperties: {
+            borderDashes: setCollapsed ? [4, 4] : false
+          }
+        });
+      });
+      
+      allEdges.forEach(edge => {
+        const fromNode = nodesDataset.get(edge.from);
+        const toNode = nodesDataset.get(edge.to);
+        const showEdge = fromNode && !fromNode.hidden && toNode && !toNode.hidden && !fromNode.collapsed;
+        
+        edgesDataset.update({
+          id: edge.id,
+          hidden: !showEdge
+        });
+      });
+      
+      showToast('Mapa contraído a categorías principales.');
+    }
+
     // Switch Tabs
     function switchTab(tab) {
       currentTab = tab;
@@ -1489,6 +1787,8 @@
         inserted = '\n- [c1] Concepto (shape: box, color: #ec4899)\n';
       } else if (type === 'conn') {
         inserted = '\n- c1 -> c2 (label: "Relación", style: dashed)\n';
+      } else if (type === 'image') {
+        inserted = '\n- [neuron] Neurona 🧠 (shape: circularImage, image: "https://upload.wikimedia.org/wikipedia/commons/1/14/Gromet_Neuron.png", size: 32)\n';
       }
       
       editor.value = text.substring(0, start) + inserted + text.substring(end);
@@ -1590,6 +1890,14 @@
       const physicsValue = document.getElementById('physics-toggle').checked;
       const springLengthValue = Number(document.getElementById('spring-length').value) || 150;
       
+      // Get current active states to embed
+      const collapsedNodeIds = nodesDataset ? nodesDataset.get({ filter: n => n.collapsed === true }).map(n => n.id) : [];
+      const fixedNodeIds = nodesDataset ? nodesDataset.get({ filter: n => n.physics === false }).map(n => n.id) : [];
+      const edgeSmoothValue = document.getElementById('edge-smooth-selector').value;
+      const arrowsToggleValue = document.getElementById('arrows-toggle').checked;
+      const canvasBgValue = document.getElementById('canvas-bg-selector').value;
+      const levelStylingValue = document.getElementById('level-styling-toggle').checked;
+      
       const colorMap = {
         mindmap: { accent: '#3b82f6', rgb: '59, 130, 246', hover: '#2563eb' },
         neuro: { accent: '#8b5cf6', rgb: '139, 92, 246', hover: '#7c3aed' },
@@ -1615,7 +1923,7 @@
   <style>
     :root {
       --bg: #0b0f19;
-      --panel-bg: rgba(17, 24, 39, 0.75);
+      --panel-bg: rgba(17, 24, 39, 0.85);
       --panel-border: rgba(255, 255, 255, 0.08);
       --text: #f3f4f6;
       --text-muted: #9ca3af;
@@ -1628,16 +1936,47 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background-color: var(--bg);
-      background-image: 
-        radial-gradient(at 10% 20%, rgba(var(--accent-rgb), 0.12) 0px, transparent 50%),
-        radial-gradient(at 90% 80%, rgba(31, 41, 55, 0.5) 0px, transparent 50%);
-      background-attachment: fixed;
       color: var(--text);
       font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
       height: 100vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+    }
+
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s ease;
+    }
+
+    /* Background themes for canvas container */
+    .bg-theme-deep {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(var(--accent-rgb), 0.12) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(31, 41, 55, 0.5) 0px, transparent 50%);
+    }
+    
+    .bg-theme-grid {
+      background-color: #080b11;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        radial-gradient(at 10% 20%, rgba(var(--accent-rgb), 0.06) 0px, transparent 40%);
+      background-size: 24px 24px, 100% 100%;
+    }
+    
+    .bg-theme-neuro {
+      background-color: #0a0518;
+      background-image: 
+        radial-gradient(at 50% 50%, rgba(var(--accent-rgb), 0.15) 0px, transparent 60%),
+        radial-gradient(at 20% 80%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
+    }
+    
+    .bg-theme-minimal {
+      background-color: #111317;
+      background-image: none;
     }
 
     header {
@@ -1729,10 +2068,10 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       z-index: 10;
       backdrop-filter: blur(12px);
-      width: 250px;
+      width: 260px;
     }
 
     .control-row {
@@ -1803,7 +2142,9 @@
 
   <header>
     <h1>Mapa Mental Interactivo</h1>
-    <div style="display: flex; align-items: center; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button class="btn" onclick="collapseAllNodes()"><i class="fa-solid fa-folder"></i> Contraer todo</button>
+      <button class="btn" onclick="expandAllNodes()"><i class="fa-solid fa-folder-open"></i> Expandir todo</button>
       <select class="select-layout" id="layout-selector" onchange="renderGraph()">
         <option value="force" ${layoutValue === 'force' ? 'selected' : ''}>🪐 Distribución libre</option>
         <option value="hierarchical-v" ${layoutValue === 'hierarchical-v' ? 'selected' : ''}>📐 Árbol vertical</option>
@@ -1814,12 +2155,47 @@
   </header>
 
   <main>
-    <div id="canvas-container"></div>
+    <div id="canvas-container" class="canvas-container bg-theme-${canvasBgValue}"></div>
     
     <!-- Controls Overlay -->
     <div class="controls-overlay">
       <div style="font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; text-transform: uppercase;">Ajustes del gráfico</div>
       
+      <div class="control-row" id="row-bg">
+        <span>Fondo</span>
+        <select class="select-layout" id="canvas-bg-selector" onchange="updateCanvasBg()" style="padding: 2px 6px; font-size: 11px;">
+          <option value="deep" ${canvasBgValue === 'deep' ? 'selected' : ''}>🌌 Espacio profundo</option>
+          <option value="grid" ${canvasBgValue === 'grid' ? 'selected' : ''}>🩻 Rejilla técnica</option>
+          <option value="neuro" ${canvasBgValue === 'neuro' ? 'selected' : ''}>🧠 Neuro-activa</option>
+          <option value="minimal" ${canvasBgValue === 'minimal' ? 'selected' : ''}>🌚 Gris minimalista</option>
+        </select>
+      </div>
+
+      <div class="control-row" id="row-smooth">
+        <span>Conectores</span>
+        <select class="select-layout" id="edge-smooth-selector" onchange="renderGraph()" style="padding: 2px 6px; font-size: 11px;">
+          <option value="smooth" ${edgeSmoothValue === 'smooth' ? 'selected' : ''}>〰️ Suave</option>
+          <option value="straight" ${edgeSmoothValue === 'straight' ? 'selected' : ''}>📐 Recto</option>
+          <option value="dynamic" ${edgeSmoothValue === 'dynamic' ? 'selected' : ''}>🌀 Dinámico</option>
+        </select>
+      </div>
+
+      <div class="control-row" id="row-arrows">
+        <span>Flechas</span>
+        <label class="switch-label">
+          <input type="checkbox" id="arrows-toggle" ${arrowsToggleValue ? 'checked' : ''} onchange="renderGraph()">
+          <span class="slider-switch"></span>
+        </label>
+      </div>
+
+      <div class="control-row" id="row-levels">
+        <span>Niveles</span>
+        <label class="switch-label">
+          <input type="checkbox" id="level-styling-toggle" ${levelStylingValue ? 'checked' : ''} onchange="renderGraph()">
+          <span class="slider-switch"></span>
+        </label>
+      </div>
+
       <div class="control-row" id="row-physics">
         <span>Físicas activas</span>
         <label class="switch-label">
@@ -1833,9 +2209,9 @@
         <input type="range" id="spring-length" class="slider" min="80" max="300" value="${springLengthValue}" oninput="renderGraph()">
       </div>
 
-      <div style="font-size: 10px; color: var(--text-muted); line-height: 1.45; margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
-        <p><i class="fa-solid fa-circle-info"></i> Haz <b>doble clic</b> en un concepto con ramificaciones para contraer o expander su rama.</p>
-        <p><i class="fa-solid fa-lock"></i> Mantén presionado <b>Ctrl</b> (o <b>Shift</b>) y haz <b>doble clic</b> para fijar/soltar su posición.</p>
+      <div style="font-size: 10px; color: var(--text-muted); line-height: 1.45; margin-top: 4px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px;">
+        <p><i class="fa-solid fa-circle-info"></i> Haz <b>doble clic</b> en un concepto para contraer o expandir su rama.</p>
+        <p><i class="fa-solid fa-lock"></i> Mantén presionado <b>Ctrl</b> (o <b>Shift</b>) y haz <b>doble clic</b> para fijar su posición.</p>
       </div>
     </div>
   </main>
@@ -1848,6 +2224,10 @@
     let network = null;
     let nodesDataset = null;
     let edgesDataset = null;
+
+    // Restore arrays from pre-rendered states
+    const initialCollapsedIds = ${JSON.stringify(collapsedNodeIds)};
+    const initialFixedNodeIds = ${JSON.stringify(fixedNodeIds)};
 
     window.addEventListener('DOMContentLoaded', () => {
       renderGraph();
@@ -1890,7 +2270,8 @@
                 originalLabel: label || id,
                 shape: attrs.shape || 'ellipse',
                 color: attrs.color || undefined,
-                size: attrs.size ? Number(attrs.size) : undefined
+                size: attrs.size ? Number(attrs.size) : undefined,
+                image: attrs.image || undefined
               });
               nodeIds.add(id);
             }
@@ -1939,14 +2320,22 @@
           if (!trimmed) return;
           
           if (line.startsWith('# ')) {
-            const label = line.substring(2).trim();
+            const rawLabel = line.substring(2).trim();
+            const attrMatch = rawLabel.match(/^(.*?)(?:\s*\\((.*?)\\))?$/);
+            const label = attrMatch[1].trim();
+            const attrStr = attrMatch[2] || '';
+            const attrs = parseAttributes(attrStr);
             const id = 'root';
+            
             rootNode = {
               id: id,
               label: label,
               originalLabel: label,
-              shape: 'circle',
-              size: 28,
+              depth: 0,
+              shape: attrs.shape || 'circle',
+              color: attrs.color || undefined,
+              size: attrs.size ? Number(attrs.size) : 28,
+              image: attrs.image || undefined,
               font: { size: 16, bold: true }
             };
             nodes.push(rootNode);
@@ -1957,7 +2346,13 @@
           const listMatch = line.match(/^(\\s*)[-*+]\\s+(.*?)$/);
           if (listMatch) {
             const indent = listMatch[1].length;
-            const label = listMatch[2].trim();
+            const rawLabel = listMatch[2].trim();
+            
+            const attrMatch = rawLabel.match(/^(.*?)(?:\s*\\((.*?)\\))?$/);
+            const label = attrMatch[1].trim();
+            const attrStr = attrMatch[2] || '';
+            const attrs = parseAttributes(attrStr);
+            
             const id = \`node-\${nodeIdCounter++}\`;
             
             if (!rootNode) {
@@ -1965,6 +2360,7 @@
                 id: 'root',
                 label: 'Mapa mental',
                 originalLabel: 'Mapa mental',
+                depth: 0,
                 shape: 'circle',
                 size: 28,
                 font: { size: 16, bold: true }
@@ -1992,8 +2388,11 @@
               id: id,
               label: label,
               originalLabel: label,
-              shape: shape,
-              size: size
+              depth: depth,
+              shape: attrs.shape || shape,
+              color: attrs.color || undefined,
+              size: attrs.size ? Number(attrs.size) : size,
+              image: attrs.image || undefined
             });
             
             edges.push({
@@ -2026,6 +2425,16 @@
       return attrs;
     }
 
+    function updateCanvasBg() {
+      const bgSelector = document.getElementById('canvas-bg-selector');
+      const val = bgSelector ? bgSelector.value : 'deep';
+      const container = document.getElementById('canvas-container');
+      if (!container) return;
+      
+      container.className = 'canvas-container';
+      container.classList.add(\`bg-theme-\${val}\`);
+    }
+
     function renderGraph() {
       const container = document.getElementById('canvas-container');
       const parsedData = parseMindmap(rawMarkdown);
@@ -2041,6 +2450,33 @@
       const layoutType = document.getElementById('layout-selector').value;
       const isPhysicsEnabled = document.getElementById('physics-toggle').checked;
       const springLength = Number(document.getElementById('spring-length').value) || 150;
+      
+      const smoothSelector = document.getElementById('edge-smooth-selector');
+      const smoothVal = smoothSelector ? smoothSelector.value : 'smooth';
+      
+      let smoothOpt = false;
+      if (smoothVal === 'smooth') {
+        smoothOpt = {
+          enabled: true,
+          type: 'cubicBezier',
+          forceDirection: 'none',
+          roundness: 0.5
+        };
+      } else if (smoothVal === 'dynamic') {
+        smoothOpt = {
+          enabled: true,
+          type: 'dynamic',
+          roundness: 0.5
+        };
+      } else {
+        smoothOpt = false;
+      }
+      
+      const arrowsToggle = document.getElementById('arrows-toggle');
+      const showArrows = arrowsToggle ? arrowsToggle.checked : false;
+
+      const levelStylingToggle = document.getElementById('level-styling-toggle');
+      const isLevelStylingEnabled = levelStylingToggle ? levelStylingToggle.checked : true;
       
       // Update UI row visibilities
       const rowPhysics = document.getElementById('row-physics');
@@ -2065,6 +2501,7 @@
         },
         edges: {
           width: 2.2,
+          smooth: smoothOpt,
           shadow: { enabled: true, color: 'rgba(0,0,0,0.3)', size: 3, x: 0, y: 2 },
           font: { face: 'Inter', size: 11, color: '#a1a1aa', strokeWidth: 0, align: 'horizontal' },
           color: {
@@ -2088,23 +2525,66 @@
       };
 
       data.nodes.forEach(node => {
+        // Load custom image/circularImage URLs
+        if ((node.shape === 'image' || node.shape === 'circularImage') && node.image) {
+          data.nodes.update({
+            id: node.id,
+            shape: node.shape,
+            image: node.image
+          });
+        }
+        
         if (!node.color) {
-          if (node.id === 'root') {
-            data.nodes.update({
-              id: node.id,
-              color: { background: 'var(--accent)', border: 'var(--accent)' },
-              font: { color: '#ffffff', bold: true }
-            });
-          } else if (node.shape === 'box') {
-            data.nodes.update({
-              id: node.id,
-              color: { background: 'rgba(255,255,255,0.08)', border: 'var(--accent)' }
-            });
+          if (isLevelStylingEnabled && node.depth !== undefined) {
+            if (node.depth === 0) {
+              data.nodes.update({
+                id: node.id,
+                shape: node.shape || 'circle',
+                size: 28,
+                color: { background: 'var(--accent)', border: 'var(--accent)' },
+                font: { color: '#ffffff', bold: true, size: 16 }
+              });
+            } else if (node.depth === 1) {
+              data.nodes.update({
+                id: node.id,
+                shape: node.shape || 'box',
+                size: 22,
+                color: { background: 'rgba(var(--accent-rgb), 0.15)', border: 'var(--accent)' },
+                font: { color: '#ffffff', bold: true, size: 14 }
+              });
+            } else if (node.depth === 2) {
+              data.nodes.update({
+                id: node.id,
+                shape: node.shape || 'ellipse',
+                size: 18,
+                color: { background: 'rgba(255,255,255,0.06)', border: 'rgba(var(--accent-rgb), 0.4)' },
+                font: { color: '#e5e7eb', size: 13 }
+              });
+            } else {
+              data.nodes.update({
+                id: node.id,
+                shape: node.shape || 'text',
+                font: { color: '#d1d5db', size: 12 }
+              });
+            }
           } else {
-            data.nodes.update({
-              id: node.id,
-              color: { background: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.18)' }
-            });
+            if (node.id === 'root') {
+              data.nodes.update({
+                id: node.id,
+                color: { background: 'var(--accent)', border: 'var(--accent)' },
+                font: { color: '#ffffff', bold: true }
+              });
+            } else if (node.shape === 'box') {
+              data.nodes.update({
+                id: node.id,
+                color: { background: 'rgba(255,255,255,0.08)', border: 'var(--accent)' }
+              });
+            } else {
+              data.nodes.update({
+                id: node.id,
+                color: { background: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.18)' }
+              });
+            }
           }
         } else {
           data.nodes.update({
@@ -2112,6 +2592,14 @@
             color: { background: node.color, border: node.color }
           });
         }
+      });
+      
+      // Update arrows based on checkboxes and dataset definitions
+      data.edges.forEach(edge => {
+        data.edges.update({
+          id: edge.id,
+          arrows: showArrows ? 'to' : (edge.arrows || '')
+        });
       });
       
       if (layoutType.startsWith('hierarchical')) {
@@ -2130,6 +2618,36 @@
       
       if (network) network.destroy();
       network = new vis.Network(container, data, options);
+      
+      // Restore collapsed states
+      initialCollapsedIds.forEach(nodeId => {
+        const node = nodesDataset.get(nodeId);
+        if (node) {
+          const origLabel = node.originalLabel || node.label;
+          nodesDataset.update({
+            id: nodeId,
+            collapsed: true,
+            originalLabel: origLabel,
+            label: \`\${origLabel} [+]\`,
+            borderWidth: 3,
+            shapeProperties: { borderDashes: [4, 4] }
+          });
+          setSubtreeVisibility(nodeId, false);
+        }
+      });
+      
+      // Restore fixed states
+      initialFixedNodeIds.forEach(nodeId => {
+        const node = nodesDataset.get(nodeId);
+        if (node) {
+          nodesDataset.update({
+            id: nodeId,
+            physics: false,
+            fixed: { x: true, y: true },
+            borderWidth: 3
+          });
+        }
+      });
       
       network.on("doubleClick", function(params) {
         if (params.nodes.length > 0) {
@@ -2221,6 +2739,107 @@
             }
           }
         }
+      });
+    }
+
+    function expandAllNodes() {
+      if (!nodesDataset) return;
+      
+      const allNodes = nodesDataset.get();
+      allNodes.forEach(node => {
+        const origLabel = node.originalLabel || node.label;
+        nodesDataset.update({
+          id: node.id,
+          collapsed: false,
+          originalLabel: origLabel,
+          label: origLabel,
+          hidden: false,
+          borderWidth: 2,
+          shapeProperties: {
+            borderDashes: false
+          }
+        });
+      });
+      
+      const allEdges = edgesDataset.get();
+      allEdges.forEach(edge => {
+        edgesDataset.update({
+          id: edge.id,
+          hidden: false
+        });
+      });
+    }
+
+    function collapseAllNodes() {
+      if (!nodesDataset || !edgesDataset) return;
+      
+      const allNodes = nodesDataset.get();
+      const allEdges = edgesDataset.get();
+      
+      const hasDepth = allNodes.some(n => n.depth !== undefined);
+      
+      allNodes.forEach(node => {
+        const origLabel = node.originalLabel || node.label;
+        const hasChildren = allEdges.some(e => e.from === node.id);
+        
+        let shouldHide = false;
+        let setCollapsed = false;
+        
+        if (hasDepth) {
+          if (node.depth === 0) {
+            shouldHide = false;
+            setCollapsed = hasChildren;
+          } else if (node.depth === 1) {
+            shouldHide = false;
+            setCollapsed = hasChildren;
+          } else {
+            shouldHide = true;
+            setCollapsed = hasChildren;
+          }
+        } else {
+          const hasParents = allEdges.some(e => e.to === node.id);
+          if (!hasParents) {
+            shouldHide = false;
+            setCollapsed = hasChildren;
+          } else {
+            const connectedFromSource = allEdges.some(e => {
+              if (e.to !== node.id) return false;
+              const parentHasParents = allEdges.some(pe => pe.to === e.from);
+              return !parentHasParents;
+            });
+            
+            if (connectedFromSource) {
+              shouldHide = false;
+              setCollapsed = hasChildren;
+            } else {
+              shouldHide = true;
+              setCollapsed = hasChildren;
+            }
+          }
+        }
+        
+        nodesDataset.update({
+          id: node.id,
+          collapsed: setCollapsed,
+          originalLabel: origLabel,
+          label: setCollapsed ? \`\${origLabel} [+]\` : origLabel,
+          hidden: shouldHide,
+          borderWidth: setCollapsed ? 3 : 2,
+          shapeProperties: {
+            borderDashes: setCollapsed ? [4, 4] : false
+          }
+        });
+      });
+      
+      allEdges.forEach(edge => {
+        const fromNode = nodesDataset.get(edge.from);
+        const toNode = nodesDataset.get(edge.to);
+        const showEdge = fromNode && !fromNode.hidden && toNode && !toNode.hidden && !fromNode.collapsed;
+        
+        edgesDataset.update({
+          id: edge.id,
+          hidden: !showEdge
+        });
       });
     }
 
