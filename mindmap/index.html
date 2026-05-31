@@ -1,0 +1,2060 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Creador de mapas mentales interactivos</title>
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Vis.js Network (Interactive Graph Engine) -->
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+  <style>
+    /* Design Tokens */
+    :root {
+      --bg: #0b0f19;
+      --panel-bg: rgba(17, 24, 39, 0.7);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      
+      /* Theme styles (updated dynamically) */
+      --accent: #3b82f6; /* default blue mindmap */
+      --accent-rgb: 59, 130, 246;
+      --accent-glow: rgba(59, 130, 246, 0.2);
+      --accent-hover: #2563eb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(var(--accent-rgb), 0.12) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(31, 41, 55, 0.5) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background-image 0.5s ease;
+    }
+
+    /* Navbar / Header */
+    header {
+      background: rgba(10, 15, 26, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      font-size: 24px;
+      background: linear-gradient(135deg, var(--accent) 30%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .select-theme {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    .select-theme:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    select option {
+      background-color: #111827 !important;
+      color: #f3f4f6 !important;
+    }
+
+    /* Workspace */
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .editor-pane {
+      width: 45%;
+      border-right: 1px solid var(--panel-border);
+      display: flex;
+      flex-direction: column;
+      background: rgba(10, 15, 26, 0.4);
+      flex-shrink: 0;
+    }
+
+    .viewer-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(8, 11, 19, 0.96);
+    }
+
+    /* Pane header */
+    .pane-header {
+      background: rgba(15, 23, 42, 0.6);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .pane-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Tab styles */
+    .tab-container {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+    /* Toolbars */
+    .editor-toolbar {
+      display: flex;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(10, 15, 26, 0.2);
+      border-bottom: 1px solid var(--panel-border);
+      flex-shrink: 0;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .preset-select {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .preset-select:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .editor-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    textarea#markdown-editor {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      color: #e5e7eb;
+      font-family: 'Consolas', 'Courier New', Courier, monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 20px;
+      resize: none;
+      outline: none;
+      tab-size: 4;
+    }
+
+    .editor-footer {
+      padding: 8px 16px;
+      border-top: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: rgba(10, 15, 26, 0.3);
+      flex-shrink: 0;
+    }
+
+    .helper-alert {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      font-weight: 500;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+
+    /* Live canvas content */
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #mindmap-canvas {
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+
+    /* Graph settings panel */
+    .settings-panel {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .settings-group {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .settings-group-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 8px;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: #e5e7eb;
+    }
+
+    .setting-control {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Sliders and custom switches */
+    .slider {
+      -webkit-appearance: none;
+      width: 120px;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--accent-glow);
+      transition: transform 0.15s ease;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    .switch-label {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+    }
+
+    .switch-label input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider-switch {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: .3s;
+      border-radius: 10px;
+      border: 1px solid var(--panel-border);
+    }
+
+    .slider-switch:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider-switch {
+      background-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    input:checked + .slider-switch:before {
+      transform: translateX(18px);
+    }
+
+    /* Draggable floating help modal */
+    .floating-panel {
+      position: absolute;
+      top: 100px;
+      left: 80px;
+      width: 440px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .drag-header {
+      background: rgba(10, 15, 26, 0.9);
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+
+    .drag-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .close-btn:hover {
+      color: #ef4444;
+    }
+
+    .panel-content {
+      padding: 20px;
+      overflow-y: auto;
+      max-height: 480px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #d1d5db;
+    }
+
+    .panel-content h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      color: #fff;
+      margin: 16px 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .panel-content h3:first-child {
+      margin-top: 0;
+    }
+
+    .panel-content p {
+      margin-bottom: 10px;
+    }
+
+    .panel-content code {
+      font-family: 'Consolas', monospace;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #e5e7eb;
+      font-size: 12px;
+    }
+
+    .panel-content pre {
+      font-family: 'Consolas', monospace;
+      background: rgba(10, 15, 26, 0.6);
+      border: 1px solid var(--panel-border);
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 8px 0;
+      font-size: 11.5px;
+      color: #e5e7eb;
+    }
+
+    .copy-template-btn {
+      width: 100%;
+      margin-top: 14px;
+      justify-content: center;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--panel-border);
+      border-left: 4px solid var(--accent);
+      padding: 14px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 200;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(12px);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast-icon {
+      color: var(--accent);
+      font-size: 18px;
+    }
+
+    .toast-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(10, 15, 26, 0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .workspace { flex-direction: column; }
+      .editor-pane { width: 100%; height: 50%; border-right: none; border-bottom: 1px solid var(--panel-border); }
+      .viewer-pane { height: 50%; }
+      .floating-panel { width: 95%; left: 2.5% !important; top: 10% !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-container">
+      <span class="logo-icon"><i class="fa-solid fa-circle-nodes"></i></span>
+      <h1>Mapas mentales interactivos</h1>
+    </div>
+    
+    <div class="header-actions">
+      <!-- Theme Selector -->
+      <select class="select-theme" id="theme-selector" onchange="updateTheme()">
+        <option value="mindmap">🪐 Clásico (Mindmap)</option>
+        <option value="neuro">🧠 Neuro-cognitivo (Kohlberg)</option>
+        <option value="classic">🌲 Clásico (Ético)</option>
+        <option value="clinical">💎 Psicología clínica</option>
+        <option value="child">🧸 Desarrollo infantil</option>
+        <option value="social">⚡ Psicología social (Milgram)</option>
+      </select>
+
+      <!-- Help Button -->
+      <button class="btn" onclick="toggleHelpPanel()">
+        <i class="fa-solid fa-circle-question"></i> Ayuda
+      </button>
+
+      <!-- Back to Landing Button -->
+      <a href="../index.html" class="btn" style="text-decoration: none;">
+        <i class="fa-solid fa-house"></i> Volver
+      </a>
+
+      <!-- Export Image -->
+      <button class="btn" onclick="exportPNG()">
+        <i class="fa-solid fa-image"></i> Guardar PNG
+      </button>
+
+      <!-- Export Button -->
+      <button class="btn btn-primary" onclick="exportHTML()">
+        <i class="fa-solid fa-file-arrow-down"></i> Exportar mapa (HTML)
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace Split Screen -->
+  <div class="workspace">
+    
+    <!-- LEFT PANE: Editor -->
+    <div class="editor-pane">
+      <div class="pane-header">
+        <span class="pane-title"><i class="fa-solid fa-pen-nib"></i> Editor markdown</span>
+        <!-- Preset dropdown -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 11px; color: var(--text-muted);">Plantilla:</span>
+          <select class="preset-select" id="preset-selector" onchange="loadPreset()">
+            <option value="brain">Estructura del cerebro (Outline radial)</option>
+            <option value="dopamine">Circuito de la dopamina (Red avanzada)</option>
+            <option value="piaget">Teoría del desarrollo de Piaget (Jerárquico)</option>
+            <option value="custom">Proyecto vacío</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Quick insertion Toolbar -->
+      <div class="editor-toolbar">
+        <button class="btn btn-xs" onclick="insertSyntax('node')" style="padding: 4px 8px; font-size: 11px;">
+          <i class="fa-solid fa-circle-dot"></i> Añadir concepto Outline
+        </button>
+        <button class="btn btn-xs" onclick="insertSyntax('conn')" style="padding: 4px 8px; font-size: 11px;">
+          <i class="fa-solid fa-link"></i> Enlace cruzado (id1 -> id2)
+        </button>
+      </div>
+
+      <div class="editor-container">
+        <textarea id="markdown-editor" placeholder="Escribe tus conceptos o diagramas aquí... (Usa /ayuda en una línea vacía para abrir la guía)" oninput="editorChanged()"></textarea>
+      </div>
+
+      <div class="editor-footer">
+        <div class="helper-alert">
+          <i class="fa-solid fa-lightbulb"></i> Escribe <code>/ayuda</code> en el editor para abrir la guía interactiva
+        </div>
+        <div id="word-counter">Caracteres: 0</div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE: Vis.js network visualizer -->
+    <div class="viewer-pane">
+      <div class="pane-header">
+        <span class="pane-title"><i class="fa-solid fa-eye"></i> Vista previa</span>
+        <div class="tab-container">
+          <button class="tab-btn active" id="tab-canvas" onclick="switchTab('canvas')">
+            <i class="fa-solid fa-diagram-project"></i> 🗺️ Mapa mental
+          </button>
+          <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">
+            <i class="fa-solid fa-sliders"></i> ⚙️ Ajustes del gráfico
+          </button>
+        </div>
+      </div>
+
+      <!-- CANVAS VIEW -->
+      <div id="canvas-tab-content" class="canvas-container">
+        <div id="mindmap-canvas"></div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div id="settings-tab-content" class="settings-panel">
+        
+        <!-- Concept Distribution -->
+        <div class="settings-group">
+          <div class="settings-group-title">
+            <i class="fa-solid fa-network-wired"></i> Distribución de conceptos (Layout)
+          </div>
+          <div class="setting-row">
+            <span>Distribución de conceptos</span>
+            <div class="setting-control">
+              <select class="preset-select" id="layout-selector" onchange="editorChanged()">
+                <option value="force">🪐 Libre (Atracción/Física)</option>
+                <option value="hierarchical-v">📐 Jerárquico vertical (Árbol)</option>
+                <option value="hierarchical-h">📐 Jerárquico horizontal (Organigrama)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Physical Solvers -->
+        <div class="settings-group" id="physics-settings-group">
+          <div class="settings-group-title">
+            <i class="fa-solid fa-atom"></i> Físicas y elasticidad de la red
+          </div>
+          
+          <div class="setting-row">
+            <span>Habilitar físicas de gravedad</span>
+            <div class="setting-control">
+              <label class="switch-label">
+                <input type="checkbox" id="physics-toggle" checked onchange="editorChanged()">
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <span>Distancia de los resortes</span>
+            <div class="setting-control">
+              <input type="range" id="spring-length" class="slider" min="80" max="300" value="150" oninput="editorChanged()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Instructions card -->
+        <div class="settings-group" style="border-color: rgba(59, 130, 246, 0.25);">
+          <div class="settings-group-title" style="color: var(--accent);">
+            <i class="fa-solid fa-circle-info"></i> Consejos de interacción en el lienzo
+          </div>
+          <div style="font-size: 12.5px; line-height: 1.6; color: #d1d5db; display: flex; flex-direction: column; gap: 8px;">
+            <p><i class="fa-solid fa-hand-pointer" style="color: var(--accent);"></i> **Arrastrar**: Haz clic en cualquier concepto y arrástralo libremente para cambiar su distribución temporal.</p>
+            <p><i class="fa-solid fa-lock" style="color: var(--accent);"></i> **Fijar concepto**: Haz **doble clic** en cualquier concepto para fijar su posición en la pantalla (las físicas dejarán de afectarlo a él de forma individual). Haz doble clic de nuevo para soltarlo.</p>
+            <p><i class="fa-solid fa-magnifying-glass" style="color: var(--accent);"></i> **Zoom**: Desliza la rueda del ratón o haz zoom con gestos táctiles de pinza para alejar o acercar el mapa mental.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Draggable Help Panel -->
+  <div class="floating-panel" id="help-panel">
+    <div class="drag-header" id="help-drag-header">
+      <span class="drag-title"><i class="fa-solid fa-circle-info"></i> Guía completa de mapas mentales</span>
+      <button class="close-btn" onclick="toggleHelpPanel()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="panel-content">
+      <h3><i class="fa-solid fa-compass"></i> Filosofía del creador de mapas</h3>
+      <p>Crea mapas mentales interactivos y redes dinámicas con simulación física y múltiples orientaciones en vivo. Puedes redactar tus mapas usando dos métodos muy simples:</p>
+      
+      <h3><i class="fa-solid fa-list-ul"></i> Método 1: Esquema Simple (Outline)</h3>
+      <p>Es el más rápido. Funciona igual que Markmap. Escribe un título principal precedido por <code># </code> y haz una lista estructurada con sangrías usando guiones:</p>
+      
+      <pre># Cerebro Humano 🧠
+- Lóbulo Frontal
+  - Córtex Prefrontal
+  - Funciones Ejecutivas
+- Lóbulo Temporal
+  - Hipocampo</pre>
+
+      <h3><i class="fa-solid fa-network-wired"></i> Método 2: Red Avanzada (Conexiones)</h3>
+      <p>Úsalo para crear flujos con conexiones cruzadas complejas, asignando formas, tamaños, estilos y colores personalizados a nodos y conectores:</p>
+      
+      <pre># Circuito de Dopamina ⚡
+## Nodos
+- [vta] Área Tegmental Ventral (shape: circle, color: #3b82f6, size: 26)
+- [accumbens] Núcleo Accumbens (shape: box, color: #ec4899)
+- [dopamina] Liberación de Dopamina (color: #f59e0b)
+
+## Conexiones
+- vta -> accumbens (label: "Vía Mesolímbica", style: solid, color: #f472b6)
+- accumbens -> dopamina (label: "Placer", style: dashed)</pre>
+
+      <h3><i class="fa-solid fa-list-check"></i> Atributos disponibles:</h3>
+      <ul>
+        <li><strong>Nodos</strong>: <code>shape: [circle, box, database, ellipse]</code>, <code>color: [hex]</code>, <code>size: [número]</code>.</li>
+        <li><strong>Conexiones</strong>: <code>label: "texto"</code>, <code>style: [solid, dashed, dotted]</code>, <code>color: [hex]</code>.</li>
+      </ul>
+
+      <button class="btn btn-primary copy-template-btn" onclick="copyTemplate()">
+        <i class="fa-solid fa-copy"></i> Cargar plantilla didáctica del cerebro
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <span class="toast-icon"><i class="fa-solid fa-circle-check"></i></span>
+    <span class="toast-text" id="toast-message">Texto copiado con éxito</span>
+  </div>
+
+  <script>
+    // PRESETS DATA
+    const presets = {
+      brain: `# Estructura del Cerebro 🧠
+
+- Lóbulo Frontal
+  - Córtex Prefrontal
+    - Control Ejecutivo
+    - Toma de Decisiones
+  - Corteza Motora
+    - Planificación del Movimiento
+- Lóbulo Temporal
+  - Hipocampo
+    - Consolidación de la Memoria
+  - Amígdala
+    - Procesamiento Emocional
+- Lóbulo Occipital
+  - Corteza Visual Primaria
+    - Procesamiento de Imágenes
+- Lóbulo Parietal
+  - Corteza Somatosensorial
+    - Procesamiento del Tacto`,
+
+      dopamine: `# Circuito de Recompensa de la Dopamina ⚡
+
+## Nodos
+- [vta] Área Tegmental Ventral (shape: circle, color: #3b82f6, size: 26)
+- [accumbens] Núcleo Accumbens (shape: box, color: #ec4899, size: 22)
+- [prefrontal] Córtex Prefrontal (shape: box, color: #8b5cf6, size: 22)
+- [amigdala] Amígdala (shape: database, color: #ef4444, size: 18)
+- [dopamina] Liberación de Dopamina (shape: ellipse, color: #f59e0b)
+
+## Conexiones
+- vta -> accumbens (label: "Vía Mesolímbica", style: solid, color: #f472b6)
+- vta -> prefrontal (label: "Vía Mesocortical", style: solid, color: #c084fc)
+- accumbens -> dopamina (label: "Genera Placer", style: dashed)
+- prefrontal -> accumbens (label: "Control Top-Down", style: solid, color: #a78bfa)
+- amigdala -> accumbens (label: "Asociación Emocional", style: dotted, color: #fca5a5)`,
+
+      piaget: `# Teoría del Desarrollo de Piaget 🧸
+
+- Periodo Sensoriomotor (0-2 años)
+  - Reflejos Innatos
+  - Permanencia del Objeto
+- Periodo Preoperacional (2-7 años)
+  - Pensamiento Egocéntrico
+  - Juego Simbólico
+- Operaciones Concretas (7-11 años)
+  - Principio de Conservación
+  - Pensamiento Lógico Concreto
+- Operaciones Formales (11+ años)
+  - Razonamiento Hipotético-Deductivo
+  - Pensamiento Abstracto`,
+
+      custom: `# Nuevo Mapa Mental 🧠
+
+- Idea Central
+  - Ramificación A
+  - Ramificación B`
+    };
+
+    // State Variables
+    let currentTab = 'canvas';
+    let network = null;
+    let nodesDataset = null;
+    let edgesDataset = null;
+
+    // Get DOM nodes
+    const editor = document.getElementById('markdown-editor');
+    const wordCounter = document.getElementById('word-counter');
+    const helpPanel = document.getElementById('help-panel');
+
+    // On Load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Load Default Brain structure
+      editor.value = presets.brain;
+      
+      // Update themes, sizes & render Vis
+      updateTheme();
+      
+      // Dragging Panel initializer
+      makeElementDraggable(helpPanel);
+
+      // Slash command keydown listener
+      editor.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          setTimeout(() => {
+            const cursorPosition = editor.selectionStart;
+            const textBeforeCursor = editor.value.substring(0, cursorPosition);
+            const lines = textBeforeCursor.split('\n');
+            const lastLine = lines[lines.length - 2] || ''; 
+            if (lastLine.trim() === '/ayuda' || lastLine.trim() === '/help') {
+              const newContent = editor.value.substring(0, cursorPosition - lastLine.length - 1) + editor.value.substring(cursorPosition);
+              editor.value = newContent;
+              editor.selectionStart = editor.selectionEnd = cursorPosition - lastLine.length - 1;
+              toggleHelpPanel(true);
+              showToast('Comando /ayuda detectado. Abriendo guía.');
+              editorChanged();
+            }
+          }, 50);
+        }
+      });
+    });
+
+    // Theme Selector Color updates
+    function updateTheme() {
+      const theme = document.getElementById('theme-selector').value;
+      const root = document.documentElement;
+      
+      if (theme === 'mindmap') {
+        root.style.setProperty('--accent', '#3b82f6');
+        root.style.setProperty('--accent-rgb', '59, 130, 246');
+        root.style.setProperty('--accent-glow', 'rgba(59, 130, 246, 0.2)');
+        root.style.setProperty('--accent-hover', '#2563eb');
+      } else if (theme === 'neuro') {
+        root.style.setProperty('--accent', '#8b5cf6');
+        root.style.setProperty('--accent-rgb', '139, 92, 246');
+        root.style.setProperty('--accent-glow', 'rgba(139, 92, 246, 0.25)');
+        root.style.setProperty('--accent-hover', '#7c3aed');
+      } else if (theme === 'classic') {
+        root.style.setProperty('--accent', '#10b981');
+        root.style.setProperty('--accent-rgb', '16, 185, 129');
+        root.style.setProperty('--accent-glow', 'rgba(16, 185, 129, 0.2)');
+        root.style.setProperty('--accent-hover', '#059669');
+      } else if (theme === 'clinical') {
+        root.style.setProperty('--accent', '#06b6d4');
+        root.style.setProperty('--accent-rgb', '6, 182, 212');
+        root.style.setProperty('--accent-glow', 'rgba(6, 182, 212, 0.2)');
+        root.style.setProperty('--accent-hover', '#0891b2');
+      } else if (theme === 'child') {
+        root.style.setProperty('--accent', '#f59e0b');
+        root.style.setProperty('--accent-rgb', '245, 158, 11');
+        root.style.setProperty('--accent-glow', 'rgba(245, 158, 11, 0.2)');
+        root.style.setProperty('--accent-hover', '#d97706');
+      } else if (theme === 'social') {
+        root.style.setProperty('--accent', '#ef4444');
+        root.style.setProperty('--accent-rgb', '239, 68, 68');
+        root.style.setProperty('--accent-glow', 'rgba(239, 68, 68, 0.25)');
+        root.style.setProperty('--accent-hover', '#dc2626');
+      }
+      
+      editorChanged();
+    }
+
+    // Load presets
+    function loadPreset() {
+      const selected = document.getElementById('preset-selector').value;
+      if (presets[selected]) {
+        editor.value = presets[selected];
+        
+        // Auto-change layout to Hierarchical for Piaget to preserve order
+        if (selected === 'piaget') {
+          document.getElementById('layout-selector').value = 'hierarchical-v';
+        } else if (selected === 'dopamine') {
+          document.getElementById('layout-selector').value = 'force';
+        } else {
+          document.getElementById('layout-selector').value = 'force';
+        }
+        
+        editorChanged();
+        showToast('Cargada plantilla de mapa mental.');
+      }
+    }
+
+    // Triggered when text in editor changes
+    function editorChanged() {
+      const text = editor.value;
+      wordCounter.textContent = `Caracteres: ${text.length}`;
+      
+      const parsedData = parseMindmap(text);
+      
+      // Update UI elements visibility based on layout select
+      const layoutType = document.getElementById('layout-selector').value;
+      const physicsGroup = document.getElementById('physics-settings-group');
+      if (layoutType.startsWith('hierarchical')) {
+        physicsGroup.style.opacity = '0.5';
+        physicsGroup.style.pointerEvents = 'none';
+      } else {
+        physicsGroup.style.opacity = '1';
+        physicsGroup.style.pointerEvents = 'auto';
+      }
+
+      if (currentTab === 'canvas') {
+        renderMindmap(parsedData);
+      }
+    }
+
+    // Hybrid outlines and arrow nodes parsing
+    function parseMindmap(text) {
+      const lines = text.split('\n');
+      const nodes = [];
+      const edges = [];
+      const hasArrows = text.includes('->');
+      
+      if (hasArrows) {
+        // Mode 2: Custom Networks
+        let currentSection = 'nodes';
+        const nodeIds = new Set();
+        
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+          
+          if (trimmed.toLowerCase().includes('nodos')) {
+            currentSection = 'nodes';
+            return;
+          }
+          if (trimmed.toLowerCase().includes('conexiones') || trimmed.toLowerCase().includes('enlaces')) {
+            currentSection = 'connections';
+            return;
+          }
+          if (trimmed.startsWith('#') && !trimmed.startsWith('# ')) {
+            return; 
+          }
+          
+          if (currentSection === 'nodes') {
+            const nodeMatch = trimmed.match(/^[-*+]\s+\[([a-zA-Z0-9_-]+)\]\s*(.*?)(?:\s*\((.*?)\))?$/);
+            if (nodeMatch) {
+              const id = nodeMatch[1].toLowerCase();
+              const label = nodeMatch[2].trim();
+              const attrStr = nodeMatch[3] || '';
+              const attrs = parseAttributes(attrStr);
+              
+              nodes.push({
+                id: id,
+                label: label || id,
+                shape: attrs.shape || 'ellipse',
+                color: attrs.color || undefined,
+                size: attrs.size ? Number(attrs.size) : undefined
+              });
+              nodeIds.add(id);
+            }
+          } else {
+            const edgeMatch = trimmed.match(/^[-*+]\s+([a-zA-Z0-9_-]+)\s*->\s*([a-zA-Z0-9_-]+)(?:\s*\((.*?)\))?$/);
+            if (edgeMatch) {
+              const from = edgeMatch[1].toLowerCase();
+              const to = edgeMatch[2].toLowerCase();
+              const attrStr = edgeMatch[3] || '';
+              const attrs = parseAttributes(attrStr);
+              
+              if (!nodeIds.has(from)) {
+                nodes.push({ id: from, label: from, shape: 'ellipse' });
+                nodeIds.add(from);
+              }
+              if (!nodeIds.has(to)) {
+                nodes.push({ id: to, label: to, shape: 'ellipse' });
+                nodeIds.add(to);
+              }
+              
+              const edge = {
+                from: from,
+                to: to,
+                label: attrs.label || undefined,
+                color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
+                arrows: 'to'
+              };
+              
+              if (attrs.style === 'dashed') {
+                edge.dashes = [5, 5];
+              } else if (attrs.style === 'dotted') {
+                edge.dashes = [2, 5];
+              }
+              
+              edges.push(edge);
+            }
+          }
+        });
+      } else {
+        // Mode 1: Outlines (Radial trees)
+        let rootNode = null;
+        const parentStack = [];
+        let nodeIdCounter = 0;
+        
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+          
+          if (line.startsWith('# ')) {
+            const label = line.substring(2).trim();
+            const id = 'root';
+            rootNode = {
+              id: id,
+              label: label,
+              shape: 'circle',
+              size: 28,
+              font: { size: 16, bold: true }
+            };
+            nodes.push(rootNode);
+            parentStack.push({ id: id, indent: -1, label: label });
+            return;
+          }
+          
+          const listMatch = line.match(/^(\s*)[-*+]\s+(.*?)$/);
+          if (listMatch) {
+            const indent = listMatch[1].length;
+            const label = listMatch[2].trim();
+            const id = `node-${nodeIdCounter++}`;
+            
+            if (!rootNode) {
+              rootNode = {
+                id: 'root',
+                label: 'Mapa mental',
+                shape: 'circle',
+                size: 28,
+                font: { size: 16, bold: true }
+              };
+              nodes.push(rootNode);
+              parentStack.push({ id: 'root', indent: -1, label: 'Mapa mental' });
+            }
+            
+            while (parentStack.length > 0 && parentStack[parentStack.length - 1].indent >= indent) {
+              parentStack.pop();
+            }
+            
+            const parent = parentStack[parentStack.length - 1] || parentStack[0];
+            const depth = parentStack.length;
+            
+            let shape = 'ellipse';
+            let size = 18;
+            
+            if (depth === 1) {
+              shape = 'box';
+              size = 22;
+            }
+            
+            nodes.push({
+              id: id,
+              label: label,
+              shape: shape,
+              size: size
+            });
+            
+            edges.push({
+              from: parent.id,
+              to: id,
+              arrows: '' // Radial mindmap usually has no arrows
+            });
+            
+            parentStack.push({ id: id, indent: indent, label: label });
+          }
+        });
+      }
+      
+      return { nodes, edges };
+    }
+
+    // Helper to parse comma separated key-value pairs
+    function parseAttributes(attrStr) {
+      const attrs = {};
+      if (!attrStr) return attrs;
+      
+      const pairs = attrStr.split(',');
+      pairs.forEach(pair => {
+        const parts = pair.split(':');
+        if (parts.length === 2) {
+          const key = parts[0].trim().toLowerCase();
+          const val = parts[1].trim().replace(/^['"]|['"]$/g, '');
+          attrs[key] = val;
+        }
+      });
+      return attrs;
+    }
+
+    // Render Vis.js network graph on preview tab
+    function renderMindmap(graphData) {
+      const container = document.getElementById('mindmap-canvas');
+      
+      nodesDataset = new vis.DataSet(graphData.nodes);
+      edgesDataset = new vis.DataSet(graphData.edges);
+      
+      const data = {
+        nodes: nodesDataset,
+        edges: edgesDataset
+      };
+      
+      const layoutType = document.getElementById('layout-selector').value;
+      const isPhysicsEnabled = document.getElementById('physics-toggle').checked;
+      const springLength = Number(document.getElementById('spring-length').value) || 150;
+      
+      const activeColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      
+      const options = {
+        nodes: {
+          borderWidth: 2,
+          shadow: {
+            enabled: true,
+            color: 'rgba(0,0,0,0.4)',
+            size: 6,
+            x: 0,
+            y: 4
+          },
+          font: {
+            face: 'Inter',
+            size: 13,
+            color: '#ffffff',
+            bold: false
+          }
+        },
+        edges: {
+          width: 2.2,
+          shadow: {
+            enabled: true,
+            color: 'rgba(0,0,0,0.3)',
+            size: 3,
+            x: 0,
+            y: 2
+          },
+          font: {
+            face: 'Inter',
+            size: 11,
+            color: '#a1a1aa',
+            strokeWidth: 0,
+            align: 'horizontal'
+          },
+          color: {
+            color: 'rgba(255, 255, 255, 0.22)',
+            highlight: activeColor,
+            hover: activeColor
+          }
+        },
+        interaction: {
+          hover: true,
+          dragNodes: true,
+          dragView: true,
+          zoomView: true
+        },
+        physics: {
+          enabled: isPhysicsEnabled && layoutType === 'force',
+          solver: 'barnesHut',
+          barnesHut: {
+            gravitationalConstant: -1800,
+            centralGravity: 0.35,
+            springLength: springLength,
+            springConstant: 0.05,
+            damping: 0.09
+          }
+        }
+      };
+
+      // Add dynamic coloring/styles to nodes that don't have custom ones
+      data.nodes.forEach(node => {
+        if (!node.color) {
+          if (node.id === 'root') {
+            data.nodes.update({
+              id: node.id,
+              color: { background: activeColor, border: activeColor },
+              font: { color: '#ffffff', bold: true }
+            });
+          } else if (node.shape === 'box') {
+            data.nodes.update({
+              id: node.id,
+              color: { background: 'rgba(255,255,255,0.08)', border: activeColor }
+            });
+          } else {
+            data.nodes.update({
+              id: node.id,
+              color: { background: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.18)' }
+            });
+          }
+        } else {
+          // Keep custom background color, style border nicely
+          data.nodes.update({
+            id: node.id,
+            color: { background: node.color, border: node.color }
+          });
+        }
+      });
+      
+      // Hierarchical adjustments
+      if (layoutType.startsWith('hierarchical')) {
+        options.layout = {
+          hierarchical: {
+            direction: layoutType === 'hierarchical-v' ? 'UD' : 'LR',
+            sortMethod: 'directed',
+            nodeSpacing: 130,
+            levelSeparation: 130
+          }
+        };
+        options.physics = { enabled: false };
+      } else {
+        options.layout = { hierarchical: false };
+      }
+      
+      if (network) {
+        network.destroy();
+      }
+      
+      network = new vis.Network(container, data, options);
+      
+      // Double click fixed position toggler
+      network.on("doubleClick", function(params) {
+        if (params.nodes.length > 0) {
+          const clickedId = params.nodes[0];
+          const node = nodesDataset.get(clickedId);
+          
+          if (node) {
+            const isCurrentlyFixed = node.physics === false;
+            nodesDataset.update({
+              id: clickedId,
+              physics: isCurrentlyFixed ? undefined : false,
+              fixed: isCurrentlyFixed ? false : { x: true, y: true },
+              borderWidth: isCurrentlyFixed ? 2 : 4
+            });
+            showToast(isCurrentlyFixed ? 'Concepto liberado (Físicas activas)' : 'Concepto bloqueado en posición');
+          }
+        }
+      });
+    }
+
+    // Switch Tabs
+    function switchTab(tab) {
+      currentTab = tab;
+      
+      const tabCanvas = document.getElementById('tab-canvas');
+      const tabSettings = document.getElementById('tab-settings');
+      
+      const contentCanvas = document.getElementById('canvas-tab-content');
+      const contentSettings = document.getElementById('settings-tab-content');
+      
+      if (tab === 'canvas') {
+        tabCanvas.classList.add('active');
+        tabSettings.classList.remove('active');
+        contentCanvas.style.display = 'block';
+        contentSettings.style.display = 'none';
+        
+        // Re-trigger layout render
+        setTimeout(() => {
+          editorChanged();
+        }, 50);
+      } else {
+        tabCanvas.classList.remove('active');
+        tabSettings.classList.add('active');
+        contentCanvas.style.display = 'none';
+        contentSettings.style.display = 'flex';
+      }
+    }
+
+    // Toggle help panel
+    function toggleHelpPanel(forceShow = false) {
+      if (forceShow || helpPanel.style.display !== 'flex') {
+        helpPanel.style.display = 'flex';
+        helpPanel.style.top = '120px';
+        helpPanel.style.left = '80px';
+      } else {
+        helpPanel.style.display = 'none';
+      }
+    }
+
+    // Copy template to editor
+    function copyTemplate() {
+      editor.value = presets.brain;
+      document.getElementById('layout-selector').value = 'force';
+      editorChanged();
+      helpPanel.style.display = 'none';
+      showToast('Cargada la plantilla del cerebro en el editor.');
+    }
+
+    // Insert markdown syntaxes
+    function insertSyntax(type) {
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      const text = editor.value;
+      let inserted = '';
+      
+      if (type === 'node') {
+        inserted = '\n- [c1] Concepto (shape: box, color: #ec4899)\n';
+      } else if (type === 'conn') {
+        inserted = '\n- c1 -> c2 (label: "Relación", style: dashed)\n';
+      }
+      
+      editor.value = text.substring(0, start) + inserted + text.substring(end);
+      editor.selectionStart = editor.selectionEnd = start + inserted.length;
+      editor.focus();
+      editorChanged();
+    }
+
+    // Draggable element utility
+    function makeElementDraggable(elmnt) {
+      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      const header = document.getElementById(elmnt.id + '-drag-header') || elmnt;
+      header.style.cursor = 'grab';
+      header.onmousedown = dragMouseDown;
+      header.ontouchstart = dragMouseDown;
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        if (e.target.closest('button, select, input, textarea')) return;
+        
+        e.preventDefault();
+        header.style.cursor = 'grabbing';
+        
+        pos3 = e.clientX || e.touches[0].clientX;
+        pos4 = e.clientY || e.touches[0].clientY;
+        
+        document.onmouseup = closeDragElement;
+        document.ontouchend = closeDragElement;
+        
+        document.onmousemove = elementDrag;
+        document.ontouchmove = elementDrag;
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        var clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        var clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        if (!clientX || !clientY) return;
+        
+        e.preventDefault();
+        pos1 = pos3 - clientX;
+        pos2 = pos4 - clientY;
+        pos3 = clientX;
+        pos4 = clientY;
+        
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      }
+
+      function closeDragElement() {
+        header.style.cursor = 'grab';
+        document.onmouseup = null;
+        document.onmousemove = null;
+        document.ontouchend = null;
+        document.ontouchmove = null;
+      }
+    }
+
+    // PNG image downloader
+    function exportPNG() {
+      const canvas = document.querySelector('#mindmap-canvas canvas');
+      if (!canvas) {
+        showToast('No se encontró el lienzo para exportar.', 'error');
+        return;
+      }
+      
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `mapa_mental.png`;
+      a.click();
+      showToast('Imagen PNG descargada con éxito.');
+    }
+
+    // Show dynamic toast alerts
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      
+      toastMsg.textContent = message;
+      if (type === 'error') {
+        toast.style.borderLeftColor = '#ef4444';
+      } else {
+        const theme = document.getElementById('theme-selector').value;
+        const colorMap = { mindmap: '#3b82f6', neuro: '#8b5cf6', classic: '#10b981', clinical: '#06b6d4', child: '#f59e0b', social: '#ef4444' };
+        toast.style.borderLeftColor = colorMap[theme] || '#3b82f6';
+      }
+      
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    // Offline Exporter HTML Generator
+    function exportHTML() {
+      const markdown = editor.value.replace(/\\/g, '\\\\');
+      const themeValue = document.getElementById('theme-selector').value;
+      const layoutValue = document.getElementById('layout-selector').value;
+      const physicsValue = document.getElementById('physics-toggle').checked;
+      const springLengthValue = Number(document.getElementById('spring-length').value) || 150;
+      
+      const colorMap = {
+        mindmap: { accent: '#3b82f6', rgb: '59, 130, 246', hover: '#2563eb' },
+        neuro: { accent: '#8b5cf6', rgb: '139, 92, 246', hover: '#7c3aed' },
+        classic: { accent: '#10b981', rgb: '16, 185, 129', hover: '#059669' },
+        clinical: { accent: '#06b6d4', rgb: '6, 182, 212', hover: '#0891b2' },
+        child: { accent: '#f59e0b', rgb: '245, 158, 11', hover: '#d97706' },
+        social: { accent: '#ef4444', rgb: '239, 68, 68', hover: '#dc2626' }
+      };
+      
+      const themeConfig = colorMap[themeValue] || colorMap.mindmap;
+
+      const htmlContent = `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mapa Mental Interactivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js">${'</' + 'script>'}
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --panel-bg: rgba(17, 24, 39, 0.75);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: ${themeConfig.accent};
+      --accent-rgb: ${themeConfig.rgb};
+      --accent-glow: rgba(${themeConfig.rgb}, 0.22);
+      --accent-hover: ${themeConfig.hover};
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(var(--accent-rgb), 0.12) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(31, 41, 55, 0.5) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background: rgba(10, 15, 26, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 10px var(--accent-glow);
+    }
+
+    .select-layout {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+    }
+
+    select option {
+      background-color: #111827 !important;
+      color: #f3f4f6 !important;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #canvas-container {
+      flex: 1;
+      height: 100%;
+    }
+
+    /* Floating control bar */
+    .controls-overlay {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      width: 250px;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      width: 100px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+    }
+
+    .switch-label {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 16px;
+    }
+
+    .switch-label input { opacity: 0; width: 0; height: 0; }
+
+    .slider-switch {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: .3s;
+      border-radius: 8px;
+    }
+
+    .slider-switch:before {
+      position: absolute;
+      content: "";
+      height: 10px;
+      width: 10px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider-switch {
+      background-color: var(--accent);
+    }
+
+    input:checked + .slider-switch:before {
+      transform: translateX(16px);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Mapa Mental Interactivo</h1>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <select class="select-layout" id="layout-selector" onchange="renderGraph()">
+        <option value="force" ${layoutValue === 'force' ? 'selected' : ''}>🪐 Distribución libre</option>
+        <option value="hierarchical-v" ${layoutValue === 'hierarchical-v' ? 'selected' : ''}>📐 Árbol vertical</option>
+        <option value="hierarchical-h" ${layoutValue === 'hierarchical-h' ? 'selected' : ''}>📐 Organigrama horizontal</option>
+      </select>
+      <button class="btn btn-primary" onclick="exportPNG()"><i class="fa-solid fa-image"></i> Guardar PNG</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="canvas-container"></div>
+    
+    <!-- Controls Overlay -->
+    <div class="controls-overlay">
+      <div style="font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; text-transform: uppercase;">Ajustes del gráfico</div>
+      
+      <div class="control-row" id="row-physics">
+        <span>Físicas activas</span>
+        <label class="switch-label">
+          <input type="checkbox" id="physics-toggle" ${physicsValue ? 'checked' : ''} onchange="renderGraph()">
+          <span class="slider-switch"></span>
+        </label>
+      </div>
+
+      <div class="control-row" id="row-spring">
+        <span>Longitud resortes</span>
+        <input type="range" id="spring-length" class="slider" min="80" max="300" value="${springLengthValue}" oninput="renderGraph()">
+      </div>
+
+      <div style="font-size: 10px; color: var(--text-muted); line-height: 1.4; margin-top: 4px;">
+        <i class="fa-solid fa-circle-info"></i> Haz <b>doble clic</b> en un concepto para fijarlo en su posición.
+      </div>
+    </div>
+  </main>
+
+  <!-- Embedded Markdown Data -->
+  <script id="markdown-data" type="text/markdown">${markdown}${'</' + 'script>'}
+
+  <script>
+    const rawMarkdown = document.getElementById('markdown-data').textContent;
+    let network = null;
+    let nodesDataset = null;
+    let edgesDataset = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderGraph();
+    });
+
+    function parseMindmap(text) {
+      const lines = text.split('\\n');
+      const nodes = [];
+      const edges = [];
+      const hasArrows = text.includes('->');
+      
+      if (hasArrows) {
+        let currentSection = 'nodes';
+        const nodeIds = new Set();
+        
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+          
+          if (trimmed.toLowerCase().includes('nodos')) {
+            currentSection = 'nodes';
+            return;
+          }
+          if (trimmed.toLowerCase().includes('conexiones') || trimmed.toLowerCase().includes('enlaces')) {
+            currentSection = 'connections';
+            return;
+          }
+          
+          if (currentSection === 'nodes') {
+            const nodeMatch = trimmed.match(/^[-*+]\\s+\\[([a-zA-Z0-9_-]+)\\]\\s*(.*?)(?:\\s*\\((.*?)\\))?$/);
+            if (nodeMatch) {
+              const id = nodeMatch[1].toLowerCase();
+              const label = nodeMatch[2].trim();
+              const attrStr = nodeMatch[3] || '';
+              const attrs = parseAttributes(attrStr);
+              
+              nodes.push({
+                id: id,
+                label: label || id,
+                shape: attrs.shape || 'ellipse',
+                color: attrs.color || undefined,
+                size: attrs.size ? Number(attrs.size) : undefined
+              });
+              nodeIds.add(id);
+            }
+          } else {
+            const edgeMatch = trimmed.match(/^[-*+]\\s+([a-zA-Z0-9_-]+)\\s*->\\s*([a-zA-Z0-9_-]+)(?:\\s*\\((.*?)\\))?$/);
+            if (edgeMatch) {
+              const from = edgeMatch[1].toLowerCase();
+              const to = edgeMatch[2].toLowerCase();
+              const attrStr = edgeMatch[3] || '';
+              const attrs = parseAttributes(attrStr);
+              
+              if (!nodeIds.has(from)) {
+                nodes.push({ id: from, label: from, shape: 'ellipse' });
+                nodeIds.add(from);
+              }
+              if (!nodeIds.has(to)) {
+                nodes.push({ id: to, label: to, shape: 'ellipse' });
+                nodeIds.add(to);
+              }
+              
+              const edge = {
+                from: from,
+                to: to,
+                label: attrs.label || undefined,
+                color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
+                arrows: 'to'
+              };
+              
+              if (attrs.style === 'dashed') {
+                edge.dashes = [5, 5];
+              } else if (attrs.style === 'dotted') {
+                edge.dashes = [2, 5];
+              }
+              
+              edges.push(edge);
+            }
+          }
+        });
+      } else {
+        let rootNode = null;
+        const parentStack = [];
+        let nodeIdCounter = 0;
+        
+        lines.forEach(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return;
+          
+          if (line.startsWith('# ')) {
+            const label = line.substring(2).trim();
+            const id = 'root';
+            rootNode = {
+              id: id,
+              label: label,
+              shape: 'circle',
+              size: 28,
+              font: { size: 16, bold: true }
+            };
+            nodes.push(rootNode);
+            parentStack.push({ id: id, indent: -1, label: label });
+            return;
+          }
+          
+          const listMatch = line.match(/^(\\s*)[-*+]\\s+(.*?)$/);
+          if (listMatch) {
+            const indent = listMatch[1].length;
+            const label = listMatch[2].trim();
+            const id = \`node-\${nodeIdCounter++}\`;
+            
+            if (!rootNode) {
+              rootNode = {
+                id: 'root',
+                label: 'Mapa mental',
+                shape: 'circle',
+                size: 28,
+                font: { size: 16, bold: true }
+              };
+              nodes.push(rootNode);
+              parentStack.push({ id: 'root', indent: -1, label: 'Mapa mental' });
+            }
+            
+            while (parentStack.length > 0 && parentStack[parentStack.length - 1].indent >= indent) {
+              parentStack.pop();
+            }
+            
+            const parent = parentStack[parentStack.length - 1] || parentStack[0];
+            const depth = parentStack.length;
+            
+            let shape = 'ellipse';
+            let size = 18;
+            
+            if (depth === 1) {
+              shape = 'box';
+              size = 22;
+            }
+            
+            nodes.push({
+              id: id,
+              label: label,
+              shape: shape,
+              size: size
+            });
+            
+            edges.push({
+              from: parent.id,
+              to: id,
+              arrows: ''
+            });
+            
+            parentStack.push({ id: id, indent: indent, label: label });
+          }
+        });
+      }
+      
+      return { nodes, edges };
+    }
+
+    function parseAttributes(attrStr) {
+      const attrs = {};
+      if (!attrStr) return attrs;
+      
+      const pairs = attrStr.split(',');
+      pairs.forEach(pair => {
+        const parts = pair.split(':');
+        if (parts.length === 2) {
+          const key = parts[0].trim().toLowerCase();
+          const val = parts[1].trim().replace(/^['"]|['"]$/g, '');
+          attrs[key] = val;
+        }
+      });
+      return attrs;
+    }
+
+    function renderGraph() {
+      const container = document.getElementById('canvas-container');
+      const parsedData = parseMindmap(rawMarkdown);
+      
+      nodesDataset = new vis.DataSet(parsedData.nodes);
+      edgesDataset = new vis.DataSet(parsedData.edges);
+      
+      const data = {
+        nodes: nodesDataset,
+        edges: edgesDataset
+      };
+      
+      const layoutType = document.getElementById('layout-selector').value;
+      const isPhysicsEnabled = document.getElementById('physics-toggle').checked;
+      const springLength = Number(document.getElementById('spring-length').value) || 150;
+      
+      // Update UI row visibilities
+      const rowPhysics = document.getElementById('row-physics');
+      const rowSpring = document.getElementById('row-spring');
+      if (layoutType.startsWith('hierarchical')) {
+        rowPhysics.style.opacity = '0.5';
+        rowPhysics.style.pointerEvents = 'none';
+        rowSpring.style.opacity = '0.5';
+        rowSpring.style.pointerEvents = 'none';
+      } else {
+        rowPhysics.style.opacity = '1';
+        rowPhysics.style.pointerEvents = 'auto';
+        rowSpring.style.opacity = '1';
+        rowSpring.style.pointerEvents = 'auto';
+      }
+
+      const options = {
+        nodes: {
+          borderWidth: 2,
+          shadow: { enabled: true, color: 'rgba(0,0,0,0.4)', size: 6, x: 0, y: 4 },
+          font: { face: 'Inter', size: 13, color: '#ffffff' }
+        },
+        edges: {
+          width: 2.2,
+          shadow: { enabled: true, color: 'rgba(0,0,0,0.3)', size: 3, x: 0, y: 2 },
+          font: { face: 'Inter', size: 11, color: '#a1a1aa', strokeWidth: 0, align: 'horizontal' },
+          color: {
+            color: 'rgba(255, 255, 255, 0.22)',
+            highlight: 'var(--accent)',
+            hover: 'var(--accent)'
+          }
+        },
+        interaction: { hover: true, dragNodes: true, dragView: true, zoomView: true },
+        physics: {
+          enabled: isPhysicsEnabled && layoutType === 'force',
+          solver: 'barnesHut',
+          barnesHut: {
+            gravitationalConstant: -1800,
+            centralGravity: 0.35,
+            springLength: springLength,
+            springConstant: 0.05,
+            damping: 0.09
+          }
+        }
+      };
+
+      data.nodes.forEach(node => {
+        if (!node.color) {
+          if (node.id === 'root') {
+            data.nodes.update({
+              id: node.id,
+              color: { background: 'var(--accent)', border: 'var(--accent)' },
+              font: { color: '#ffffff', bold: true }
+            });
+          } else if (node.shape === 'box') {
+            data.nodes.update({
+              id: node.id,
+              color: { background: 'rgba(255,255,255,0.08)', border: 'var(--accent)' }
+            });
+          } else {
+            data.nodes.update({
+              id: node.id,
+              color: { background: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.18)' }
+            });
+          }
+        } else {
+          data.nodes.update({
+            id: node.id,
+            color: { background: node.color, border: node.color }
+          });
+        }
+      });
+      
+      if (layoutType.startsWith('hierarchical')) {
+        options.layout = {
+          hierarchical: {
+            direction: layoutType === 'hierarchical-v' ? 'UD' : 'LR',
+            sortMethod: 'directed',
+            nodeSpacing: 130,
+            levelSeparation: 130
+          }
+        };
+        options.physics = { enabled: false };
+      } else {
+        options.layout = { hierarchical: false };
+      }
+      
+      if (network) network.destroy();
+      network = new vis.Network(container, data, options);
+      
+      network.on("doubleClick", function(params) {
+        if (params.nodes.length > 0) {
+          const clickedId = params.nodes[0];
+          const node = nodesDataset.get(clickedId);
+          if (node) {
+            const isCurrentlyFixed = node.physics === false;
+            nodesDataset.update({
+              id: clickedId,
+              physics: isCurrentlyFixed ? undefined : false,
+              fixed: isCurrentlyFixed ? false : { x: true, y: true },
+              borderWidth: isCurrentlyFixed ? 2 : 4
+            });
+          }
+        }
+      });
+    }
+
+    function exportPNG() {
+      const canvas = document.querySelector('#canvas-container canvas');
+      if (!canvas) return;
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = 'mapa_mental.png';
+      a.click();
+    }
+  </script>
+</body>
+</html>`;
+
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'mapa_mental_interactivo.html';
+      a.click();
+      showToast('Mapa mental exportado con éxito como HTML auto-contenido.');
+    }
+  </script>
+</body>
+</html>

@@ -24,6 +24,7 @@
       --accent-timeline: #f59e0b;
       --accent-slides: #10b981;
       --accent-dilemmas: #8b5cf6;
+      --accent-mindmap: #3b82f6;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -81,7 +82,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 24px;
     }
 
@@ -121,10 +122,7 @@
     a.card.timeline::before { background: var(--accent-timeline); }
     a.card.slides::before { background: var(--accent-slides); }
     a.card.dilemmas::before { background: var(--accent-dilemmas); }
-
-    a.card.dilemmas {
-      grid-column: span 2;
-    }
+    a.card.mindmap::before { background: var(--accent-mindmap); }
 
     a.card:hover {
       transform: translateY(-6px);
@@ -147,6 +145,9 @@
     }
     a.card.dilemmas:hover {
       box-shadow: 0 15px 35px rgba(139, 92, 246, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    a.card.mindmap:hover {
+      box-shadow: 0 15px 35px rgba(59, 130, 246, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
     }
 
     .card-top {
@@ -174,12 +175,14 @@
     a.card.timeline strong { color: #fffbeb; }
     a.card.slides strong { color: #ecfdf5; }
     a.card.dilemmas strong { color: #f5f3ff; }
+    a.card.mindmap strong { color: #eff6ff; }
 
     a.card.markmap:hover strong { color: var(--accent-markmap); }
     a.card.studio:hover strong { color: var(--accent-studio); }
     a.card.timeline:hover strong { color: var(--accent-timeline); }
     a.card.slides:hover strong { color: var(--accent-slides); }
     a.card.dilemmas:hover strong { color: var(--accent-dilemmas); }
+    a.card.mindmap:hover strong { color: var(--accent-mindmap); }
 
     span.desc {
       color: var(--text-muted);
@@ -205,6 +208,7 @@
     a.card.timeline .go { color: var(--accent-timeline); }
     a.card.slides .go { color: var(--accent-slides); }
     a.card.dilemmas .go { color: var(--accent-dilemmas); }
+    a.card.mindmap .go { color: var(--accent-mindmap); }
 
     .arrow {
       transform: translateX(0);
@@ -230,7 +234,6 @@
     @media (max-width: 820px) {
       .grid { grid-template-columns: 1fr; }
       a.card { min-height: 200px; padding: 26px; }
-      a.card.dilemmas { grid-column: span 1; }
       body { padding: 30px 16px; }
     }
   </style>
@@ -239,7 +242,7 @@
   <main>
     <header>
       <h1>Suite de herramientas visuales</h1>
-      <p>Cinco espacios interactivos para crear mapas conceptuales, diagramar flujos, estructurar líneas de tiempo, impartir presentaciones dinámicas y diseñar dilemas éticos ramificados.</p>
+      <p>Seis espacios interactivos para crear mapas conceptuales, diagramar flujos, estructurar líneas de tiempo, impartir presentaciones dinámicas, simular dilemas éticos y trazar mapas mentales con físicas animadas.</p>
     </header>
     
     <section class="grid" aria-label="Aplicaciones disponibles">
@@ -301,6 +304,18 @@
         </div>
         <div class="card-bottom">
           <span class="go">Diseñar dilemas <span class="arrow">→</span></span>
+        </div>
+      </a>
+
+      <!-- CARD 6: MINDMAP -->
+      <a href="./mindmap/" class="card mindmap">
+        <div class="card-top">
+          <div class="card-icon">🪐</div>
+          <strong>Mapas mentales interactivos</strong>
+          <span class="desc">Dibuja mapas mentales radiales o redes de conceptos elásticas con físicas de rebote y arrastre. Personaliza formas de nodos, colores y estilos de enlaces.</span>
+        </div>
+        <div class="card-bottom">
+          <span class="go">Crear mapa mental <span class="arrow">→</span></span>
         </div>
       </a>
       
