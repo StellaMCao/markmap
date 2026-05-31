@@ -1,0 +1,1058 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Presentador de Diapositivas desde Markdown</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-2: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #475569;
+      --accent: #10b981;
+      --accent-dark: #059669;
+      --accent-light: rgba(16, 185, 129, 0.15);
+      --font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --panel-2: #f1f5f9;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --accent: #059669;
+      --accent-dark: #047857;
+      --accent-light: rgba(5, 150, 105, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-family); overflow: hidden; }
+
+    .app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    .brand h1 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; letter-spacing: -0.01em; }
+    .brand h1 span { color: var(--accent); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    .control-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 8px;
+    }
+
+    .group-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); padding-right: 4px; border-right: 1px solid var(--border); margin-right: 4px; }
+
+    label { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+    
+    select, input[type="search"] {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 4px 8px;
+      outline: none;
+      min-height: 28px;
+    }
+
+    select:focus, input[type="search"]:focus { border-color: var(--accent); }
+
+    button {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 5px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+      min-height: 28px;
+    }
+    button:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+    button.secondary { background: var(--panel); border-color: var(--border); color: var(--text); }
+    button.secondary:hover { background: var(--panel-2); }
+
+    main { display: grid; grid-template-columns: minmax(300px, 35vw) 6px 1fr; height: 100%; min-height: 0; }
+
+    .editor-pane { display: grid; grid-template-rows: auto auto 1fr; background: var(--panel); border-right: 1px solid var(--border); min-height: 0; }
+    .pane-title { background: var(--panel-2); padding: 8px 12px; font-size: 12px; font-weight: 700; color: var(--muted); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+
+    textarea {
+      background: transparent;
+      border: 0;
+      color: var(--text);
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 16px;
+      resize: none;
+      outline: none;
+      width: 100%;
+      height: 100%;
+    }
+
+    .editor-tools { padding: 6px 12px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .splitter { background: var(--border); cursor: col-resize; transition: background 0.2s ease; }
+    .splitter:hover { background: var(--accent); }
+
+    .preview-pane { display: flex; flex-direction: column; background: var(--bg); min-height: 0; justify-content: center; align-items: center; padding: 30px; position: relative; }
+    
+    /* SLIDE ASPECT RATIO BOX (16:9) */
+    .slide-wrapper {
+      width: 100%;
+      max-width: 800px;
+      aspect-ratio: 16 / 9;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .slide-container {
+      width: 90%;
+      height: 85%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      font-size: 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* THEME PRESETS FOR SLIDES */
+    .slide-wrapper.slide-minimal-dark { background: #0f172a; color: #f8fafc; }
+    .slide-wrapper.slide-minimal-light { background: #f8fafc; color: #0f172a; border-color: #e2e8f0; }
+    
+    .slide-wrapper.slide-chalkboard {
+      background: #14532d;
+      color: #fff;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      border: 6px solid #78350f;
+      border-radius: 4px;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+    }
+    .slide-wrapper.slide-chalkboard h2 { border-bottom: 2px dashed rgba(255,255,255,0.3) !important; font-family: inherit; }
+
+    .slide-wrapper.slide-navy-gradient {
+      background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+      color: #f8fafc;
+    }
+    
+    .slide-wrapper.slide-fire-gradient {
+      background: linear-gradient(135deg, #581c87 0%, #1e1b4b 100%);
+      color: #f8fafc;
+    }
+
+    .slide-container h2 {
+      font-size: 1.8em;
+      font-weight: 700;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 8px;
+    }
+
+    .slide-container p, .slide-container li {
+      line-height: 1.6;
+      margin-bottom: 12px;
+      font-size: 1em;
+    }
+    
+    .slide-container ul, .slide-container ol {
+      margin-left: 28px;
+      margin-bottom: 16px;
+    }
+
+    .slide-container table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+      font-size: 0.85em;
+    }
+    .slide-container th, .slide-container td {
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      text-align: left;
+    }
+    .slide-container th { background: rgba(255,255,255,0.1); }
+
+    /* LAYOUT FORMATS */
+    .layout-left .slide-container { text-align: left; }
+    .layout-center .slide-container { text-align: center; align-items: center; }
+    .layout-center ul, .layout-center ol { text-align: left; display: inline-block; }
+    .layout-center table { margin: 10px auto; width: auto; }
+
+    /* Double Column Helper */
+    .two-cols { display: flex; gap: 20px; width: 100%; height: 100%; align-items: flex-start; }
+    .col { flex: 1; }
+
+    /* Navigational controls at bottom of preview */
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 14px;
+      z-index: 5;
+    }
+
+    /* FULLSCREEN PRESENTATION MODE */
+    body.presentation-mode {
+      overflow: hidden;
+    }
+    body.presentation-mode main {
+      grid-template-columns: 1fr;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1000;
+    }
+    body.presentation-mode .editor-pane,
+    body.presentation-mode .splitter,
+    body.presentation-mode header {
+      display: none !important;
+    }
+    body.presentation-mode .preview-pane {
+      width: 100vw;
+      height: 100vh;
+      padding: 0;
+      background: #000;
+    }
+    body.presentation-mode .slide-wrapper {
+      max-width: 100%;
+      width: 100vw;
+      height: 100vh;
+      aspect-ratio: auto;
+      border-radius: 0;
+      border: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    body.presentation-mode .slide-container {
+      width: 80%;
+      height: 80%;
+      font-size: 32px;
+    }
+    body.presentation-mode .nav-controls {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0.1;
+      transition: opacity 0.3s ease;
+    }
+    body.presentation-mode .nav-controls:hover { opacity: 0.9; }
+
+    /* DRAWING CANVAS (WHITEBOARD) OVERLAY */
+    canvas.whiteboard {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      cursor: crosshair;
+      pointer-events: none;
+    }
+    body.drawing-active canvas.whiteboard {
+      pointer-events: auto;
+    }
+
+    /* WHITEBOARD FLOATING TOOLBOX */
+    .whiteboard-tools {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1010;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    
+    .whiteboard-tools .tool-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .color-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.2s;
+    }
+    .color-dot:hover { transform: scale(1.15); }
+    .color-dot.active { border-color: #fff; transform: scale(1.15); }
+
+    .color-red { background: #ef4444; }
+    .color-yellow { background: #f59e0b; }
+    .color-blue { background: #3b82f6; }
+    .color-green { background: #10b981; }
+    .color-white { background: #ffffff; border: 1px solid #94a3b8; }
+
+    /* SPEAKER NOTES DRAGGABLE PANEL */
+    .notes-panel {
+      position: fixed;
+      bottom: 80px;
+      right: 24px;
+      width: 320px;
+      max-height: 200px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      z-index: 1010;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      backdrop-filter: blur(10px);
+      overflow-y: auto;
+      display: none;
+    }
+    .notes-panel h4 { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    .notes-panel p { font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+    /* PDF Print layouts styles */
+    @media print {
+      @page { size: landscape; margin: 0; }
+      body { background: #fff; color: #000; overflow: visible; height: auto; }
+      .app, header, .editor-pane, .splitter, .nav-controls, .whiteboard-tools { display: none !important; }
+      
+      .print-slide-container {
+        display: block !important;
+        page-break-after: always;
+        width: 100vw;
+        height: 100vh;
+        box-sizing: border-box;
+        padding: 40px;
+        display: flex !important;
+        flex-direction: column;
+        justify-content: center;
+        background: #fff;
+        color: #000;
+        border: 0;
+      }
+      .print-slide-container h2 { border-bottom: 2px solid #000 !important; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="app">
+    <header>
+      <div class="brand">
+        <h1><span>🎭</span> Presentador Slides</h1>
+      </div>
+      
+      <div class="actions">
+        <!-- Background Select -->
+        <div class="control-group">
+          <span class="group-title">Apariencia</span>
+          <label>Fondo
+            <select id="slide-theme">
+              <option value="slide-minimal-dark" selected>Minimal Oscuro</option>
+              <option value="slide-minimal-light">Minimal Claro</option>
+              <option value="slide-chalkboard">Pizarrón</option>
+              <option value="slide-navy-gradient">Gradiente Azul</option>
+              <option value="slide-fire-gradient">Gradiente Fuego</option>
+            </select>
+          </label>
+          <label>Alineación
+            <select id="slide-layout">
+              <option value="layout-left" selected>Izquierda</option>
+              <option value="layout-center">Centrado</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Exporters & Actions -->
+        <div class="control-group">
+          <button id="btn-present">Presentar</button>
+          <button id="share" class="secondary">Copiar link</button>
+          <button id="save-md" class="secondary">MD</button>
+          <button id="print-pdf" class="secondary">Imprimir PDF</button>
+          <button id="save-html">Guardar HTML</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- EDITOR PANEL -->
+      <section class="editor-pane" aria-label="Editor de diapositivas">
+        <div class="pane-title">
+          <span>Diapositivas Markdown</span>
+          <span id="char-count">0 caracteres</span>
+        </div>
+        <div class="editor-tools">
+          <button class="secondary" id="btn-bold" title="Negrita"><strong>B</strong></button>
+          <button class="secondary" id="btn-italic" title="Cursiva"><em>I</em></button>
+          <button class="secondary" id="btn-slide" title="Nueva Diapositiva">Nueva Diapositiva</button>
+          <button class="secondary" id="btn-note" title="Agregar Nota">Nota</button>
+          <button class="secondary" id="btn-cols" title="Doble Columna">2 Columnas</button>
+          <button class="secondary" id="btn-sample" title="Ejemplo">Ejemplo</button>
+        </div>
+        <textarea id="markdown" spellcheck="false" placeholder="Escribe tus diapositivas separadas por '---'..."></textarea>
+      </section>
+
+      <!-- SPLITTER -->
+      <div class="splitter" id="splitter" role="separator" aria-label="Ajustar paneles"></div>
+
+      <!-- PREVIEW PANEL -->
+      <section class="preview-pane" aria-label="Vista previa de diapositivas">
+        <div class="slide-wrapper slide-minimal-dark layout-left" id="slide-wrapper">
+          <!-- Live Drawing whiteboard Canvas -->
+          <canvas class="whiteboard" id="whiteboard"></canvas>
+          
+          <div class="slide-container" id="slide-container">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Navigational slide bar -->
+        <div class="nav-controls">
+          <button id="btn-prev" class="secondary">◀ Anterior</button>
+          <span id="slide-number">Slide 1 / 1</span>
+          <button id="btn-next" class="secondary">Siguiente ▶</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- FLOATING PRESENTATION CONTROLS (Whiteboard + Notes) -->
+  <div class="whiteboard-tools hidden" id="whiteboard-tools">
+    <div class="tool-row">
+      <strong style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Pizarra digital</strong>
+      <button class="secondary" id="btn-toggle-draw" style="padding: 2px 6px; font-size: 11px;">Pincel: OFF</button>
+    </div>
+    <div class="tool-row" id="color-selectors">
+      <div class="color-dot color-red" data-color="#ef4444"></div>
+      <div class="color-yellow color-dot active" data-color="#f59e0b"></div>
+      <div class="color-blue color-dot" data-color="#3b82f6"></div>
+      <div class="color-green color-dot" data-color="#10b981"></div>
+      <div class="color-white color-dot" data-color="#ffffff"></div>
+    </div>
+    <div class="tool-row">
+      <button class="secondary" id="btn-clear-draw" style="flex: 1; padding: 3px; font-size: 11px;">Limpiar</button>
+      <button class="secondary" id="btn-toggle-notes" style="flex: 1; padding: 3px; font-size: 11px;">Notas</button>
+    </div>
+    <div class="tool-row">
+      <button id="btn-exit-present" style="background: #ef4444; border-color: #ef4444; width: 100%; padding: 4px; font-size: 11px;">Salir</button>
+    </div>
+  </div>
+
+  <!-- Draggable speaker notes container -->
+  <div class="notes-panel" id="notes-panel">
+    <h4>Notas del Orador</h4>
+    <p id="notes-content">Sin notas para esta diapositiva.</p>
+  </div>
+
+  <!-- Non-display container for PDF printing -->
+  <div id="print-container" style="display: none;"></div>
+
+  <!-- Load Markdown & Math CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  
+  <script>
+    const sampleSlides = `# Didáctica y Exposición\n## Cómo lograr diapositivas interactivas impactantes\n\n- Usar texto conciso en viñetas.\n- Evitar el desorden visual.\n- Aprovechar la **pizarra interactiva** integrada arriba a la derecha en modo presentación.\n\n---\n\n## 🧪 Fórmulas y Matemáticas\n\nLas diapositivas tienen soporte total de **KaTeX** para fórmulas elegantes:\n\n- Ecuación cuadrática: $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$\n- Ecuación de Schrödinger:\n  $i\\hbar\\frac{\\partial}{\\partial t}\\Psi(\\mathbf{r},t) = \\hat{H}\\Psi(\\mathbf{r},t)$\n\n---\n\n## 📊 Layout de Doble Columna\n\nPodés estructurar comparaciones o layouts de dos columnas fácilmente:\n\n||col||\n\n### Columna A\n- Conceptos teóricos.\n- Notas del alumno.\n- Fórmulas de base.\n\n||col||\n\n### Columna B\n- Ejemplos prácticos.\n- Dibujos de la pizarra.\n- Casos de estudio reales.\n\nNota: Explicar al grupo la diferencia entre teoría y práctica basándose en las dos columnas.\n\n---\n\n## 🎨 Estilos y Conclusiones\n\n- **Pizarra**: Ideal para resolver ejercicios en clase sobre la diapositiva.\n- **Fondos**: Cambiá el fondo arriba (como el modo *Pizarrón* verde tradicional).\n- **Exportar**: Descargá un HTML interactivo que conserve la pizarra funcional para tus alumnos.\n`;
+
+    const textarea = document.getElementById('markdown');
+    const slideContainer = document.getElementById('slide-container');
+    const slideWrapper = document.getElementById('slide-wrapper');
+    const slideNumber = document.getElementById('slide-number');
+    const slideThemeSelect = document.getElementById('slide-theme');
+    const slideLayoutSelect = document.getElementById('slide-layout');
+    const charCount = document.getElementById('char-count');
+    const splitter = document.getElementById('splitter');
+    
+    let slides = [];
+    let currentSlideIndex = 0;
+
+    // Resizable panels
+    let isResizing = false;
+    splitter.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      const editorWidth = Math.max(260, Math.min(e.clientX, window.innerWidth * 0.7));
+      document.querySelector('main').style.gridTemplateColumns = `${editorWidth}px 6px 1fr`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      isResizing = false;
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+    });
+
+    // Configuration listeners
+    slideThemeSelect.addEventListener('change', () => {
+      updateSlideTheme();
+    });
+    slideLayoutSelect.addEventListener('change', () => {
+      updateSlideLayout();
+    });
+
+    textarea.addEventListener('input', () => {
+      charCount.textContent = `${textarea.value.length} caracteres`;
+      parseSlides();
+      renderCurrentSlide();
+      persist();
+    });
+
+    // Navigation triggers
+    document.getElementById('btn-prev').addEventListener('click', prevSlide);
+    document.getElementById('btn-next').addEventListener('click', nextSlide);
+
+    // Editor Helper keys
+    document.getElementById('btn-bold').addEventListener('click', () => insertText('**', '**'));
+    document.getElementById('btn-italic').addEventListener('click', () => insertText('*', '*'));
+    document.getElementById('btn-slide').addEventListener('click', () => insertText('\n\n---\n\n## ', ''));
+    document.getElementById('btn-note').addEventListener('click', () => insertText('\n\nNota: ', ''));
+    document.getElementById('btn-cols').addEventListener('click', () => insertText('\n\n||col||\n\n', ''));
+    document.getElementById('btn-sample').addEventListener('click', () => {
+      textarea.value = sampleSlides;
+      charCount.textContent = `${textarea.value.length} caracteres`;
+      parseSlides();
+      renderCurrentSlide();
+      persist();
+    });
+
+    function insertText(before, after) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const selected = text.substring(start, end);
+      const replacement = before + selected + after;
+      textarea.value = text.substring(0, start) + replacement + text.substring(end);
+      textarea.focus();
+      textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+      parseSlides();
+      renderCurrentSlide();
+      persist();
+    }
+
+    // Markdown parse slide splitting
+    function parseSlides() {
+      const content = textarea.value;
+      // Split by --- keeping in mind double newlines
+      const rawSlides = content.split(/\n\s*---\s*\n/);
+      
+      slides = rawSlides.map(s => {
+        let slideText = s.trim();
+        let notes = '';
+        
+        // Extract Notes: line
+        const noteMatch = slideText.match(/(?:Nota|Notes):\s*(.*)$/im);
+        if (noteMatch) {
+          notes = noteMatch[1].trim();
+          slideText = slideText.replace(/(?:Nota|Notes):\s*(.*)$/im, '').trim();
+        }
+
+        return {
+          markdown: slideText,
+          notes: notes
+        };
+      });
+
+      if (currentSlideIndex >= slides.length) {
+        currentSlideIndex = Math.max(0, slides.length - 1);
+      }
+    }
+
+    function renderMathText(text) {
+      // Inline math: $formula$
+      return text.replace(/\$([^\$]+)\$/g, (match, formula) => {
+        try { return katex.renderToString(formula, { displayMode: false, throwOnError: false }); }
+        catch (e) { return match; }
+      });
+    }
+
+    // Render a slide converting standard Markdown to slide HTML structure
+    function renderSlideHtml(slide) {
+      const mathRendered = renderMathText(slide.markdown);
+      
+      // Support double columns: splitting by ||col||
+      if (mathRendered.includes('||col||')) {
+        const columns = mathRendered.split('||col||');
+        const colHtml = columns.map(c => `<div class="col">${marked.parse(c.trim())}</div>`).join('');
+        return `<div class="two-cols">${colHtml}</div>`;
+      }
+
+      return marked.parse(mathRendered);
+    }
+
+    function renderCurrentSlide() {
+      if (slides.length === 0) {
+        slideContainer.innerHTML = '<h2>Diapositiva Vacía</h2><p>Escribe algo de texto en el editor en la parte izquierda...</p>';
+        slideNumber.textContent = 'Slide 1 / 1';
+        return;
+      }
+      
+      const slide = slides[currentSlideIndex];
+      slideContainer.innerHTML = renderSlideHtml(slide);
+      slideNumber.textContent = `Slide ${currentSlideIndex + 1} / ${slides.length}`;
+      
+      // Update Speaker Notes panel
+      const notesContent = document.getElementById('notes-content');
+      notesContent.textContent = slide.notes || 'Sin notas para esta diapositiva.';
+
+      // Clear drawings on slide change (optional, or we keep slide specific cache)
+      clearWhiteboard();
+    }
+
+    function prevSlide() {
+      if (currentSlideIndex > 0) {
+        currentSlideIndex--;
+        renderCurrentSlide();
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlideIndex < slides.length - 1) {
+        currentSlideIndex++;
+        renderCurrentSlide();
+      }
+    }
+
+    function updateSlideTheme() {
+      // Remove all theme classes
+      slideWrapper.className = 'slide-wrapper ' + slideThemeSelect.value + ' ' + slideLayoutSelect.value;
+    }
+
+    function updateSlideLayout() {
+      slideWrapper.className = 'slide-wrapper ' + slideThemeSelect.value + ' ' + slideLayoutSelect.value;
+    }
+
+    // Keybindings navigation for slideshow
+    document.addEventListener('keydown', (e) => {
+      if (document.body.classList.contains('presentation-mode')) {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+          nextSlide();
+          e.preventDefault();
+        } else if (e.key === 'ArrowLeft' || e.key === 'Backspace' || e.key === 'PageUp') {
+          prevSlide();
+          e.preventDefault();
+        } else if (e.key === 'Escape') {
+          exitPresentationMode();
+        }
+      }
+    });
+
+    // FULLSCREEN PRESENTATION MODE LOGIC
+    const btnPresent = document.getElementById('btn-present');
+    const toolsFloating = document.getElementById('whiteboard-tools');
+    
+    btnPresent.addEventListener('click', () => {
+      enterPresentationMode();
+    });
+
+    document.getElementById('btn-exit-present').addEventListener('click', () => {
+      exitPresentationMode();
+    });
+
+    function enterPresentationMode() {
+      document.body.classList.add('presentation-mode');
+      toolsFloating.classList.remove('hidden');
+      resizeCanvas();
+      
+      // Attempt standard browser fullscreen if possible
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) docEl.requestFullscreen();
+    }
+
+    function exitPresentationMode() {
+      document.body.classList.remove('presentation-mode');
+      toolsFloating.classList.add('hidden');
+      document.getElementById('notes-panel').style.display = 'none';
+      stopDrawing();
+      
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+    }
+
+    // INTERACTIVE DRAWING PIZARRA (WHITEBOARD CANVAS)
+    const canvas = document.getElementById('whiteboard');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let drawColor = '#f59e0b';
+    let drawThickness = 4;
+    let penActive = false;
+
+    // Toggle draw button
+    const btnDrawToggle = document.getElementById('btn-toggle-draw');
+    btnDrawToggle.addEventListener('click', () => {
+      penActive = !penActive;
+      btnDrawToggle.textContent = penActive ? 'Pincel: ON' : 'Pincel: OFF';
+      btnDrawToggle.style.background = penActive ? 'var(--accent)' : 'var(--panel-2)';
+      document.body.classList.toggle('drawing-active', penActive);
+    });
+
+    // Change colors
+    document.querySelectorAll('#color-selectors .color-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        document.querySelectorAll('#color-selectors .color-dot').forEach(d => d.classList.remove('active'));
+        dot.classList.add('active');
+        drawColor = dot.dataset.color;
+      });
+    });
+
+    // Clear whiteboard
+    document.getElementById('btn-clear-draw').addEventListener('click', clearWhiteboard);
+    
+    function clearWhiteboard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function stopDrawing() {
+      penActive = false;
+      btnDrawToggle.textContent = 'Pincel: OFF';
+      btnDrawToggle.style.background = 'var(--panel-2)';
+      document.body.classList.remove('drawing-active');
+      isDrawing = false;
+    }
+
+    // Canvas drawing coordinates logic
+    function getMousePos(canvasDom, event) {
+      const rect = canvasDom.getBoundingClientRect();
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+      return {
+        x: ((clientX - rect.left) / rect.width) * canvasDom.width,
+        y: ((clientY - rect.top) / rect.height) * canvasDom.height
+      };
+    }
+
+    function startDrawingFlow(e) {
+      if (!penActive) return;
+      isDrawing = true;
+      const pos = getMousePos(canvas, e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      ctx.strokeStyle = drawColor;
+      ctx.lineWidth = drawThickness;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      e.preventDefault();
+    }
+
+    function drawFlow(e) {
+      if (!isDrawing || !penActive) return;
+      const pos = getMousePos(canvas, e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      e.preventDefault();
+    }
+
+    canvas.addEventListener('mousedown', startDrawingFlow);
+    canvas.addEventListener('mousemove', drawFlow);
+    window.addEventListener('mouseup', () => isDrawing = false);
+
+    canvas.addEventListener('touchstart', startDrawingFlow);
+    canvas.addEventListener('touchmove', drawFlow);
+    window.addEventListener('touchend', () => isDrawing = false);
+
+    function resizeCanvas() {
+      // Dynamic Canvas dimensions mapping
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    }
+    
+    window.addEventListener('resize', () => {
+      if (document.body.classList.contains('presentation-mode')) {
+        resizeCanvas();
+      }
+    });
+
+    // Notes Toggle
+    document.getElementById('btn-toggle-notes').addEventListener('click', () => {
+      const panel = document.getElementById('notes-panel');
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Persistance
+    function persist() {
+      localStorage.setItem('slides-md', textarea.value);
+    }
+
+    function restore() {
+      const hash = location.hash;
+      if (hash && hash.startsWith('#m=')) {
+        try {
+          const decoded = JSON.parse(decodeURIComponent(escape(atob(hash.substring(3)))));
+          textarea.value = decoded.markdown || sampleSlides;
+          if (decoded.theme) {
+            slideThemeSelect.value = decoded.theme;
+            updateSlideTheme();
+          }
+          if (decoded.layout) {
+            slideLayoutSelect.value = decoded.layout;
+            updateSlideLayout();
+          }
+        } catch(e) {
+          textarea.value = sampleSlides;
+        }
+      } else {
+        textarea.value = localStorage.getItem('slides-md') || sampleSlides;
+      }
+      charCount.textContent = `${textarea.value.length} caracteres`;
+      parseSlides();
+      renderCurrentSlide();
+    }
+
+    // Exporters
+    document.getElementById('share').addEventListener('click', () => {
+      const state = {
+        markdown: textarea.value,
+        theme: slideThemeSelect.value,
+        layout: slideLayoutSelect.value
+      };
+      const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+      const shareUrl = `${location.protocol}//${location.host}${location.pathname}#m=${base64}`;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert('¡Enlace de la presentación copiado al portapapeles!');
+      });
+    });
+
+    // Save Markdown
+    document.getElementById('save-md').addEventListener('click', () => {
+      const blob = new Blob([textarea.value], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'presentacion.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // PDF printing trigger
+    document.getElementById('print-pdf').addEventListener('click', () => {
+      const printContainer = document.getElementById('print-container');
+      printContainer.innerHTML = '';
+      
+      // Rebuild each slide for clean landscape layout printed page
+      slides.forEach(s => {
+        const slidePage = document.createElement('div');
+        slidePage.className = `print-slide-container ${slideThemeSelect.value} ${slideLayoutSelect.value}`;
+        
+        const contentBox = document.createElement('div');
+        contentBox.className = 'slide-container';
+        contentBox.innerHTML = renderSlideHtml(s);
+        
+        slidePage.appendChild(contentBox);
+        printContainer.appendChild(slidePage);
+      });
+
+      // Show container, print, and hide
+      printContainer.style.display = 'block';
+      window.print();
+      printContainer.style.display = 'none';
+    });
+
+    // Save interactive HTML presentation export
+    document.getElementById('save-html').addEventListener('click', () => {
+      const deckTitle = textarea.value.match(/^#\s+(.+)$/m)?.[1] || 'Presentación Slides';
+      
+      const htmlContent = `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${deckTitle}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <style>
+    ${document.head.querySelector('style').innerHTML}
+    /* Force simple static fullscreen layout */
+    .editor-pane, .splitter, header { display: none !important; }
+    main { grid-template-columns: 1fr; }
+    .preview-pane { width: 100vw; height: 100vh; padding: 0; background: #000; }
+    .slide-wrapper { max-width: 100%; width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; border: 0; }
+    .slide-container { width: 80%; height: 80%; font-size: 32px; }
+    .nav-controls { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); opacity: 0.15; transition: opacity 0.3s; }
+    .nav-controls:hover { opacity: 0.9; }
+  </style>
+</head>
+<body class="presentation-mode" data-theme="dark">
+  <div class="app">
+    <main>
+      <div class="preview-pane">
+        <div class="slide-wrapper ${slideThemeSelect.value} ${slideLayoutSelect.value}" id="slide-wrapper">
+          <canvas class="whiteboard" id="whiteboard"></canvas>
+          <div class="slide-container" id="slide-container"></div>
+        </div>
+
+        <div class="nav-controls">
+          <button id="btn-prev">◀ Anterior</button>
+          <span id="slide-number">Slide 1 / 1</span>
+          <button id="btn-next">Siguiente ▶</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="whiteboard-tools" id="whiteboard-tools">
+    <div class="tool-row">
+      <strong style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Pizarra digital</strong>
+      <button class="secondary" id="btn-toggle-draw" style="padding: 2px 6px; font-size: 11px;">Pincel: OFF</button>
+    </div>
+    <div class="tool-row" id="color-selectors">
+      <div class="color-dot color-red" data-color="#ef4444"></div>
+      <div class="color-yellow color-dot active" data-color="#f59e0b"></div>
+      <div class="color-blue color-dot" data-color="#3b82f6"></div>
+      <div class="color-green color-dot" data-color="#10b981"></div>
+      <div class="color-white color-dot" data-color="#ffffff"></div>
+    </div>
+    <div class="tool-row">
+      <button class="secondary" id="btn-clear-draw" style="width: 100%; padding: 3px; font-size: 11px;">Limpiar Pizarra</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
+  
+  <script>
+    const markdownContent = \`${textarea.value.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+    
+    // Parse slides structure
+    let slides = [];
+    let currentSlideIndex = 0;
+    
+    // Embed the functional logic
+    (${parseSlides.toString()})();
+    
+    const slideContainer = document.getElementById('slide-container');
+    const slideNumber = document.getElementById('slide-number');
+    const canvas = document.getElementById('whiteboard');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let drawColor = '#f59e0b';
+    let drawThickness = 4;
+    let penActive = false;
+    
+    ${renderMathText.toString()}
+    ${renderSlideHtml.toString()}
+    ${renderCurrentSlide.toString()}
+    ${prevSlide.toString()}
+    ${nextSlide.toString()}
+    
+    // Wire navigational hooks
+    document.getElementById('btn-prev').addEventListener('click', prevSlide);
+    document.getElementById('btn-next').addEventListener('click', nextSlide);
+    
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+        e.preventDefault();
+      } else if (e.key === 'ArrowLeft' || e.key === 'Backspace' || e.key === 'PageUp') {
+        prevSlide();
+        e.preventDefault();
+      }
+    });
+
+    // Pizarra digital logic
+    const btnDrawToggle = document.getElementById('btn-toggle-draw');
+    btnDrawToggle.addEventListener('click', () => {
+      penActive = !penActive;
+      btnDrawToggle.textContent = penActive ? 'Pincel: ON' : 'Pincel: OFF';
+      btnDrawToggle.style.background = penActive ? '#10b981' : '#334155';
+      document.body.classList.toggle('drawing-active', penActive);
+    });
+
+    document.querySelectorAll('#color-selectors .color-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        document.querySelectorAll('#color-selectors .color-dot').forEach(d => d.classList.remove('active'));
+        dot.classList.add('active');
+        drawColor = dot.dataset.color;
+      });
+    });
+
+    document.getElementById('btn-clear-draw').addEventListener('click', clearWhiteboard);
+    
+    ${clearWhiteboard.toString()}
+    ${stopDrawing.toString()}
+    ${getMousePos.toString()}
+    ${startDrawingFlow.toString()}
+    ${drawFlow.toString()}
+    ${resizeCanvas.toString()}
+    
+    canvas.addEventListener('mousedown', startDrawingFlow);
+    canvas.addEventListener('mousemove', drawFlow);
+    window.addEventListener('mouseup', () => isDrawing = false);
+    canvas.addEventListener('touchstart', startDrawingFlow);
+    canvas.addEventListener('touchmove', drawFlow);
+    window.addEventListener('touchend', () => isDrawing = false);
+
+    // Initial setups
+    resizeCanvas();
+    renderCurrentSlide();
+    window.addEventListener('resize', resizeCanvas);
+  <\/script>
+</body>
+</html>`;
+
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'presentacion-diapositivas.html';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Start Up
+    restore();
+  </script>
+</body>
+</html>

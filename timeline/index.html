@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generador de Líneas de Tiempo Interactivas</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-2: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #475569;
+      --accent: #3b82f6;
+      --accent-dark: #2563eb;
+      --accent-light: rgba(59, 130, 246, 0.15);
+      --font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --panel-2: #f1f5f9;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --accent-light: rgba(37, 99, 235, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-family); overflow: hidden; }
+
+    .app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .brand h1 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; letter-spacing: -0.01em; }
+    .brand h1 span { color: var(--accent); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    .control-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 8px;
+    }
+
+    .group-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); padding-right: 4px; border-right: 1px solid var(--border); margin-right: 4px; }
+
+    label { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+    
+    select, input[type="search"] {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 4px 8px;
+      outline: none;
+      min-height: 28px;
+    }
+
+    select:focus, input[type="search"]:focus { border-color: var(--accent); }
+
+    button {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 5px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+      min-height: 28px;
+    }
+    button:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+    button.secondary { background: var(--panel); border-color: var(--border); color: var(--text); }
+    button.secondary:hover { background: var(--panel-2); }
+
+    main { display: grid; grid-template-columns: minmax(300px, 35vw) 6px 1fr; height: 100%; min-height: 0; }
+
+    .editor-pane { display: grid; grid-template-rows: auto auto 1fr; background: var(--panel); border-right: 1px solid var(--border); min-height: 0; }
+    .pane-title { background: var(--panel-2); padding: 8px 12px; font-size: 12px; font-weight: 700; color: var(--muted); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+
+    textarea {
+      background: transparent;
+      border: 0;
+      color: var(--text);
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 16px;
+      resize: none;
+      outline: none;
+      width: 100%;
+      height: 100%;
+    }
+
+    .editor-tools { padding: 6px 12px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .splitter { background: var(--border); cursor: col-resize; transition: background 0.2s ease; }
+    .splitter:hover { background: var(--accent); }
+
+    .preview-pane { display: grid; grid-template-rows: auto 1fr; background: var(--bg); min-height: 0; position: relative; }
+    
+    .filter-bar {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .filter-bar::-webkit-scrollbar { height: 4px; }
+    .filter-bar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .tag-btn {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tag-btn:hover, .tag-btn.active {
+      background: var(--accent-light);
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .timeline-container {
+      padding: 40px 20px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      height: 100%;
+      position: relative;
+    }
+
+    /* VERTICAL LAYOUT STYLE */
+    .vertical-timeline {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .vertical-timeline::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 4px;
+      background: var(--border);
+      transform: translateX(-50%);
+      border-radius: 2px;
+    }
+    
+    .event-card {
+      position: relative;
+      width: 45%;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.5s forwards;
+    }
+    .event-card.left { float: left; clear: left; text-align: right; }
+    .event-card.right { float: right; clear: right; text-align: left; }
+
+    .event-card::after {
+      content: '';
+      position: absolute;
+      top: 24px;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border: 4px solid var(--bg);
+      border-radius: 50%;
+      z-index: 1;
+      transition: all 0.3s ease;
+    }
+    .event-card.left::after { right: -7.5%; transform: translateX(50%); }
+    .event-card.right::after { left: -7.5%; transform: translateX(-50%); }
+
+    .event-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      border-color: var(--accent);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+    }
+    .event-card:hover::after {
+      background: var(--text);
+      transform: scale(1.2) translateY(-40%);
+    }
+    .event-card.left:hover::after { transform: scale(1.2) translateX(50%); }
+    .event-card.right:hover::after { transform: scale(1.2) translateX(-50%); }
+
+    .event-date {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+    }
+    .event-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .event-desc { font-size: 14px; line-height: 1.5; color: var(--muted); margin-bottom: 12px; }
+    .event-desc p { margin-bottom: 8px; }
+    .event-desc p:last-child { margin-bottom: 0; }
+
+    .event-img {
+      width: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-top: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .event-category {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-top: 8px;
+    }
+
+    .clearfix { clear: both; }
+
+    /* HORIZONTAL LAYOUT STYLE */
+    .horizontal-timeline-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      justify-content: space-between;
+      padding: 20px;
+    }
+
+    .horizontal-card-display {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      position: relative;
+    }
+
+    .hz-card {
+      width: 100%;
+      max-width: 580px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.4s ease;
+    }
+    .hz-card.active { display: flex; }
+
+    .hz-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .hz-card-body { overflow-y: auto; max-height: 250px; }
+    .hz-card .event-img { max-height: 180px; }
+
+    .horizontal-track-container {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 24px;
+      position: relative;
+      margin-top: 20px;
+    }
+
+    .timeline-line {
+      position: absolute;
+      top: 50%;
+      left: 32px;
+      right: 32px;
+      height: 4px;
+      background: var(--border);
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+
+    .timeline-points-scroll {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+      overflow-x: auto;
+      gap: 20px;
+      padding: 10px 0;
+    }
+
+    .timeline-dot {
+      background: var(--panel-2);
+      border: 3px solid var(--border);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .timeline-dot:hover, .timeline-dot.active {
+      background: var(--accent);
+      border-color: var(--text);
+      transform: scale(1.25);
+      box-shadow: 0 0 12px var(--accent);
+    }
+    .timeline-dot span.dot-label {
+      position: absolute;
+      top: -24px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      background: var(--panel-2);
+      padding: 2px 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .status-alert {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      margin: 20px auto;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    /* Animation Keyframes */
+    @keyframes fadeInUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .hidden { display: none !important; }
+
+    /* Palettes configurations */
+    [data-theme-palette="sunset"] {
+      --accent: #f97316;
+      --accent-dark: #ea580c;
+      --accent-light: rgba(249, 115, 22, 0.15);
+    }
+    [data-theme-palette="ocean"] {
+      --accent: #06b6d4;
+      --accent-dark: #0891b2;
+      --accent-light: rgba(6, 182, 212, 0.15);
+    }
+    [data-theme-palette="forest"] {
+      --accent: #10b981;
+      --accent-dark: #059669;
+      --accent-light: rgba(16, 185, 129, 0.15);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      main { grid-template-columns: 1fr; grid-template-rows: 40vh 6px 1fr; }
+      .splitter { display: none; }
+      .editor-pane { border-right: 0; border-bottom: 1px solid var(--border); }
+      .vertical-timeline::before { left: 24px; }
+      .event-card { width: calc(100% - 48px) !important; float: left !important; clear: left !important; text-align: left !important; margin-left: 48px !important; }
+      .event-card::after { left: -32px !important; transform: translateX(-50%) !important; }
+    }
+  </style>
+</head>
+<body data-theme="dark" data-theme-palette="classic">
+  <div class="app">
+    <header>
+      <div class="brand">
+        <h1><span>⏱️</span> Línea de Tiempo REPL</h1>
+      </div>
+      
+      <div class="actions">
+        <!-- Layout Selection -->
+        <div class="control-group">
+          <span class="group-title">Layout</span>
+          <label>Diseño
+            <select id="layout">
+              <option value="vertical" selected>Vertical Feed</option>
+              <option value="horizontal">Horizontal Slider</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Aesthetics Selection -->
+        <div class="control-group">
+          <span class="group-title">Apariencia</span>
+          <label>Paleta
+            <select id="palette">
+              <option value="classic" selected>Clásico</option>
+              <option value="sunset">Atardecer</option>
+              <option value="ocean">Océano</option>
+              <option value="forest">Bosque</option>
+            </select>
+          </label>
+          <label>Tema
+            <select id="theme">
+              <option value="dark" selected>Oscuro</option>
+              <option value="light">Claro</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="control-group">
+          <span class="group-title">Buscar</span>
+          <input id="search" type="search" placeholder="Filtrar hitos...">
+        </div>
+
+        <!-- Exporters -->
+        <div class="control-group">
+          <button id="share" class="secondary">Copiar link</button>
+          <button id="save-md" class="secondary">MD</button>
+          <button id="save-html">Guardar HTML</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- EDITOR PANEL -->
+      <section class="editor-pane" aria-label="Editor de Markdown">
+        <div class="pane-title">
+          <span>Markdown</span>
+          <span id="char-count">0 caracteres</span>
+        </div>
+        <div class="editor-tools">
+          <button class="secondary" id="btn-bold" title="Negrita"><strong>B</strong></button>
+          <button class="secondary" id="btn-italic" title="Cursiva"><em>I</em></button>
+          <button class="secondary" id="btn-link" title="Enlace">Enlace</button>
+          <button class="secondary" id="btn-img" title="Imagen">Imagen</button>
+          <button class="secondary" id="btn-sample" title="Cargar Ejemplo">Ejemplo</button>
+        </div>
+        <textarea id="markdown" spellcheck="false" placeholder="Escribe aquí tu cronología en Markdown..."></textarea>
+      </section>
+
+      <!-- SPLITTER -->
+      <div class="splitter" id="splitter" role="separator" aria-label="Ajustar paneles"></div>
+
+      <!-- PREVIEW PANEL -->
+      <section class="preview-pane" aria-label="Línea de tiempo interactiva">
+        <!-- Dynamic category filter bar -->
+        <div class="filter-bar" id="filter-bar" aria-label="Filtro de categorías">
+          <button class="tag-btn active" data-category="all">Todas las categorías</button>
+        </div>
+        
+        <!-- Live timeline container -->
+        <div class="timeline-container" id="timeline-container">
+          <!-- Populated by JavaScript -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Load Markdown and Math rendering CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  
+  <script>
+    const sampleTimeline = `# Historia del Cosmos y la Ciencia\n## Un recorrido interactivo a través de los hitos científicos más importantes.\n\n- [1687] **Leyes de Newton**: Isaac Newton publica los *Philosophiæ naturalis principia mathematica*.\n  - Descripcion: Sentó las bases de la mecánica clásica y la ley de la gravitación universal. Todo el movimiento del universo físico pasó a ser predecible mediante ecuaciones exactas: $F = G \\frac{m_1 m_2}{r^2}$.\n  - Imagen: https://upload.wikimedia.org/wikipedia/commons/3/39/GodfreyKneller-IsaacNewton-1689.jpg\n  - Categoría: Física\n\n- [1859] **Teoría de la Evolución**: Charles Darwin publica *El Origen de las Especies*.\n  - Descripcion: Explica el mecanismo de selección natural, demostrando que todas las especies evolucionan a partir de ancestros comunes. Cambió radicalmente nuestra comprensión de la biología y la vida.\n  - Imagen: https://upload.wikimedia.org/wikipedia/commons/2/2e/Charles_Darwin_seated_crop.jpg\n  - Categoría: Biología\n\n- [1869] **Tabla Periódica**: Dmitri Mendeléyev organiza los elementos químicos.\n  - Descripcion: Dispuso los elementos según sus pesos atómicos y propiedades, incluso dejando huecos para elementos no descubiertos. Unificó la química moderna.\n  - Imagen: https://upload.wikimedia.org/wikipedia/commons/c/c8/Dmitri_Mendeleev_1890s.jpg\n  - Categoría: Química\n\n- [1905] **Teoría de la Relatividad Especial**: Albert Einstein formula $E = mc^2$.\n  - Descripcion: Demostró que el tiempo y el espacio son relativos y están unificados en un tejido espacio-temporal. Introdujo la equivalencia entre masa y energía.\n  - Imagen: https://upload.wikimedia.org/wikipedia/commons/d/d3/Albert_Einstein_Head.jpg\n  - Categoría: Física\n\n- [1953] **Estructura del ADN**: Watson, Crick y Rosalind Franklin descubren la doble hélice.\n  - Descripcion: Revelaron la forma molecular que codifica la información genética de los seres vivos. Abrió la era de la biotecnología moderna.\n  - Imagen: https://upload.wikimedia.org/wikipedia/commons/f/f0/Rosalind_Franklin.jpg\n  - Categoría: Biología\n\n- [1969] **Llegada a la Luna**: La misión Apolo 11 logra el alunizaje.\n  - Descripcion: Neil Armstrong y Buzz Aldrin se convierten en los primeros humanos en caminar sobre otro cuerpo celeste. Un hito cumbre de la ingeniería y exploración espacial.\n  - Imagen: https://upload.wikimedia.org/wikipedia/commons/d/dd/Apollo_11_launch.jpg\n  - Categoría: Exploración\n`;
+
+    const markdownArea = document.getElementById('markdown');
+    const timelineContainer = document.getElementById('timeline-container');
+    const filterBar = document.getElementById('filter-bar');
+    const searchInput = document.getElementById('search');
+    const layoutSelect = document.getElementById('layout');
+    const paletteSelect = document.getElementById('palette');
+    const themeSelect = document.getElementById('theme');
+    const charCount = document.getElementById('char-count');
+    const splitter = document.getElementById('splitter');
+    
+    let activeCategory = 'all';
+    let currentEvents = [];
+    let activeHzIndex = 0;
+
+    // Resizable panels
+    let isResizing = false;
+    splitter.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      const editorWidth = Math.max(260, Math.min(e.clientX, window.innerWidth * 0.7));
+      document.querySelector('main').style.gridTemplateColumns = `${editorWidth}px 6px 1fr`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      isResizing = false;
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+    });
+
+    // Theme toggling
+    themeSelect.addEventListener('change', () => {
+      document.body.dataset.theme = themeSelect.value;
+    });
+
+    paletteSelect.addEventListener('change', () => {
+      document.body.dataset.themePalette = paletteSelect.value;
+    });
+
+    layoutSelect.addEventListener('change', () => {
+      renderTimeline();
+    });
+
+    // Search and filters
+    searchInput.addEventListener('input', () => {
+      renderTimeline();
+    });
+
+    // Textarea editing
+    markdownArea.addEventListener('input', () => {
+      charCount.textContent = `${markdownArea.value.length} caracteres`;
+      parseAndRender();
+      persist();
+    });
+
+    // Editor auxiliary buttons
+    document.getElementById('btn-bold').addEventListener('click', () => insertText('**', '**'));
+    document.getElementById('btn-italic').addEventListener('click', () => insertText('*', '*'));
+    document.getElementById('btn-link').addEventListener('click', () => insertText('[Enlace](https://', ')'));
+    document.getElementById('btn-img').addEventListener('click', () => insertText('  - Imagen: https://', ''));
+    document.getElementById('btn-sample').addEventListener('click', () => {
+      markdownArea.value = sampleTimeline;
+      charCount.textContent = `${markdownArea.value.length} caracteres`;
+      parseAndRender();
+      persist();
+    });
+
+    function insertText(before, after) {
+      const start = markdownArea.selectionStart;
+      const end = markdownArea.selectionEnd;
+      const text = markdownArea.value;
+      const selected = text.substring(start, end);
+      const replacement = before + selected + after;
+      markdownArea.value = text.substring(0, start) + replacement + text.substring(end);
+      markdownArea.focus();
+      markdownArea.setSelectionRange(start + before.length, start + before.length + selected.length);
+      parseAndRender();
+      persist();
+    }
+
+    // Markdown Parser for Timeline Events
+    function parseMarkdownTimeline(mdText) {
+      const events = [];
+      const lines = mdText.split('\n');
+      let currentEvent = null;
+
+      lines.forEach((line) => {
+        const trimmed = line.trim();
+        // Match list items starting with - [Date]
+        const match = line.match(/^\s*-\s*\[([^\]]+)\]\s*(.*)/);
+        
+        if (match) {
+          if (currentEvent) events.push(currentEvent);
+          
+          currentEvent = {
+            date: match[1].trim(),
+            title: match[2].trim(),
+            description: '',
+            image: '',
+            category: ''
+          };
+        } else if (currentEvent && trimmed.startsWith('-')) {
+          // Check for subitems
+          const subContent = trimmed.substring(1).trim();
+          
+          if (subContent.toLowerCase().startsWith('imagen:') || subContent.toLowerCase().startsWith('image:')) {
+            currentEvent.image = subContent.split(':').slice(1).join(':').trim();
+          } else if (subContent.toLowerCase().startsWith('categoría:') || subContent.toLowerCase().startsWith('category:')) {
+            currentEvent.category = subContent.split(':').slice(1).join(':').trim();
+          } else if (subContent.toLowerCase().startsWith('descripcion:') || subContent.toLowerCase().startsWith('description:') || subContent.toLowerCase().startsWith('descripción:')) {
+            currentEvent.description += subContent.split(':').slice(1).join(':').trim() + ' ';
+          } else {
+            currentEvent.description += subContent + ' ';
+          }
+        } else if (currentEvent && trimmed.length > 0 && !line.match(/^\s*#/)) {
+          // Append generic text to description
+          currentEvent.description += trimmed + ' ';
+        }
+      });
+
+      if (currentEvent) events.push(currentEvent);
+
+      // Simple markdown cleanups in titles
+      events.forEach(e => {
+        e.title = e.title.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                         .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      });
+
+      return events;
+    }
+
+    // Parse equations in text using KaTeX before rendering
+    function renderMathText(text) {
+      // Inline math: $equation$
+      return text.replace(/\$([^\$]+)\$/g, (match, formula) => {
+        try { return katex.renderToString(formula, { displayMode: false, throwOnError: false }); }
+        catch (e) { return match; }
+      });
+    }
+
+    function parseAndRender() {
+      currentEvents = parseMarkdownTimeline(markdownArea.value);
+      updateCategoryFilters();
+      renderTimeline();
+    }
+
+    function updateCategoryFilters() {
+      const categories = new Set();
+      currentEvents.forEach(e => {
+        if (e.category) categories.add(e.category);
+      });
+
+      // Rebuild filter buttons preserving active state
+      filterBar.innerHTML = `<button class="tag-btn ${activeCategory === 'all' ? 'active' : ''}" data-category="all">Todas las categorías</button>`;
+      
+      categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = `tag-btn ${activeCategory === cat ? 'active' : ''}`;
+        btn.dataset.category = cat;
+        btn.textContent = cat;
+        filterBar.appendChild(btn);
+      });
+
+      // Bind events to tags
+      document.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeCategory = btn.dataset.category;
+          renderTimeline();
+        });
+      });
+    }
+
+    function renderTimeline() {
+      timelineContainer.innerHTML = '';
+      
+      const query = searchInput.value.toLowerCase().trim();
+      const layout = layoutSelect.value;
+
+      // Filter events
+      const filtered = currentEvents.filter(e => {
+        const matchCategory = activeCategory === 'all' || e.category === activeCategory;
+        const matchSearch = !query || e.title.toLowerCase().includes(query) || e.date.toLowerCase().includes(query) || e.description.toLowerCase().includes(query);
+        return matchCategory && matchSearch;
+      });
+
+      if (filtered.length === 0) {
+        timelineContainer.innerHTML = `<div class="status-alert">No se encontraron hitos. Asegúrate de escribir tu cronología siguiendo el formato: <br><strong>- [Año] Título del hito</strong><br>  - Descripción corta.</div>`;
+        return;
+      }
+
+      if (layout === 'vertical') {
+        // Vertical Timeline Rendering
+        const wrapper = document.createElement('div');
+        wrapper.className = 'vertical-timeline';
+        
+        filtered.forEach((event, index) => {
+          const card = document.createElement('div');
+          card.className = `event-card ${index % 2 === 0 ? 'left' : 'right'}`;
+          card.style.animationDelay = `${index * 0.1}s`;
+          
+          let imgHtml = '';
+          if (event.image) {
+            imgHtml = `<img class="event-img" src="${event.image}" alt="${event.title}" onerror="this.style.display='none'">`;
+          }
+
+          let catHtml = '';
+          if (event.category) {
+            catHtml = `<div class="event-category">${event.category}</div>`;
+          }
+
+          const parsedDesc = marked.parse(renderMathText(event.description.trim()));
+
+          card.innerHTML = `
+            <div class="event-date">${event.date}</div>
+            <h3 class="event-title">${event.title}</h3>
+            <div class="event-desc">${parsedDesc}</div>
+            ${imgHtml}
+            ${catHtml}
+          `;
+          wrapper.appendChild(card);
+        });
+
+        const clear = document.createElement('div');
+        clear.className = 'clearfix';
+        wrapper.appendChild(clear);
+        
+        timelineContainer.appendChild(wrapper);
+      } else {
+        // Horizontal Timeline Slider Rendering
+        const wrapper = document.createElement('div');
+        wrapper.className = 'horizontal-timeline-wrapper';
+
+        // Cards display container
+        const cardDisplay = document.createElement('div');
+        cardDisplay.className = 'horizontal-card-display';
+
+        filtered.forEach((event, index) => {
+          const card = document.createElement('div');
+          card.className = `hz-card ${index === activeHzIndex ? 'active' : ''}`;
+          
+          let imgHtml = '';
+          if (event.image) {
+            imgHtml = `<img class="event-img" src="${event.image}" alt="${event.title}" onerror="this.style.display='none'">`;
+          }
+
+          let catHtml = '';
+          if (event.category) {
+            catHtml = `<div class="event-category">${event.category}</div>`;
+          }
+
+          const parsedDesc = marked.parse(renderMathText(event.description.trim()));
+
+          card.innerHTML = `
+            <div class="hz-card-top">
+              <h3 class="event-title">${event.title}</h3>
+              <div class="event-date">${event.date}</div>
+            </div>
+            <div class="hz-card-body">
+              <div class="event-desc">${parsedDesc}</div>
+              ${imgHtml}
+              ${catHtml}
+            </div>
+          `;
+          cardDisplay.appendChild(card);
+        });
+        wrapper.appendChild(cardDisplay);
+
+        // Timeline Scroll track
+        const trackContainer = document.createElement('div');
+        trackContainer.className = 'horizontal-track-container';
+        
+        const line = document.createElement('div');
+        line.className = 'timeline-line';
+        trackContainer.appendChild(line);
+
+        const pointsScroll = document.createElement('div');
+        pointsScroll.className = 'timeline-points-scroll';
+
+        filtered.forEach((event, index) => {
+          const dot = document.createElement('div');
+          dot.className = `timeline-dot ${index === activeHzIndex ? 'active' : ''}`;
+          dot.innerHTML = `<span class="dot-label">${event.date}</span>`;
+          dot.addEventListener('click', () => {
+            activeHzIndex = index;
+            renderTimeline();
+          });
+          pointsScroll.appendChild(dot);
+        });
+
+        trackContainer.appendChild(pointsScroll);
+        wrapper.appendChild(trackContainer);
+        
+        timelineContainer.appendChild(wrapper);
+      }
+    }
+
+    // Persist data in localStorage
+    function persist() {
+      localStorage.setItem('timeline-md', markdownArea.value);
+    }
+
+    function restore() {
+      const hash = location.hash;
+      if (hash && hash.startsWith('#m=')) {
+        try {
+          const decoded = JSON.parse(decodeURIComponent(escape(atob(hash.substring(3)))));
+          markdownArea.value = decoded.markdown || sampleTimeline;
+          if (decoded.layout) layoutSelect.value = decoded.layout;
+          if (decoded.palette) {
+            paletteSelect.value = decoded.palette;
+            document.body.dataset.themePalette = decoded.palette;
+          }
+          if (decoded.theme) {
+            themeSelect.value = decoded.theme;
+            document.body.dataset.theme = decoded.theme;
+          }
+        } catch(e) {
+          markdownArea.value = sampleTimeline;
+        }
+      } else {
+        markdownArea.value = localStorage.getItem('timeline-md') || sampleTimeline;
+      }
+      charCount.textContent = `${markdownArea.value.length} caracteres`;
+      parseAndRender();
+    }
+
+    // Share link exporter using Base64
+    document.getElementById('share').addEventListener('click', () => {
+      const state = {
+        markdown: markdownArea.value,
+        layout: layoutSelect.value,
+        palette: paletteSelect.value,
+        theme: themeSelect.value
+      };
+      const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+      const shareUrl = `${location.protocol}//${location.host}${location.pathname}#m=${base64}`;
+      
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert('¡Enlace de la línea de tiempo copiado al portapapeles!');
+      });
+    });
+
+    // Save Markdown
+    document.getElementById('save-md').addEventListener('click', () => {
+      const blob = new Blob([markdownArea.value], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'cronologia.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Save self-contained HTML
+    document.getElementById('save-html').addEventListener('click', () => {
+      const title = markdownArea.value.match(/^#\s+(.+)$/m)?.[1] || 'Línea de Tiempo';
+      
+      // We build a fully functional, self-contained HTML page that loads marked & katex, and displays this exact timeline statically.
+      const htmlContent = `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${title}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <style>
+    ${document.head.querySelector('style').innerHTML}
+    /* Simple tweaks for static full width display */
+    main { grid-template-columns: 1fr; }
+    .editor-pane, .splitter, header { display: none !important; }
+  </style>
+</head>
+<body data-theme="${themeSelect.value}" data-theme-palette="${paletteSelect.value}">
+  <div class="app">
+    <div class="preview-pane">
+      <div class="filter-bar" id="filter-bar"></div>
+      <div class="timeline-container" id="timeline-container"></div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
+  
+  <script>
+    const markdownContent = \`${markdownArea.value.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+    const layout = "${layoutSelect.value}";
+    
+    // Embed the functional logic
+    const currentEvents = (${parseMarkdownTimeline.toString()})(markdownContent);
+    let activeCategory = "all";
+    let activeHzIndex = 0;
+    
+    const timelineContainer = document.getElementById('timeline-container');
+    const filterBar = document.getElementById('filter-bar');
+    
+    ${renderMathText.toString()}
+    ${updateCategoryFilters.toString()}
+    ${renderTimeline.toString()}
+    
+    // Init
+    updateCategoryFilters();
+    renderTimeline();
+  <\/script>
+</body>
+</html>`;
+
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'linea-de-tiempo.html';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Start Up
+    restore();
+  </script>
+</body>
+</html>
