@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Creador de Dilemas y Árboles de Decisiones Morales</title>
+  <title>Creador de dilemas y árboles de decisiones morales</title>
   <!-- Google Fonts: Outfit & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -718,17 +718,17 @@
   <header>
     <div class="logo-container">
       <span class="logo-icon"><i class="fa-solid fa-network-wired"></i></span>
-      <h1>Dilemas y Decisiones REPL</h1>
+      <h1>Dilemas y decisiones REPL</h1>
     </div>
     
     <div class="header-actions">
       <!-- Theme Selector -->
       <select class="select-theme" id="theme-selector" onchange="updateTheme()">
-        <option value="neuro">🧠 Neuro-Cognitivo (Kohlberg)</option>
+        <option value="neuro">🧠 Neuro-cognitivo (Kohlberg)</option>
         <option value="classic">🌲 Clásico (Ético)</option>
-        <option value="clinical">💎 Psicología Clínica</option>
-        <option value="child">🧸 Desarrollo Infantil</option>
-        <option value="social">⚡ Psicología Social (Milgram)</option>
+        <option value="clinical">💎 Psicología clínica</option>
+        <option value="child">🧸 Desarrollo infantil</option>
+        <option value="social">⚡ Psicología social (Milgram)</option>
       </select>
 
       <!-- Help Button -->
@@ -743,7 +743,7 @@
 
       <!-- Export Button -->
       <button class="btn btn-primary" onclick="exportDilema()">
-        <i class="fa-solid fa-file-arrow-down"></i> Exportar Dilema (HTML)
+        <i class="fa-solid fa-file-arrow-down"></i> Exportar dilema (HTML)
       </button>
     </div>
   </header>
@@ -754,18 +754,18 @@
     <!-- LEFT PANE: Editor -->
     <div class="editor-pane">
       <div class="pane-header">
-        <span class="pane-title"><i class="fa-solid fa-pen-nib"></i> Editor Markdown</span>
+        <span class="pane-title"><i class="fa-solid fa-pen-nib"></i> Editor markdown</span>
         <!-- Preset dropdown -->
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 11px; color: var(--text-muted);">Plantilla:</span>
           <select class="preset-select" id="preset-selector" onchange="loadPreset()">
             <option value="heinz">Dilema de Heinz (Moral - Kohlberg)</option>
-            <option value="trolley">Dilema del Tranvía (Neurociencia)</option>
-            <option value="milgram">Experimento de Milgram (Obediencia - Psicología Social)</option>
-            <option value="bystander">Efecto Espectador (Apatía - Psicología Social)</option>
-            <option value="prisoner">Dilema del Prisionero (Teoría de Juegos - Cooperación)</option>
-            <option value="peer">Dilema de la Presión de Grupo (Psicología del Adolescente)</option>
-            <option value="custom">Proyecto Vacío</option>
+            <option value="trolley">Dilema del tranvía (Neurociencia)</option>
+            <option value="milgram">Experimento de Milgram (Obediencia - Psicología social)</option>
+            <option value="bystander">Efecto espectador (Apatía - Psicología social)</option>
+            <option value="prisoner">Dilema del prisionero (Teoría de juegos - Cooperación)</option>
+            <option value="peer">Dilema de la presión de grupo (Psicología del adolescente)</option>
+            <option value="custom">Proyecto vacío</option>
           </select>
         </div>
       </div>
@@ -798,13 +798,13 @@
     <!-- RIGHT PANE: Simulator & Tree Map -->
     <div class="preview-pane">
       <div class="pane-header">
-        <span class="pane-title"><i class="fa-solid fa-eye"></i> Vista Previa</span>
+        <span class="pane-title"><i class="fa-solid fa-eye"></i> Vista previa</span>
         <div class="tab-container">
           <button class="tab-btn active" id="tab-player" onclick="switchTab('player')">
             <i class="fa-solid fa-gamepad"></i> 🎮 Simulador
           </button>
           <button class="tab-btn" id="tab-map" onclick="switchTab('map')">
-            <i class="fa-solid fa-diagram-project"></i> 📊 Mapa de Decisiones
+            <i class="fa-solid fa-diagram-project"></i> 📊 Mapa de decisiones
           </button>
         </div>
       </div>
@@ -830,7 +830,7 @@
         <!-- Breadcrumbs Footer inside Player tab -->
         <div class="path-container">
           <div class="path-header">
-            <span>Tu Recorrido Cognitivo / Hilo de Decisiones</span>
+            <span>Tu recorrido cognitivo / Hilo de decisiones</span>
             <button class="btn" style="padding: 2px 6px; font-size: 10px;" onclick="resetSimulation()">
               <i class="fa-solid fa-rotate-left"></i> Reiniciar
             </button>
@@ -855,14 +855,14 @@
   <!-- Draggable Help Panel -->
   <div class="floating-panel" id="help-panel">
     <div class="drag-header" id="help-drag-header">
-      <span class="drag-title"><i class="fa-solid fa-circle-info"></i> Guía Completa de Dilemas Morales</span>
+      <span class="drag-title"><i class="fa-solid fa-circle-info"></i> Guía completa de dilemas morales</span>
       <button class="close-btn" onclick="toggleHelpPanel()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="panel-content">
-      <h3><i class="fa-solid fa-compass"></i> Filosofía del Creador de Dilemas</h3>
+      <h3><i class="fa-solid fa-compass"></i> Filosofía del creador de dilemas</h3>
       <p>Diseña flujos interactivos de ramificación (árboles de decisión). Los alumnos leen el escenario principal y responden preguntas eligiendo opciones. Es ideal para evaluar el <strong>Desarrollo Moral de Kohlberg</strong>, sopesar <strong>sesgos cognitivos</strong> o realizar simulaciones en <strong>psicología y neurociencia</strong>.</p>
       
-      <h3><i class="fa-solid fa-code"></i> Sintaxis del Documento</h3>
+      <h3><i class="fa-solid fa-code"></i> Sintaxis del documento</h3>
       <p>El formato es simple y estructurado en Markdown puro:</p>
       
       <pre># #inicio
@@ -881,7 +881,7 @@ Aquí describes las consecuencias...
 
 - [Volver a empezar] -> #inicio</pre>
 
-      <h3><i class="fa-solid fa-list-check"></i> Reglas Clave:</h3>
+      <h3><i class="fa-solid fa-list-check"></i> Reglas clave:</h3>
       <ul>
         <li><code>---</code> (tres guiones) separan una pantalla de otra.</li>
         <li>La primera línea de cada bloque define su identificador con <code># #mi-id</code> (ej: <code># #inicio</code>). La pantalla inicial siempre debe llamarse <code>#inicio</code>.</li>
@@ -890,7 +890,7 @@ Aquí describes las consecuencias...
       </ul>
 
       <button class="btn btn-primary copy-template-btn" onclick="copyTemplate()">
-        <i class="fa-solid fa-copy"></i> Cargar Plantilla de Kohlberg en Editor
+        <i class="fa-solid fa-copy"></i> Cargar plantilla de Kohlberg en el editor
       </button>
     </div>
   </div>
@@ -2190,10 +2190,10 @@ Este es el nivel más alto del razonamiento moral prosocial, donde la orientaci�
 <body>
 
   <header>
-    <h1>Dilema Moral Interactivo</h1>
+    <h1>Dilema moral interactivo</h1>
     <div style="display: flex; gap: 8px;">
       <button class="btn btn-primary" id="btn-show-player" onclick="toggleView('player')"><i class="fa-solid fa-gamepad"></i> Jugar</button>
-      <button class="btn" id="btn-show-map" onclick="toggleView('map')"><i class="fa-solid fa-diagram-project"></i> Mapa de Flujos</button>
+      <button class="btn" id="btn-show-map" onclick="toggleView('map')"><i class="fa-solid fa-diagram-project"></i> Mapa de flujos</button>
     </div>
   </header>
 
@@ -2205,7 +2205,7 @@ Este es el nivel más alto del razonamiento moral prosocial, donde la orientaci�
       <div class="options-container" id="dilemma-options" style="margin-top: 24px;"></div>
       <div class="path-container" style="margin-top: 32px;">
         <div class="path-header">
-          <span>Decisiones Tomadas</span>
+          <span>Decisiones tomadas</span>
           <button class="btn" style="padding: 2px 6px; font-size: 10px;" onclick="resetSimulation()"><i class="fa-solid fa-rotate-left"></i> Reiniciar</button>
         </div>
         <div class="path-list" id="path-list"></div>
@@ -2213,7 +2213,7 @@ Este es el nivel más alto del razonamiento moral prosocial, donde la orientaci�
     </div>
 
     <div id="map-view" class="map-container">
-      <div style="font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #fff;"><i class="fa-solid fa-sitemap"></i> Mapa Completo del Árbol de Decisiones</div>
+      <div style="font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #fff;"><i class="fa-solid fa-sitemap"></i> Mapa completo del árbol de decisiones</div>
       <div id="tree-map-container" style="position: relative;"></div>
     </div>
   </main>
