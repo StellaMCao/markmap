@@ -1508,7 +1508,10 @@
       
       const movableEdgesToggle = document.getElementById('movable-edges-toggle');
       const movableEdges = movableEdgesToggle ? movableEdgesToggle.checked : true;
-      const isLightTheme = (document.getElementById('canvas-bg-selector')?.value === 'light');
+      const currentBgVal = document.getElementById('canvas-bg-selector')?.value || 'deep';
+      const isLightTheme = currentBgVal === 'light';
+      const bgColorMap = { deep: '#0b0f19', grid: '#090d16', neuro: '#0a0518', minimal: '#111317', light: '#ffffff' };
+      const canvasBgColor = bgColorMap[currentBgVal] || '#0b0f19';
       const globalFont = document.getElementById('font-family-selector')?.value || 'Inter';
       const edgeFontSize = Number(document.getElementById('edge-font-size')?.value) || 11;
       
@@ -1587,15 +1590,18 @@
                   isEdgeLabelNode: true,
                   physics: true,
                   color: {
-                    background: isLightTheme ? '#ffffff' : '#1e293b',
-                    border: isLightTheme ? '#cbd5e1' : '#334155'
+                    background: canvasBgColor,
+                    border: canvasBgColor,
+                    highlight: { background: canvasBgColor, border: canvasBgColor },
+                    hover: { background: canvasBgColor, border: canvasBgColor }
                   },
+                  borderWidth: 0,
                   font: {
                     size: edgeFontSize,
                     face: globalFont,
                     color: isLightTheme ? '#475569' : '#d1d5db'
                   },
-                  shadow: { enabled: true, color: 'rgba(0,0,0,0.1)', size: 4, x: 0, y: 2 }
+                  shadow: false
                 });
                 
                 const edge1 = {
@@ -3084,7 +3090,10 @@
       
       const movableEdgesToggle = document.getElementById('movable-edges-toggle');
       const movableEdges = movableEdgesToggle ? movableEdgesToggle.checked : true;
-      const isLightTheme = (document.getElementById('canvas-bg-selector')?.value === 'light');
+      const currentBgVal = document.getElementById('canvas-bg-selector')?.value || 'deep';
+      const isLightTheme = currentBgVal === 'light';
+      const bgColorMap = { deep: '#0b0f19', grid: '#090d16', neuro: '#0a0518', minimal: '#111317', light: '#ffffff' };
+      const canvasBgColor = bgColorMap[currentBgVal] || '#0b0f19';
       const globalFont = document.getElementById('font-family-selector')?.value || 'Inter';
       const edgeFontSize = Number(document.getElementById('edge-font-size')?.value) || 11;
       
@@ -3159,15 +3168,18 @@
                   isEdgeLabelNode: true,
                   physics: true,
                   color: {
-                    background: isLightTheme ? '#ffffff' : '#1e293b',
-                    border: isLightTheme ? '#cbd5e1' : '#334155'
+                    background: canvasBgColor,
+                    border: canvasBgColor,
+                    highlight: { background: canvasBgColor, border: canvasBgColor },
+                    hover: { background: canvasBgColor, border: canvasBgColor }
                   },
+                  borderWidth: 0,
                   font: {
                     size: edgeFontSize,
                     face: globalFont,
                     color: isLightTheme ? '#475569' : '#d1d5db'
                   },
-                  shadow: { enabled: true, color: 'rgba(0,0,0,0.1)', size: 4, x: 0, y: 2 }
+                  shadow: false
                 });
                 
                 const edge1 = {
