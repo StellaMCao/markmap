@@ -719,6 +719,7 @@
         <option value="classic">🌲 Clásico (Ético)</option>
         <option value="clinical">💎 Psicología Clínica</option>
         <option value="child">🧸 Desarrollo Infantil</option>
+        <option value="social">⚡ Psicología Social (Milgram)</option>
       </select>
 
       <!-- Help Button -->
@@ -751,6 +752,8 @@
           <select class="preset-select" id="preset-selector" onchange="loadPreset()">
             <option value="heinz">Dilema de Heinz (Moral - Kohlberg)</option>
             <option value="trolley">Dilema del Tranvía (Neurociencia)</option>
+            <option value="milgram">Experimento de Milgram (Obediencia - Psicología Social)</option>
+            <option value="bystander">Efecto Espectador (Apatía - Psicología Social)</option>
             <option value="custom">Proyecto Vacío</option>
           </select>
         </div>
@@ -1042,7 +1045,75 @@ Detalla el resultado de la opción A.
 ## Consecuencia B
 Detalla el resultado de la opción B.
 
-- [Volver a empezar] -> #inicio`
+- [Volver a empezar] -> #inicio`,
+
+      milgram: `# #inicio
+## El Experimento de Milgram ⚡
+Eres el "maestro" en un experimento científico. El investigador (una figura de autoridad con bata blanca) te ordena administrar **descargas eléctricas** cada vez más fuertes a un "alumno" (un actor que no recibe descargas) cada vez que comete un error en una prueba de memoria.
+
+A los 150 voltios, el alumno empieza a gritar de dolor, a golpear la pared y a pedir desesperadamente que se detenga el experimento porque tiene problemas cardíacos. El investigador te dice fríamente: *"El experimento requiere que continúe. Por favor, continúe"*.
+
+¿Qué decides hacer?
+
+- [Continuar y presionar el botón de descarga] -> #obedecer
+- [Negarte y detener el experimento] -> #desobedecer
+
+---
+
+# #obedecer
+## 👮 Decisión: Obediencia a la Autoridad
+Decides seguir las órdenes y administras la descarga. El nivel de voltaje sigue subiendo: 300V, 375V... hasta llegar al nivel máximo de **450 voltios (Peligro: Descarga Severa)**, donde el alumno ya no emite ningún sonido, simulando desmayo o muerte.
+
+Esta elección refleja el fenómeno de la **obediencia ciega** estudiado por Stanley Milgram tras la Segunda Guerra Mundial. 
+
+Milgram demostró que el **65% de las personas comunes** llegaron hasta el nivel máximo de 450V bajo la presión de una autoridad legítima, diluyendo su propia responsabilidad moral personal (*estado agéntico*).
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #desobedecer
+## ✊ Decisión: Autonomía y Resistencia Moral
+Te niegas firmemente a continuar y te levantas de tu asiento, desafiando las insistencias del investigador en bata blanca. Priorizas el bienestar físico y psicológico del alumno por encima de la autoridad científica.
+
+Esta elección representa la transición del *estado agéntico* al **estado autonómico**, donde asumes la responsabilidad directa por tus propias acciones éticas.
+
+En los estudios de Milgram, solo el **35% de los participantes** tuvieron la fortaleza de rebelarse y desobedecer por completo, a menudo experimentando un intenso conflicto de estrés y tensión psicológica al desafiar a la autoridad.
+
+- [Volver al inicio] -> #inicio`,
+
+      bystander: `# #inicio
+## El Efecto Espectador (Bystander Effect) 🏙️
+Caminas por una avenida concurrida a plena luz del día y ves a una persona mayor desorientada, tropezar y caer al suelo con muestras evidentes de dolor y confusión. Hay de decenas de personas caminando a tu alrededor, pero nadie se detiene; todos siguen su camino mirando sus teléfonos o al frente.
+
+¿Cómo actúas tú ante esta situación?
+
+- [Detenerte y ayudar activamente] -> #ayudar
+- [Seguir de largo asumiendo que alguien más intervendrá] -> #no-ayudar
+
+---
+
+# #ayudar
+## 🤝 Intervención y Ruptura de la Apatía Social
+Te detienes, ayudas a la persona a levantarse, y al notar que necesitas ayuda adicional, designas con el dedo a un peatón específico diciéndole: *"Tú, llama a una ambulancia ya"*.
+
+Al intervenir, rompes el estado de apatía general. En psicología social, se ha demostrado que cuando un primer espectador da el paso y ayuda, se desencadena un **effecto dominó** de imitación social positiva.
+
+Al señalar a una persona concreta para llamar al servicio de emergencias, evitas la **ignorancia pluralista** y eliminas la difusión de la responsabilidad, asignando un rol de acción claro.
+
+- [Volver al inicio] -> #inicio
+
+---
+
+# #no-ayudar
+## 🏙️ Difusión de la Responsabilidad
+Decides seguir caminando. Piensas que con tanta gente alrededor, seguramente hay médicos, policías o personas más capacitadas que tú para ayudar, y que tú tienes prisa.
+
+Este es el caso clásico del **Efecto Espectador**, estudiado por Latané y Darley tras el asesinato de Kitty Genovese en Nueva York.
+
+El razonamiento demuestra la **difusión de la responsabilidad**: cuanta más gente presencia una emergencia, *menor* es la probabilidad de que alguien actúe, ya que la responsabilidad percibida se divide entre todos los presentes ("alguien más lo hará").
+
+- [Volver al inicio] -> #inicio`
     };
 
     // State Variables
@@ -1118,6 +1189,11 @@ Detalla el resultado de la opción B.
         root.style.setProperty('--accent-rgb', '245, 158, 11');
         root.style.setProperty('--accent-glow', 'rgba(245, 158, 11, 0.2)');
         root.style.setProperty('--accent-hover', '#d97706');
+      } else if (theme === 'social') {
+        root.style.setProperty('--accent', '#ef4444');
+        root.style.setProperty('--accent-rgb', '239, 68, 68');
+        root.style.setProperty('--accent-glow', 'rgba(239, 68, 68, 0.25)');
+        root.style.setProperty('--accent-hover', '#dc2626');
       }
       
       // Update UI elements color
@@ -1432,22 +1508,26 @@ Detalla el resultado de la opción B.
         
         colNodes.forEach((id, rowIndex) => {
           const node = nodes[id];
+          const nodeTitle = node ? node.title : `Pendiente (#${id})`;
           const x = col * colWidth + 40;
           const y = rowIndex * rowHeight + 40;
           
           nodePositions[id] = { x: x + 90, y: y + 30 }; // save card center coords
           
           const card = document.createElement('div');
-          card.className = `map-node-card ${activeNodeId === id ? 'active' : ''}`;
+          card.className = `map-node-card ${activeNodeId === id ? 'active' : ''} ${!node ? 'pending' : ''}`;
           card.style.position = 'absolute';
           card.style.left = `${x}px`;
           card.style.top = `${y}px`;
           card.style.width = '180px';
           card.style.height = '60px';
           card.style.zIndex = '2';
+          if (!node) {
+            card.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+          }
           card.innerHTML = `
-            <div class="node-id">#${id}</div>
-            <div class="node-title" title="${node.title}">${node.title}</div>
+            <div class="node-id" style="${!node ? 'color: #ef4444;' : ''}">#${id}</div>
+            <div class="node-title" title="${nodeTitle}" style="${!node ? 'color: var(--text-muted); font-style: italic;' : ''}">${nodeTitle}</div>
           `;
           card.onclick = () => {
             // Jump player and preview node
@@ -1642,7 +1722,8 @@ Detalla el resultado de la opción B.
         neuro: { accent: '#8b5cf6', rgb: '139, 92, 246', hover: '#7c3aed' },
         classic: { accent: '#10b981', rgb: '16, 185, 129', hover: '#059669' },
         clinical: { accent: '#06b6d4', rgb: '6, 182, 212', hover: '#0891b2' },
-        child: { accent: '#f59e0b', rgb: '245, 158, 11', hover: '#d97706' }
+        child: { accent: '#f59e0b', rgb: '245, 158, 11', hover: '#d97706' },
+        social: { accent: '#ef4444', rgb: '239, 68, 68', hover: '#dc2626' }
       };
       
       const themeConfig = colorMap[themeValue] || colorMap.neuro;
@@ -2209,22 +2290,26 @@ Detalla el resultado de la opción B.
         
         colNodes.forEach((id, rowIndex) => {
           const node = nodes[id];
+          const nodeTitle = node ? node.title : `Pendiente (#${id})`;
           const x = col * colWidth + 20;
           const y = rowIndex * rowHeight + 20;
           
           nodePositions[id] = { x: x + 90, y: y + 30 };
           
           const card = document.createElement('div');
-          card.className = \`map-node-card \${activeNodeId === id ? 'active' : ''}\`;
+          card.className = `map-node-card \${activeNodeId === id ? 'active' : ''} \${!node ? 'pending' : ''}`;
           card.style.position = 'absolute';
-          card.style.left = \`\${x}px\`;
-          card.style.top = \`\${y}px\`;
+          card.style.left = `\${x}px`;
+          card.style.top = `\${y}px`;
           card.style.width = '180px';
           card.style.height = '60px';
           card.style.zIndex = '2';
+          if (!node) {
+            card.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+          }
           card.innerHTML = \`
-            <div class="node-id">#\${id}</div>
-            <div class="node-title" title="\${node.title}">\${node.title}</div>
+            <div class="node-id" style="\${!node ? 'color: #ef4444;' : ''}">#\${id}</div>
+            <div class="node-title" title="\${nodeTitle}" style="\${!node ? 'color: var(--text-muted); font-style: italic;' : ''}">\${nodeTitle}</div>
           \`;
           card.onclick = () => {
             activeNodeId = id;
