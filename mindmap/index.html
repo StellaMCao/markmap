@@ -3338,7 +3338,7 @@
           
           if (line.startsWith('# ')) {
             const rawLabel = line.substring(2).trim();
-            const attrMatch = rawLabel.match(/^(.*?)(?:\s*\\((.*?)\\))?$/);
+            const attrMatch = rawLabel.match(/^(.*?)(?:\\s*\\((.*?)\\))?$/);
             const label = attrMatch[1].trim();
             const attrStr = attrMatch[2] || '';
             const attrs = parseAttributes(attrStr);
@@ -3387,7 +3387,7 @@
             const indent = listMatch[1].length;
             const rawLabel = listMatch[2].trim();
             
-            const attrMatch = rawLabel.match(/^(.*?)(?:\s*\\((.*?)\\))?$/);
+            const attrMatch = rawLabel.match(/^(.*?)(?:\\s*\\((.*?)\\))?$/);
             const label = attrMatch[1].trim();
             const attrStr = attrMatch[2] || '';
             const attrs = parseAttributes(attrStr);
@@ -3530,6 +3530,9 @@
       const edgeLabelWrapLimit = Number(document.getElementById('edge-label-wrap').value) || 25;
       const edgeLineWidth = Number(document.getElementById('edge-line-width').value) || 2.2;
       
+      const activeColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      const activeColorRgb = getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim();
+      
       const bgColors = {
         deep: '#0b0f19',
         grid: '#090d16',
@@ -3621,8 +3624,8 @@
           },
           color: {
             color: isLightTheme ? 'rgba(15, 23, 42, 0.15)' : 'rgba(255, 255, 255, 0.22)',
-            highlight: 'var(--accent)',
-            hover: 'var(--accent)'
+            highlight: activeColor,
+            hover: activeColor
           }
         },
         interaction: { hover: true, dragNodes: true, dragView: true, zoomView: true },
@@ -3703,7 +3706,7 @@
                 id: node.id,
                 shape: node.shape || 'circle',
                 size: 28,
-                color: { background: 'var(--accent)', border: 'var(--accent)' },
+                color: { background: activeColor, border: activeColor },
                 font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
                 label: formattedLabel
               });
@@ -3713,8 +3716,8 @@
                 shape: node.shape || 'box',
                 size: 22,
                 color: { 
-                  background: isLightTheme ? 'rgba(var(--accent-rgb), 0.08)' : 'rgba(var(--accent-rgb), 0.15)', 
-                  border: 'var(--accent)' 
+                  background: isLightTheme ? \`rgba(\${activeColorRgb}, 0.08)\` : \`rgba(\${activeColorRgb}, 0.15)\`, 
+                  border: activeColor 
                 },
                 font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || (nodeFontSize + 1) },
                 label: formattedLabel
@@ -3726,7 +3729,7 @@
                 size: 18,
                 color: { 
                   background: isLightTheme ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.06)', 
-                  border: isLightTheme ? 'rgba(15,23,42,0.12)' : 'rgba(var(--accent-rgb), 0.4)' 
+                  border: isLightTheme ? 'rgba(15,23,42,0.12)' : \`rgba(\${activeColorRgb}, 0.4)\` 
                 },
                 font: { face: fontFace, color: isLightTheme ? '#334155' : '#e5e7eb', size: fontSize || nodeFontSize },
                 label: formattedLabel
@@ -3743,7 +3746,7 @@
             if (node.id === 'root') {
               data.nodes.update({
                 id: node.id,
-                color: { background: 'var(--accent)', border: 'var(--accent)' },
+                color: { background: activeColor, border: activeColor },
                 font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
                 label: formattedLabel
               });
@@ -3752,7 +3755,7 @@
                 id: node.id,
                 color: { 
                   background: isLightTheme ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.08)', 
-                  border: 'var(--accent)' 
+                  border: activeColor 
                 },
                 font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize },
                 label: formattedLabel
@@ -3773,11 +3776,11 @@
           data.nodes.update({
             id: node.id,
             color: { 
-              background: node.bgColor || node.color || 'var(--accent)', 
-              border: node.borderColor || node.color || 'var(--accent)',
+              background: node.bgColor || node.color || activeColor, 
+              border: node.borderColor || node.color || activeColor,
               highlight: {
-                background: node.bgColor || node.color || 'var(--accent)', 
-                border: node.borderColor || node.color || 'var(--accent)'
+                background: node.bgColor || node.color || activeColor, 
+                border: node.borderColor || node.color || activeColor
               }
             },
             font: { face: fontFace, color: node.textColor || (isLightTheme ? '#0f172a' : '#ffffff'), size: fontSize || nodeFontSize },
