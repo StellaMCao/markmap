@@ -1112,6 +1112,228 @@
     let nodesDataset = null;
     let edgesDataset = null;
 
+    const imageCache = new Map();
+    function loadImageAsDataURL(url) {
+      if (!url) return Promise.resolve(url);
+      if (imageCache.has(url)) {
+        return Promise.resolve(imageCache.get(url));
+      }
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL('image/png');
+            imageCache.set(url, dataURL);
+            resolve(dataURL);
+          } catch (e) {
+            console.warn('CORS restrict on preloading image:', url, e);
+            resolve(url);
+          }
+        };
+        img.onerror = () => {
+          resolve(url);
+        };
+        img.src = url;
+      });
+    }
+
+    function showPngExportErrorModal() {
+      let modal = document.getElementById('png-error-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'png-error-modal';
+        modal.className = 'modal-overlay';
+        
+        const style = document.createElement('style');
+        style.innerHTML = `
+          .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 15, 30, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+          }
+          .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+          }
+          .modal-content {
+            background: rgba(20, 27, 45, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 540px;
+            padding: 30px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            color: #f3f4f6;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          }
+          .modal-overlay.show .modal-content {
+            transform: translateY(0);
+          }
+          .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+          }
+          .modal-header i {
+            font-size: 28px;
+            color: #f59e0b;
+          }
+          .modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+          }
+          .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+          .modal-close:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+          }
+          .modal-body {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #d1d5db;
+          }
+          .modal-body p {
+            margin-bottom: 16px;
+          }
+          .modal-step {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 12px;
+          }
+          .modal-step i {
+            font-size: 18px;
+            color: var(--accent);
+            margin-top: 2px;
+          }
+          .modal-step-content strong {
+            color: #ffffff;
+            display: block;
+            margin-bottom: 4px;
+            font-family: 'Outfit', sans-serif;
+          }
+          .modal-footer {
+            margin-top: 24px;
+            display: flex;
+            justify-content: flex-end;
+          }
+          .modal-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px var(--accent-glow);
+          }
+          .modal-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+          }
+        `;
+        document.head.appendChild(style);
+
+        modal.innerHTML = `
+          <div class="modal-content">
+            <button class="modal-close" onclick="document.getElementById('png-error-modal').classList.remove('show')">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="modal-header">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span class="modal-title">Limitación de seguridad del navegador</span>
+            </div>
+            <div class="modal-body">
+              <p>
+                Debido a restricciones de seguridad de los navegadores modernos, al ejecutar el mapa mental localmente como un archivo <code>file://</code>, no es posible exportar directamente el lienzo a imagen PNG si este contiene imágenes externas (como fotos en los nodos), ya que el lienzo se marca como <em>protegido</em> (tainted canvas) para evitar accesos cruzados.
+              </p>
+              <p>
+                ¡No te preocupes! Puedes obtener tu imagen fácilmente de las siguientes maneras:
+              </p>
+              
+              <div class="modal-step">
+                <i class="fa-solid fa-desktop"></i>
+                <div class="modal-step-content">
+                  <strong>Opción A: Captura de pantalla (Recomendada)</strong>
+                  Presiona <code>Alt + Impr Pant</code> (Windows) o <code>Cmd + Shift + 4</code> (Mac) para realizar una captura rápida y precisa del mapa en tu pantalla.
+                </div>
+              </div>
+              
+              <div class="modal-step">
+                <i class="fa-solid fa-file-pdf"></i>
+                <div class="modal-step-content">
+                  <strong>Opción B: Guardar como PDF de alta calidad</strong>
+                  Presiona <code>Ctrl + P</code> (o <code>Cmd + P</code>) para abrir el diálogo de impresión y selecciona <em>Guardar como PDF</em>. Obtendrás un archivo vectorial nítido e ideal para compartir o imprimir.
+                </div>
+              </div>
+              
+              <div class="modal-step">
+                <i class="fa-solid fa-globe"></i>
+                <div class="modal-step-content">
+                  <strong>Opción C: Ejecutar en un servidor web</strong>
+                  Si subes este archivo HTML a GitHub Pages o lo abres usando un servidor local (como <em>Live Server</em> en VS Code), la exportación PNG directa funcionará perfectamente al eliminarse la restricción del protocolo local.
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn" onclick="document.getElementById('png-error-modal').classList.remove('show')">Entendido</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+      
+      setTimeout(() => {
+        modal.classList.add('show');
+      }, 50);
+    }
+
+
     // Get DOM nodes
     const editor = document.getElementById('markdown-editor');
     const wordCounter = document.getElementById('word-counter');
@@ -1612,6 +1834,16 @@
             id: node.id,
             shape: node.shape,
             image: node.image
+          });
+          
+          loadImageAsDataURL(node.image).then(dataURL => {
+            if (nodesDataset.get(node.id)) {
+              nodesDataset.update({
+                id: node.id,
+                shape: node.shape,
+                image: dataURL
+              });
+            }
           });
         }
         
@@ -2126,11 +2358,16 @@
         return;
       }
       
-      const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
-      a.download = `mapa_mental.png`;
-      a.click();
-      showToast('Imagen PNG descargada con éxito.');
+      try {
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = `mapa_mental.png`;
+        a.click();
+        showToast('Imagen PNG descargada con éxito.');
+      } catch (e) {
+        console.error('Error exportando PNG:', e);
+        showPngExportErrorModal();
+      }
     }
 
     // Show dynamic toast alerts
@@ -2536,6 +2773,227 @@
     let nodesDataset = null;
     let edgesDataset = null;
 
+    const imageCache = new Map();
+    function loadImageAsDataURL(url) {
+      if (!url) return Promise.resolve(url);
+      if (imageCache.has(url)) {
+        return Promise.resolve(imageCache.get(url));
+      }
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL('image/png');
+            imageCache.set(url, dataURL);
+            resolve(dataURL);
+          } catch (e) {
+            console.warn('CORS restrict on preloading image:', url, e);
+            resolve(url);
+          }
+        };
+        img.onerror = () => {
+          resolve(url);
+        };
+        img.src = url;
+      });
+    }
+
+    function showPngExportErrorModal() {
+      let modal = document.getElementById('png-error-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'png-error-modal';
+        modal.className = 'modal-overlay';
+        
+        const style = document.createElement('style');
+        style.innerHTML = \`
+          .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 15, 30, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+          }
+          .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+          }
+          .modal-content {
+            background: rgba(20, 27, 45, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 540px;
+            padding: 30px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            color: #f3f4f6;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          }
+          .modal-overlay.show .modal-content {
+            transform: translateY(0);
+          }
+          .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+          }
+          .modal-header i {
+            font-size: 28px;
+            color: #f59e0b;
+          }
+          .modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+          }
+          .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+          .modal-close:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+          }
+          .modal-body {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #d1d5db;
+          }
+          .modal-body p {
+            margin-bottom: 16px;
+          }
+          .modal-step {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 12px;
+          }
+          .modal-step i {
+            font-size: 18px;
+            color: var(--accent);
+            margin-top: 2px;
+          }
+          .modal-step-content strong {
+            color: #ffffff;
+            display: block;
+            margin-bottom: 4px;
+            font-family: 'Outfit', sans-serif;
+          }
+          .modal-footer {
+            margin-top: 24px;
+            display: flex;
+            justify-content: flex-end;
+          }
+          .modal-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px var(--accent-glow);
+          }
+          .modal-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+          }
+        \`;
+        document.head.appendChild(style);
+
+        modal.innerHTML = \`
+          <div class="modal-content">
+            <button class="modal-close" onclick="document.getElementById('png-error-modal').classList.remove('show')">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="modal-header">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span class="modal-title">Limitación de seguridad del navegador</span>
+            </div>
+            <div class="modal-body">
+              <p>
+                Debido a restricciones de seguridad de los navegadores modernos, al ejecutar el mapa mental localmente como un archivo <code>file://</code>, no es posible exportar directamente el lienzo a imagen PNG si este contiene imágenes externas (como fotos en los nodos), ya que el lienzo se marca como <em>protegido</em> (tainted canvas) para evitar accesos cruzados.
+              </p>
+              <p>
+                ¡No te preocupes! Puedes obtener tu imagen fácilmente de las siguientes maneras:
+              </p>
+              
+              <div class="modal-step">
+                <i class="fa-solid fa-desktop"></i>
+                <div class="modal-step-content">
+                  <strong>Opción A: Captura de pantalla (Recomendada)</strong>
+                  Presiona <code>Alt + Impr Pant</code> (Windows) o <code>Cmd + Shift + 4</code> (Mac) para realizar una captura rápida y precisa del mapa en tu pantalla.
+                </div>
+              </div>
+              
+              <div class="modal-step">
+                <i class="fa-solid fa-file-pdf"></i>
+                <div class="modal-step-content">
+                  <strong>Opción B: Guardar como PDF de alta calidad</strong>
+                  Presiona <code>Ctrl + P</code> (o <code>Cmd + P</code>) para abrir el diálogo de impresión y selecciona <em>Guardar como PDF</em>. Obtendrás un archivo vectorial nítido e ideal para compartir o imprimir.
+                </div>
+              </div>
+              
+              <div class="modal-step">
+                <i class="fa-solid fa-globe"></i>
+                <div class="modal-step-content">
+                  <strong>Opción C: Ejecutar en un servidor web</strong>
+                  Si subes este archivo HTML a GitHub Pages o lo abres usando un servidor local (como <em>Live Server</em> en VS Code), la exportación PNG directa funcionará perfectamente al eliminarse la restricción del protocolo local.
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn" onclick="document.getElementById('png-error-modal').classList.remove('show')">Entendido</button>
+            </div>
+          </div>
+        \`;
+        document.body.appendChild(modal);
+      }
+      
+      setTimeout(() => {
+        modal.classList.add('show');
+      }, 50);
+    }
+
     // Restore arrays from pre-rendered states
     const initialCollapsedIds = ${JSON.stringify(collapsedNodeIds)};
     const initialFixedNodeIds = ${JSON.stringify(fixedNodeIds)};
@@ -2908,6 +3366,16 @@
             id: node.id,
             shape: node.shape,
             image: node.image
+          });
+          
+          loadImageAsDataURL(node.image).then(dataURL => {
+            if (nodesDataset.get(node.id)) {
+              nodesDataset.update({
+                id: node.id,
+                shape: node.shape,
+                image: dataURL
+              });
+            }
           });
         }
         
@@ -3319,10 +3787,15 @@
     function exportPNG() {
       const canvas = document.querySelector('#canvas-container canvas');
       if (!canvas) return;
-      const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
-      a.download = 'mapa_mental.png';
-      a.click();
+      try {
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'mapa_mental.png';
+        a.click();
+      } catch (e) {
+        console.error('Error exportando PNG:', e);
+        showPngExportErrorModal();
+      }
     }
   ${'</' + 'script>'}
 </body>
