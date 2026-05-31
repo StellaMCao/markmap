@@ -1504,7 +1504,7 @@
             face: globalFont,
             size: nodeFontSize,
             color: isLightTheme ? '#0f172a' : '#ffffff',
-            bold: false
+            multi: 'md'
           }
         },
         edges: {
@@ -1575,6 +1575,28 @@
         let fontSize = node.fontSize || undefined;
         let fontStyle = node.fontStyle || undefined;
 
+        // Parse and build markdown label formatting (bold/italic) safely avoiding vis.js bold validation crash
+        let origLabel = node.originalLabel || node.label || '';
+        if (origLabel.endsWith(' [+]')) {
+          origLabel = origLabel.substring(0, origLabel.length - 4);
+        }
+        
+        let isBold = fontStyle ? fontStyle.includes('bold') : (node.depth === 0 || node.depth === 1 || node.id === 'root');
+        let isItalic = fontStyle ? fontStyle.includes('italic') : false;
+        let formattedLabel = origLabel;
+        
+        if (isBold && isItalic) {
+          formattedLabel = '*_' + origLabel + '_*';
+        } else if (isBold) {
+          formattedLabel = '*' + origLabel + '*';
+        } else if (isItalic) {
+          formattedLabel = '_' + origLabel + '_';
+        }
+        
+        if (node.collapsed) {
+          formattedLabel += ' [+]';
+        }
+
         if (!node.color && !node.bgColor && !node.borderColor) {
           if (isLevelStylingEnabled && node.depth !== undefined) {
             // Apply depth-based styling
@@ -1584,7 +1606,8 @@
                 shape: node.shape || 'circle',
                 size: 28,
                 color: { background: activeColor, border: activeColor },
-                font: { face: fontFace, color: '#ffffff', bold: fontStyle ? fontStyle.includes('bold') : true, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || (nodeFontSize + 3) }
+                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
+                label: formattedLabel
               });
             } else if (node.depth === 1) {
               data.nodes.update({
@@ -1595,7 +1618,8 @@
                   background: isLightTheme ? `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()}, 0.08)` : `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()}, 0.15)`, 
                   border: activeColor 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', bold: fontStyle ? fontStyle.includes('bold') : true, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || (nodeFontSize + 1) }
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || (nodeFontSize + 1) },
+                label: formattedLabel
               });
             } else if (node.depth === 2) {
               data.nodes.update({
@@ -1606,14 +1630,16 @@
                   background: isLightTheme ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.06)', 
                   border: isLightTheme ? 'rgba(15,23,42,0.12)' : `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()}, 0.4)` 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#334155' : '#e5e7eb', bold: fontStyle ? fontStyle.includes('bold') : false, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || nodeFontSize }
+                font: { face: fontFace, color: isLightTheme ? '#334155' : '#e5e7eb', size: fontSize || nodeFontSize },
+                label: formattedLabel
               });
             } else {
               // Level 3+ gets pure text for a clean modern minimal outline look!
               data.nodes.update({
                 id: node.id,
                 shape: node.shape || 'text',
-                font: { face: fontFace, color: isLightTheme ? '#475569' : '#d1d5db', bold: fontStyle ? fontStyle.includes('bold') : false, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || (nodeFontSize - 1) }
+                font: { face: fontFace, color: isLightTheme ? '#475569' : '#d1d5db', size: fontSize || (nodeFontSize - 1) },
+                label: formattedLabel
               });
             }
           } else {
@@ -1622,7 +1648,8 @@
               data.nodes.update({
                 id: node.id,
                 color: { background: activeColor, border: activeColor },
-                font: { face: fontFace, color: '#ffffff', bold: fontStyle ? fontStyle.includes('bold') : true, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || (nodeFontSize + 3) }
+                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
+                label: formattedLabel
               });
             } else if (node.shape === 'box') {
               data.nodes.update({
@@ -1631,7 +1658,8 @@
                   background: isLightTheme ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.08)', 
                   border: activeColor 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', bold: fontStyle ? fontStyle.includes('bold') : false, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || nodeFontSize }
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize },
+                label: formattedLabel
               });
             } else {
               data.nodes.update({
@@ -1640,7 +1668,8 @@
                   background: isLightTheme ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.04)', 
                   border: isLightTheme ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)' 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', bold: fontStyle ? fontStyle.includes('bold') : false, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || nodeFontSize }
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize },
+                label: formattedLabel
               });
             }
           }
@@ -1656,7 +1685,8 @@
                 border: node.borderColor || node.color || activeColor
               }
             },
-            font: { face: fontFace, color: node.textColor || (isLightTheme ? '#0f172a' : '#ffffff'), bold: fontStyle ? fontStyle.includes('bold') : false, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || nodeFontSize }
+            font: { face: fontFace, color: node.textColor || (isLightTheme ? '#0f172a' : '#ffffff'), size: fontSize || nodeFontSize },
+            label: formattedLabel
           });
         }
 
@@ -2668,7 +2698,7 @@
     // Helper to wrap text into multiple lines
     function wrapText(text, maxChars = 25) {
       if (!text || text.length <= maxChars) return text;
-      if (text.includes('\n') || text.includes('\\n')) return text;
+      if (text.includes('\\n') || text.includes('\\\\n')) return text;
       
       const words = text.split(' ');
       let currentLine = '';
@@ -2683,7 +2713,7 @@
         }
       });
       if (currentLine) lines.push(currentLine.trim());
-      return lines.join('\n');
+      return lines.join('\\n');
     }
 
     function renderGraph() {
@@ -2757,7 +2787,8 @@
           font: { 
             face: globalFont, 
             size: nodeFontSize, 
-            color: isLightTheme ? '#0f172a' : '#ffffff' 
+            color: isLightTheme ? '#0f172a' : '#ffffff',
+            multi: 'md'
           }
         },
         edges: {
@@ -2813,6 +2844,28 @@
         let fontSize = node.fontSize || undefined;
         let fontStyle = node.fontStyle || undefined;
 
+        // Parse and build markdown label formatting (bold/italic) safely avoiding vis.js bold validation crash
+        let origLabel = node.originalLabel || node.label || '';
+        if (origLabel.endsWith(' [+]')) {
+          origLabel = origLabel.substring(0, origLabel.length - 4);
+        }
+        
+        let isBold = fontStyle ? fontStyle.includes('bold') : (node.depth === 0 || node.depth === 1 || node.id === 'root');
+        let isItalic = fontStyle ? fontStyle.includes('italic') : false;
+        let formattedLabel = origLabel;
+        
+        if (isBold && isItalic) {
+          formattedLabel = '*_' + origLabel + '_*';
+        } else if (isBold) {
+          formattedLabel = '*' + origLabel + '*';
+        } else if (isItalic) {
+          formattedLabel = '_' + origLabel + '_';
+        }
+        
+        if (node.collapsed) {
+          formattedLabel += ' [+]';
+        }
+
         if (!node.color && !node.bgColor && !node.borderColor) {
           if (isLevelStylingEnabled && node.depth !== undefined) {
             if (node.depth === 0) {
@@ -2821,7 +2874,8 @@
                 shape: node.shape || 'circle',
                 size: 28,
                 color: { background: 'var(--accent)', border: 'var(--accent)' },
-                font: { face: fontFace, color: '#ffffff', bold: fontStyle ? fontStyle.includes('bold') : true, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || (nodeFontSize + 3) }
+                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
+                label: formattedLabel
               });
             } else if (node.depth === 1) {
               data.nodes.update({
@@ -2832,7 +2886,8 @@
                   background: isLightTheme ? 'rgba(var(--accent-rgb), 0.08)' : 'rgba(var(--accent-rgb), 0.15)', 
                   border: 'var(--accent)' 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', bold: fontStyle ? fontStyle.includes('bold') : true, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || (nodeFontSize + 1) }
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || (nodeFontSize + 1) },
+                label: formattedLabel
               });
             } else if (node.depth === 2) {
               data.nodes.update({
@@ -2843,13 +2898,15 @@
                   background: isLightTheme ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.06)', 
                   border: isLightTheme ? 'rgba(15,23,42,0.12)' : 'rgba(var(--accent-rgb), 0.4)' 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#334155' : '#e5e7eb', bold: fontStyle ? fontStyle.includes('bold') : false, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || nodeFontSize }
+                font: { face: fontFace, color: isLightTheme ? '#334155' : '#e5e7eb', size: fontSize || nodeFontSize },
+                label: formattedLabel
               });
             } else {
               data.nodes.update({
                 id: node.id,
                 shape: node.shape || 'text',
-                font: { face: fontFace, color: isLightTheme ? '#475569' : '#d1d5db', bold: fontStyle ? fontStyle.includes('bold') : false, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || (nodeFontSize - 1) }
+                font: { face: fontFace, color: isLightTheme ? '#475569' : '#d1d5db', size: fontSize || (nodeFontSize - 1) },
+                label: formattedLabel
               });
             }
           } else {
@@ -2857,7 +2914,8 @@
               data.nodes.update({
                 id: node.id,
                 color: { background: 'var(--accent)', border: 'var(--accent)' },
-                font: { face: fontFace, color: '#ffffff', bold: fontStyle ? fontStyle.includes('bold') : true, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || (nodeFontSize + 3) }
+                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
+                label: formattedLabel
               });
             } else if (node.shape === 'box') {
               data.nodes.update({
@@ -2866,7 +2924,8 @@
                   background: isLightTheme ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.08)', 
                   border: 'var(--accent)' 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', bold: fontStyle ? fontStyle.includes('bold') : false, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || nodeFontSize }
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize },
+                label: formattedLabel
               });
             } else {
               data.nodes.update({
@@ -2875,7 +2934,8 @@
                   background: isLightTheme ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.04)', 
                   border: isLightTheme ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)' 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', bold: fontStyle ? fontStyle.includes('bold') : false, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || nodeFontSize }
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize },
+                label: formattedLabel
               });
             }
           }
@@ -2890,7 +2950,8 @@
                 border: node.borderColor || node.color || 'var(--accent)'
               }
             },
-            font: { face: fontFace, color: node.textColor || (isLightTheme ? '#0f172a' : '#ffffff'), bold: fontStyle ? fontStyle.includes('bold') : false, italic: fontStyle ? fontStyle.includes('italic') : false, size: fontSize || nodeFontSize }
+            font: { face: fontFace, color: node.textColor || (isLightTheme ? '#0f172a' : '#ffffff'), size: fontSize || nodeFontSize },
+            label: formattedLabel
           });
         }
 
