@@ -853,17 +853,7 @@
           <div class="setting-row">
             <span>Ancho etiquetas de enlaces</span>
             <div class="setting-control">
-              <input type="range" id="edge-label-wrap" class="slider" min="10" max="40" value="18" oninput="editorChanged()">
-            </div>
-          </div>
-
-          <div class="setting-row">
-            <span>Texto de enlaces movible</span>
-            <div class="setting-control">
-              <label class="switch-label">
-                <input type="checkbox" id="movable-edges-toggle" checked onchange="editorChanged()">
-                <span class="slider-switch"></span>
-              </label>
+              <input type="range" id="edge-label-wrap" class="slider" min="15" max="40" value="25" oninput="editorChanged()">
             </div>
           </div>
 
@@ -894,7 +884,7 @@
           <div class="setting-row">
             <span>Distancia de los resortes</span>
             <div class="setting-control">
-              <input type="range" id="spring-length" class="slider" min="30" max="300" value="150" oninput="editorChanged()">
+              <input type="range" id="spring-length" class="slider" min="80" max="300" value="150" oninput="editorChanged()">
             </div>
           </div>
         </div>
@@ -908,14 +898,7 @@
             <p><i class="fa-solid fa-hand-pointer" style="color: var(--accent);"></i> **Arrastrar**: Haz clic en cualquier concepto y arrástralo libremente para cambiar su distribución.</p>
             <p><i class="fa-solid fa-folder-open" style="color: var(--accent);"></i> **Contraer/Expandir**: Haz **doble clic** en un concepto con hijos para ocultar o mostrar su sub-árbol completo (las ramas cerradas mostrarán un indicador `[+]` y borde punteado).</p>
             <p><i class="fa-solid fa-lock" style="color: var(--accent);"></i> **Fijar concepto**: Mantén presionado **Ctrl** (o **Shift**) y haz **doble clic** en cualquier concepto para congelar su posición en el lienzo.</p>
-            <p><i class="fa-solid fa-magnifying-glass" style="color: var(--accent);"></i> <strong>Zoom</strong>: Desliza la rueda del ratón o haz gestos táctiles de pinza para acercar y alejar el mapa.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Draggable Help Panel -->
+            <p><i class="fa-solid fa-magnifying-glass" style="color: var(--accent);"></i> **Zoom**: Desliza la rueda del ratón o haz gestos táctiles de pinza para alejar  <!-- Draggable Help Panel -->
   <div class="floating-panel" id="help-panel" style="width: 500px;">
     <div class="drag-header" id="help-drag-header">
       <span class="drag-title"><i class="fa-solid fa-circle-info"></i> Guía completa de mapas mentales interactivos</span>
@@ -953,16 +936,8 @@
       <ul style="margin-left: 18px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
         <li><code>shape: [circle | box | database | ellipse | image | circularImage]</code>. Las formas <code>image</code> y <code>circularImage</code> renderizan imágenes de forma nativa.</li>
         <li><code>image: "https://enlace-directo.png"</code>. Especifica la URL de la imagen.</li>
-        <li><code>size: [número]</code>. Define la dimensión del concepto (los nodos con imágenes se ven óptimos con tamaño <code>32</code>).</li>
+        <li><code>size: [número]</code>. Define la dimensión del concepto (por defecto, los nodos con imágenes se ven óptimos con tamaño <code>32</code>).</li>
         <li><code>color: [hexadecimal]</code>. Personaliza el fondo y borde del nodo (ej. <code>color: #ec4899</code>).</li>
-        <li><code>fontsize: [número]</code>. Define el tamaño de letra personalizado del concepto (ej. <code>fontsize: 16</code>).</li>
-        <li><code>fontface: [familia]</code>. Define el tipo de letra independiente para este nodo (ej. <code>fontface: Courier</code>).</li>
-        <li><code>fontstyle: [bold | italic | bold italic]</code>. Define el estilo de letra del concepto (ej. <code>fontstyle: bold</code>).</li>
-        <li><code>borderwidth: [número]</code>. Establece el grosor de borde del concepto (ej. <code>borderwidth: 3</code>).</li>
-        <li><code>dashed: [true | false]</code>. Activa o desactiva el borde punteado en el nodo (ej. <code>dashed: true</code>).</li>
-        <li><code>shadow: [true | false]</code>. Habilita o deshabilita la sombra de este nodo individual (ej. <code>shadow: true</code>).</li>
-        <li><code>mass: [número]</code>. Establece el peso o inercia física del concepto en la gravedad (ej. <code>mass: 2.5</code>).</li>
-        <li><code>margin: [número]</code>. Define el relleno interno de la caja de texto (ej. <code>margin: 12</code>).</li>
       </ul>
 
       <h3><i class="fa-solid fa-link"></i> Personalización de conectores (Enlaces)</h3>
@@ -1137,228 +1112,6 @@
     let nodesDataset = null;
     let edgesDataset = null;
 
-    const imageCache = new Map();
-    function loadImageAsDataURL(url) {
-      if (!url) return Promise.resolve(url);
-      if (imageCache.has(url)) {
-        return Promise.resolve(imageCache.get(url));
-      }
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            const dataURL = canvas.toDataURL('image/png');
-            imageCache.set(url, dataURL);
-            resolve(dataURL);
-          } catch (e) {
-            console.warn('CORS restrict on preloading image:', url, e);
-            resolve(url);
-          }
-        };
-        img.onerror = () => {
-          resolve(url);
-        };
-        img.src = url;
-      });
-    }
-
-    function showPngExportErrorModal() {
-      let modal = document.getElementById('png-error-modal');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'png-error-modal';
-        modal.className = 'modal-overlay';
-        
-        const style = document.createElement('style');
-        style.innerHTML = `
-          .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(10, 15, 30, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-          }
-          .modal-overlay.show {
-            opacity: 1;
-            pointer-events: auto;
-          }
-          .modal-content {
-            background: rgba(20, 27, 45, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 20px;
-            width: 90%;
-            max-width: 540px;
-            padding: 30px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            color: #f3f4f6;
-            position: relative;
-            transform: translateY(20px);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-          }
-          .modal-overlay.show .modal-content {
-            transform: translateY(0);
-          }
-          .modal-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-          }
-          .modal-header i {
-            font-size: 28px;
-            color: #f59e0b;
-          }
-          .modal-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: #ffffff;
-          }
-          .modal-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            color: #9ca3af;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-          }
-          .modal-close:hover {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-          }
-          .modal-body {
-            font-size: 14px;
-            line-height: 1.6;
-            color: #d1d5db;
-          }
-          .modal-body p {
-            margin-bottom: 16px;
-          }
-          .modal-step {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 14px 16px;
-            margin-bottom: 12px;
-            display: flex;
-            gap: 12px;
-          }
-          .modal-step i {
-            font-size: 18px;
-            color: var(--accent);
-            margin-top: 2px;
-          }
-          .modal-step-content strong {
-            color: #ffffff;
-            display: block;
-            margin-bottom: 4px;
-            font-family: 'Outfit', sans-serif;
-          }
-          .modal-footer {
-            margin-top: 24px;
-            display: flex;
-            justify-content: flex-end;
-          }
-          .modal-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px var(--accent-glow);
-          }
-          .modal-btn:hover {
-            transform: translateY(-1px);
-            filter: brightness(1.1);
-          }
-        `;
-        document.head.appendChild(style);
-
-        modal.innerHTML = `
-          <div class="modal-content">
-            <button class="modal-close" onclick="document.getElementById('png-error-modal').classList.remove('show')">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div class="modal-header">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <span class="modal-title">Limitación de seguridad del navegador</span>
-            </div>
-            <div class="modal-body">
-              <p>
-                Debido a restricciones de seguridad de los navegadores modernos, al ejecutar el mapa mental localmente como un archivo <code>file://</code>, no es posible exportar directamente el lienzo a imagen PNG si este contiene imágenes externas (como fotos en los nodos), ya que el lienzo se marca como <em>protegido</em> (tainted canvas) para evitar accesos cruzados.
-              </p>
-              <p>
-                ¡No te preocupes! Puedes obtener tu imagen fácilmente de las siguientes maneras:
-              </p>
-              
-              <div class="modal-step">
-                <i class="fa-solid fa-desktop"></i>
-                <div class="modal-step-content">
-                  <strong>Opción A: Captura de pantalla (Recomendada)</strong>
-                  Presiona <code>Alt + Impr Pant</code> (Windows) o <code>Cmd + Shift + 4</code> (Mac) para realizar una captura rápida y precisa del mapa en tu pantalla.
-                </div>
-              </div>
-              
-              <div class="modal-step">
-                <i class="fa-solid fa-file-pdf"></i>
-                <div class="modal-step-content">
-                  <strong>Opción B: Guardar como PDF de alta calidad</strong>
-                  Presiona <code>Ctrl + P</code> (o <code>Cmd + P</code>) para abrir el diálogo de impresión y selecciona <em>Guardar como PDF</em>. Obtendrás un archivo vectorial nítido e ideal para compartir o imprimir.
-                </div>
-              </div>
-              
-              <div class="modal-step">
-                <i class="fa-solid fa-globe"></i>
-                <div class="modal-step-content">
-                  <strong>Opción C: Ejecutar en un servidor web</strong>
-                  Si subes este archivo HTML a GitHub Pages o lo abres usando un servidor local (como <em>Live Server</em> en VS Code), la exportación PNG directa funcionará perfectamente al eliminarse la restricción del protocolo local.
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button class="modal-btn" onclick="document.getElementById('png-error-modal').classList.remove('show')">Entendido</button>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(modal);
-      }
-      
-      setTimeout(() => {
-        modal.classList.add('show');
-      }, 50);
-    }
-
-
     // Get DOM nodes
     const editor = document.getElementById('markdown-editor');
     const wordCounter = document.getElementById('word-counter');
@@ -1492,19 +1245,10 @@
     }
 
     // Triggered when text in editor changes
-    let debounceTimer;
     function editorChanged() {
       const text = editor.value;
       wordCounter.textContent = `Caracteres: ${text.length}`;
       
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        updatePreviewImmediately();
-      }, 200);
-    }
-    
-    function updatePreviewImmediately() {
-      const text = editor.value;
       const parsedData = parseMindmap(text);
       
       // Update UI elements visibility based on layout select
@@ -1525,32 +1269,10 @@
 
     // Hybrid outlines and arrow nodes parsing
     function parseMindmap(text) {
-      function safeNumber(val, fallback = undefined) {
-        if (val === undefined || val === null || val === '') return fallback;
-        const num = Number(val);
-        return isNaN(num) ? fallback : num;
-      }
       const lines = text.split('\n');
       const nodes = [];
       const edges = [];
       const hasArrows = text.includes('->');
-      
-      const movableEdgesToggle = document.getElementById('movable-edges-toggle');
-      const movableEdges = movableEdgesToggle ? movableEdgesToggle.checked : true;
-      const currentBgVal = document.getElementById('canvas-bg-selector')?.value || 'deep';
-      const isLightTheme = currentBgVal === 'light';
-      const bgColorMap = { deep: '#0b0f19', grid: '#090d16', neuro: '#0a0518', minimal: '#111317', light: '#ffffff' };
-      const canvasBgColor = bgColorMap[currentBgVal] || '#0b0f19';
-      const globalFont = document.getElementById('font-family-selector')?.value || 'Inter';
-      const edgeFontSize = Number(document.getElementById('edge-font-size')?.value) || 11;
-      const edgeLabelWrapLimit = Number(document.getElementById('edge-label-wrap')?.value) || 18;
-      const labelNodeMaxWidth = edgeLabelWrapLimit * 5;
-      
-      const arrowsToggle = document.getElementById('arrows-toggle');
-      const showArrows = arrowsToggle ? arrowsToggle.checked : false;
-      const springLength = Number(document.getElementById('spring-length')?.value) || 150;
-      
-      let nodeIdCounter = 0;
       
       if (hasArrows) {
         // Mode 2: Custom Networks
@@ -1581,7 +1303,7 @@
               const attrStr = nodeMatch[3] || '';
               const attrs = parseAttributes(attrStr);
               
-              const nodeObj = {
+              nodes.push({
                 id: id,
                 label: label || id,
                 originalLabel: label || id,
@@ -1590,28 +1312,10 @@
                 bgColor: attrs.bgcolor || attrs.background || undefined,
                 borderColor: attrs.bordercolor || attrs.border || undefined,
                 textColor: attrs.textcolor || attrs.fontcolor || undefined,
-                size: attrs.size ? safeNumber(attrs.size) : undefined,
+                size: attrs.size ? Number(attrs.size) : undefined,
                 image: attrs.image || undefined,
-                widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
-                fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
-                fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
-                fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-                borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-                borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-                shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-                mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
-                margin: attrs.margin ? safeNumber(attrs.margin) : undefined
-              };
-              if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
-                nodeObj.shapeProperties = {
-                  borderDashes: true,
-                  borderRadius: 6,
-                  interpolation: true,
-                  useImageSize: false,
-                  useBorderWithImage: false
-                };
-              }
-              nodes.push(nodeObj);
+                widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
+              });
               nodeIds.add(id);
             }
           } else {
@@ -1631,81 +1335,22 @@
                 nodeIds.add(to);
               }
               
-              const hasLabel = attrs.label && attrs.label.trim();
-              const edgeLen = attrs.length ? safeNumber(attrs.length) : springLength;
-              if (movableEdges && hasLabel) {
-                const labelNodeId = `edge-label-${from}-${to}-${nodeIdCounter++}`;
-                
-                nodes.push({
-                  id: labelNodeId,
-                  label: attrs.label,
-                  originalLabel: attrs.label,
-                  shape: 'box',
-                  isEdgeLabelNode: true,
-                  physics: true,
-                  color: {
-                    background: canvasBgColor,
-                    border: canvasBgColor,
-                    highlight: { background: canvasBgColor, border: canvasBgColor },
-                    hover: { background: canvasBgColor, border: canvasBgColor }
-                  },
-                  borderWidth: 0,
-                  widthConstraint: { maximum: labelNodeMaxWidth },
-                  font: {
-                    size: edgeFontSize,
-                    face: globalFont,
-                    color: isLightTheme ? '#475569' : '#d1d5db'
-                  },
-                  shadow: false
-                });
-                
-                const edge1 = {
-                  from: from,
-                  to: labelNodeId,
-                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                  arrows: '',
-                  originalArrows: '',
-                  isSplitEdge: true,
-                  isCustomLength: !!attrs.length,
-                  length: edgeLen / 2
-                };
-                if (attrs.style === 'dashed') edge1.dashes = [5, 5];
-                else if (attrs.style === 'dotted') edge1.dashes = [2, 5];
-                
-                const edge2 = {
-                  from: labelNodeId,
-                  to: to,
-                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                  arrows: showArrows ? 'to' : '',
-                  originalArrows: 'to',
-                  isSplitEdge: true,
-                  isCustomLength: !!attrs.length,
-                  length: edgeLen / 2
-                };
-                if (attrs.style === 'dashed') edge2.dashes = [5, 5];
-                else if (attrs.style === 'dotted') edge2.dashes = [2, 5];
-                
-                edges.push(edge1);
-                edges.push(edge2);
-              } else {
-                const edge = {
-                  from: from,
-                  to: to,
-                  label: attrs.label || undefined,
-                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                  arrows: showArrows ? 'to' : '',
-                  originalArrows: 'to',
-                  length: edgeLen
-                };
-                
-                if (attrs.style === 'dashed') {
-                  edge.dashes = [5, 5];
-                } else if (attrs.style === 'dotted') {
-                  edge.dashes = [2, 5];
-                }
-                
-                edges.push(edge);
+              const edge = {
+                from: from,
+                to: to,
+                label: attrs.label || undefined,
+                color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
+                arrows: 'to',
+                length: attrs.length ? Number(attrs.length) : undefined
+              };
+              
+              if (attrs.style === 'dashed') {
+                edge.dashes = [5, 5];
+              } else if (attrs.style === 'dotted') {
+                edge.dashes = [2, 5];
               }
+              
+              edges.push(edge);
             }
           }
         });
@@ -1719,16 +1364,15 @@
           const trimmed = line.trim();
           if (!trimmed) return;
           
-          if (line.startsWith('#') && !line.startsWith('##')) {
-            let rawLabel = line.substring(1).trim();
-            if (!rawLabel) rawLabel = 'Mapa mental';
+          if (line.startsWith('# ')) {
+            const rawLabel = line.substring(2).trim();
             const attrMatch = rawLabel.match(/^(.*?)(?:\s*\((.*?)\))?$/);
-            const label = attrMatch[1].trim() || 'Mapa mental';
+            const label = attrMatch[1].trim();
             const attrStr = attrMatch[2] || '';
             const attrs = parseAttributes(attrStr);
             const id = 'root';
             
-            const rootNodeObj = {
+            rootNode = {
               id: id,
               label: label,
               originalLabel: label,
@@ -1738,29 +1382,11 @@
               bgColor: attrs.bgcolor || attrs.background || undefined,
               borderColor: attrs.bordercolor || attrs.border || undefined,
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
-              size: attrs.size ? safeNumber(attrs.size) : 28,
+              size: attrs.size ? Number(attrs.size) : 28,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
-              fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
-              fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
-              fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-              borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-              borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-              shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-              mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
-              margin: attrs.margin ? safeNumber(attrs.margin) : undefined,
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined),
               font: { size: 16, bold: true }
             };
-            if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
-              rootNodeObj.shapeProperties = {
-                borderDashes: true,
-                borderRadius: 6,
-                interpolation: true,
-                useImageSize: false,
-                useBorderWithImage: false
-              };
-            }
-            rootNode = rootNodeObj;
             nodes.push(rootNode);
             parentStack.push({ id: id, indent: -1, label: label });
             return;
@@ -1808,7 +1434,7 @@
               size = 22;
             }
             
-            const nodeObj = {
+            nodes.push({
               id: id,
               label: label,
               originalLabel: label,
@@ -1818,51 +1444,24 @@
               bgColor: attrs.bgcolor || attrs.background || undefined,
               borderColor: attrs.bordercolor || attrs.border || undefined,
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
-              size: attrs.size ? safeNumber(attrs.size) : size,
+              size: attrs.size ? Number(attrs.size) : size,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
-              fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
-              fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
-              fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-              borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-              borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-              shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-              mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
-              margin: attrs.margin ? safeNumber(attrs.margin) : undefined
-            };
-            if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
-              nodeObj.shapeProperties = {
-                borderDashes: true,
-                borderRadius: 6,
-                interpolation: true,
-                useImageSize: false,
-                useBorderWithImage: false
-              };
-            }
-            nodes.push(nodeObj);
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
+            });
+            
+            const arrowsToggle = document.getElementById('arrows-toggle');
+            const showArrows = arrowsToggle ? arrowsToggle.checked : false;
             
             edges.push({
               from: parent.id,
               to: id,
-              arrows: showArrows ? 'to' : '',
-              originalArrows: 'to'
+              arrows: showArrows ? 'to' : ''
             });
             
             parentStack.push({ id: id, indent: indent, label: label });
           }
         });
       }
-      
-      // Distribute nodes in a circle if they don't have coordinates to avoid initial coordinate overlaps
-      const totalNodes = nodes.length;
-      nodes.forEach((node, index) => {
-        if (node.x === undefined && node.y === undefined) {
-          const angle = (index / (totalNodes || 1)) * 2 * Math.PI;
-          const radius = 100 + Math.random() * 50;
-          node.x = radius * Math.cos(angle);
-          node.y = radius * Math.sin(angle);
-        }
-      });
       
       return { nodes, edges };
     }
@@ -1916,19 +1515,7 @@
       const isPhysicsEnabled = document.getElementById('physics-toggle').checked;
       const springLength = Number(document.getElementById('spring-length').value) || 150;
       
-      const themeSelector = document.getElementById('theme-selector');
-      const themeVal = themeSelector ? themeSelector.value : 'mindmap';
-      const themeColors = {
-        mindmap: { accent: '#3b82f6', rgb: '59, 130, 246' },
-        neuro: { accent: '#8b5cf6', rgb: '139, 92, 246' },
-        classic: { accent: '#10b981', rgb: '16, 185, 129' },
-        clinical: { accent: '#06b6d4', rgb: '6, 182, 212' },
-        child: { accent: '#f59e0b', rgb: '245, 158, 11' },
-        social: { accent: '#ef4444', rgb: '239, 68, 68' }
-      };
-      const activeTheme = themeColors[themeVal] || themeColors.mindmap;
-      const activeColor = activeTheme.accent;
-      const activeRgb = activeTheme.rgb;
+      const activeColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
       
       const smoothSelector = document.getElementById('edge-smooth-selector');
       const smoothVal = smoothSelector ? smoothSelector.value : 'smooth';
@@ -2019,25 +1606,12 @@
 
       // Add dynamic coloring/styles to nodes that don't have custom ones
       data.nodes.forEach(node => {
-        // Skip edge label intermediary nodes — they manage their own transparent style
-        if (node.isEdgeLabelNode) return;
-
         // Handle image nodes shape and URL loading
         if ((node.shape === 'image' || node.shape === 'circularImage') && node.image) {
           data.nodes.update({
             id: node.id,
             shape: node.shape,
             image: node.image
-          });
-          
-          loadImageAsDataURL(node.image).then(dataURL => {
-            if (nodesDataset.get(node.id)) {
-              nodesDataset.update({
-                id: node.id,
-                shape: node.shape,
-                image: dataURL
-              });
-            }
           });
         }
         
@@ -2084,7 +1658,7 @@
                 shape: node.shape || 'circle',
                 size: 28,
                 color: { background: activeColor, border: activeColor },
-                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3), multi: 'md' },
+                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
                 label: formattedLabel
               });
             } else if (node.depth === 1) {
@@ -2093,10 +1667,10 @@
                 shape: node.shape || 'box',
                 size: 22,
                 color: { 
-                  background: isLightTheme ? `rgba(${activeRgb}, 0.08)` : `rgba(${activeRgb}, 0.15)`, 
+                  background: isLightTheme ? `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()}, 0.08)` : `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()}, 0.15)`, 
                   border: activeColor 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || (nodeFontSize + 1), multi: 'md' },
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || (nodeFontSize + 1) },
                 label: formattedLabel
               });
             } else if (node.depth === 2) {
@@ -2106,9 +1680,9 @@
                 size: 18,
                 color: { 
                   background: isLightTheme ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.06)', 
-                  border: isLightTheme ? 'rgba(15,23,42,0.12)' : `rgba(${activeRgb}, 0.4)` 
+                  border: isLightTheme ? 'rgba(15,23,42,0.12)' : `rgba(${getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()}, 0.4)` 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#334155' : '#e5e7eb', size: fontSize || nodeFontSize, multi: 'md' },
+                font: { face: fontFace, color: isLightTheme ? '#334155' : '#e5e7eb', size: fontSize || nodeFontSize },
                 label: formattedLabel
               });
             } else {
@@ -2116,7 +1690,7 @@
               data.nodes.update({
                 id: node.id,
                 shape: node.shape || 'text',
-                font: { face: fontFace, color: isLightTheme ? '#475569' : '#d1d5db', size: fontSize || (nodeFontSize - 1), multi: 'md' },
+                font: { face: fontFace, color: isLightTheme ? '#475569' : '#d1d5db', size: fontSize || (nodeFontSize - 1) },
                 label: formattedLabel
               });
             }
@@ -2126,7 +1700,7 @@
               data.nodes.update({
                 id: node.id,
                 color: { background: activeColor, border: activeColor },
-                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3), multi: 'md' },
+                font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
                 label: formattedLabel
               });
             } else if (node.shape === 'box') {
@@ -2136,7 +1710,7 @@
                   background: isLightTheme ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.08)', 
                   border: activeColor 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize, multi: 'md' },
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize },
                 label: formattedLabel
               });
             } else {
@@ -2146,7 +1720,7 @@
                   background: isLightTheme ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.04)', 
                   border: isLightTheme ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.18)' 
                 },
-                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize, multi: 'md' },
+                font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize },
                 label: formattedLabel
               });
             }
@@ -2163,7 +1737,7 @@
                 border: node.borderColor || node.color || activeColor
               }
             },
-            font: { face: fontFace, color: node.textColor || (isLightTheme ? '#0f172a' : '#ffffff'), size: fontSize || nodeFontSize, multi: 'md' },
+            font: { face: fontFace, color: node.textColor || (isLightTheme ? '#0f172a' : '#ffffff'), size: fontSize || nodeFontSize },
             label: formattedLabel
           });
         }
@@ -2177,11 +1751,11 @@
         }
       });
       
-      // Apply edge font, labels, and dynamically update split edge lengths
+      // Apply edge font and labels dynamically (supports word wrapping)
       data.edges.forEach(edge => {
         let updatedLabel = edge.label ? wrapText(edge.label, edgeLabelWrapLimit) : undefined;
         
-        const updateParams = {
+        data.edges.update({
           id: edge.id,
           label: updatedLabel,
           font: {
@@ -2190,13 +1764,7 @@
             color: isLightTheme ? '#475569' : '#a1a1aa',
             background: edgeBgColor
           }
-        };
-        
-        if (edge.isSplitEdge && !edge.isCustomLength) {
-          updateParams.length = springLength / 2;
-        }
-        
-        data.edges.update(updateParams);
+        });
       });
       
       // Hierarchical adjustments
@@ -2287,10 +1855,7 @@
       showToast(isCollapsed ? 'Rama contraída' : 'Rama expandida');
     }
 
-    function setSubtreeVisibility(parentId, visible, visited = new Set()) {
-      if (visited.has(parentId)) return;
-      visited.add(parentId);
-      
+    function setSubtreeVisibility(parentId, visible) {
       const outgoingEdges = edgesDataset.get({
         filter: function(edge) {
           return edge.from === parentId;
@@ -2306,18 +1871,16 @@
         
         const childNode = nodesDataset.get(childId);
         if (childNode) {
-          const isFixed = childNode.fixed && (childNode.fixed === true || childNode.fixed.x === true);
           nodesDataset.update({
             id: childId,
-            hidden: !visible,
-            physics: visible ? (isFixed ? false : true) : false
+            hidden: !visible
           });
           
           if (!visible) {
-            setSubtreeVisibility(childId, false, visited);
+            setSubtreeVisibility(childId, false);
           } else {
             if (!childNode.collapsed) {
-              setSubtreeVisibility(childId, true, visited);
+              setSubtreeVisibility(childId, true);
             } else {
               const childEdges = edgesDataset.get({
                 filter: function(e) { return e.from === childId; }
@@ -2337,14 +1900,12 @@
       const allNodes = nodesDataset.get();
       allNodes.forEach(node => {
         const origLabel = node.originalLabel || node.label;
-        const isFixed = node.fixed && (node.fixed === true || node.fixed.x === true);
         nodesDataset.update({
           id: node.id,
           collapsed: false,
           originalLabel: origLabel,
           label: origLabel,
           hidden: false,
-          physics: isFixed ? false : true,
           borderWidth: 2,
           shapeProperties: {
             borderDashes: false
@@ -2411,14 +1972,12 @@
           }
         }
         
-        const isFixed = node.fixed && (node.fixed === true || node.fixed.x === true);
         nodesDataset.update({
           id: node.id,
           collapsed: setCollapsed,
           originalLabel: origLabel,
           label: setCollapsed ? `${origLabel} [+]` : origLabel,
           hidden: shouldHide,
-          physics: shouldHide ? false : (isFixed ? false : true),
           borderWidth: setCollapsed ? 3 : 2,
           shapeProperties: {
             borderDashes: setCollapsed ? [4, 4] : false
@@ -2567,16 +2126,11 @@
         return;
       }
       
-      try {
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = `mapa_mental.png`;
-        a.click();
-        showToast('Imagen PNG descargada con éxito.');
-      } catch (e) {
-        console.error('Error exportando PNG:', e);
-        showPngExportErrorModal();
-      }
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `mapa_mental.png`;
+      a.click();
+      showToast('Imagen PNG descargada con éxito.');
     }
 
     // Show dynamic toast alerts
@@ -2615,7 +2169,6 @@
       const canvasBgValue = document.getElementById('canvas-bg-selector').value;
       const levelStylingValue = document.getElementById('level-styling-toggle').checked;
       const edgeLineWidthValue = document.getElementById('edge-line-width').value || 2.2;
-      const movableEdgesValue = document.getElementById('movable-edges-toggle').checked;
       
       const colorMap = {
         mindmap: { accent: '#3b82f6', rgb: '59, 130, 246', hover: '#2563eb' },
@@ -2921,15 +2474,7 @@
 
       <div class="control-row" id="row-edge-wrap">
         <span>Ancho texto enlaces</span>
-        <input type="range" id="edge-label-wrap" class="slider" min="10" max="40" value="18" oninput="renderGraph()">
-      </div>
-
-      <div class="control-row" id="row-movable-edges">
-        <span>Enlaces movibles</span>
-        <label class="switch-label">
-          <input type="checkbox" id="movable-edges-toggle" ${movableEdgesValue ? 'checked' : ''} onchange="renderGraph()">
-          <span class="slider-switch"></span>
-        </label>
+        <input type="range" id="edge-label-wrap" class="slider" min="15" max="40" value="25" oninput="renderGraph()">
       </div>
 
       <div class="control-row" id="row-edge-width">
@@ -2972,7 +2517,7 @@
 
       <div class="control-row" id="row-spring">
         <span>Longitud resortes</span>
-        <input type="range" id="spring-length" class="slider" min="30" max="300" value="${springLengthValue}" oninput="renderGraph()">
+        <input type="range" id="spring-length" class="slider" min="80" max="300" value="${springLengthValue}" oninput="renderGraph()">
       </div>
 
       <div style="font-size: 10px; color: var(--text-muted); line-height: 1.45; margin-top: 4px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px;">
@@ -2991,247 +2536,19 @@
     let nodesDataset = null;
     let edgesDataset = null;
 
-    const imageCache = new Map();
-    function loadImageAsDataURL(url) {
-      if (!url) return Promise.resolve(url);
-      if (imageCache.has(url)) {
-        return Promise.resolve(imageCache.get(url));
-      }
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            const dataURL = canvas.toDataURL('image/png');
-            imageCache.set(url, dataURL);
-            resolve(dataURL);
-          } catch (e) {
-            console.warn('CORS restrict on preloading image:', url, e);
-            resolve(url);
-          }
-        };
-        img.onerror = () => {
-          resolve(url);
-        };
-        img.src = url;
-      });
-    }
+    // Restore arrays from pre-rendered states
+    const initialCollapsedIds = ${JSON.stringify(collapsedNodeIds)};
+    const initialFixedNodeIds = ${JSON.stringify(fixedNodeIds)};
 
-    function showPngExportErrorModal() {
-      let modal = document.getElementById('png-error-modal');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'png-error-modal';
-        modal.className = 'modal-overlay';
-        
-        const style = document.createElement('style');
-        style.innerHTML = \`
-          .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(10, 15, 30, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-          }
-          .modal-overlay.show {
-            opacity: 1;
-            pointer-events: auto;
-          }
-          .modal-content {
-            background: rgba(20, 27, 45, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 20px;
-            width: 90%;
-            max-width: 540px;
-            padding: 30px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            color: #f3f4f6;
-            position: relative;
-            transform: translateY(20px);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-          }
-          .modal-overlay.show .modal-content {
-            transform: translateY(0);
-          }
-          .modal-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-          }
-          .modal-header i {
-            font-size: 28px;
-            color: #f59e0b;
-          }
-          .modal-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: #ffffff;
-          }
-          .modal-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            color: #9ca3af;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-          }
-          .modal-close:hover {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-          }
-          .modal-body {
-            font-size: 14px;
-            line-height: 1.6;
-            color: #d1d5db;
-          }
-          .modal-body p {
-            margin-bottom: 16px;
-          }
-          .modal-step {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 14px 16px;
-            margin-bottom: 12px;
-            display: flex;
-            gap: 12px;
-          }
-          .modal-step i {
-            font-size: 18px;
-            color: var(--accent);
-            margin-top: 2px;
-          }
-          .modal-step-content strong {
-            color: #ffffff;
-            display: block;
-            margin-bottom: 4px;
-            font-family: 'Outfit', sans-serif;
-          }
-          .modal-footer {
-            margin-top: 24px;
-            display: flex;
-            justify-content: flex-end;
-          }
-          .modal-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px var(--accent-glow);
-          }
-          .modal-btn:hover {
-            transform: translateY(-1px);
-            filter: brightness(1.1);
-          }
-        \`;
-        document.head.appendChild(style);
-
-        modal.innerHTML = \`
-          <div class="modal-content">
-            <button class="modal-close" onclick="document.getElementById('png-error-modal').classList.remove('show')">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div class="modal-header">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <span class="modal-title">Limitación de seguridad del navegador</span>
-            </div>
-            <div class="modal-body">
-              <p>
-                Debido a restricciones de seguridad de los navegadores modernos, al ejecutar el mapa mental localmente como un archivo <code>file://</code>, no es posible exportar directamente el lienzo a imagen PNG si este contiene imágenes externas (como fotos en los nodos), ya que el lienzo se marca como <em>protegido</em> (tainted canvas) para evitar accesos cruzados.
-              </p>
-              <p>
-                ¡No te preocupes! Puedes obtener tu imagen fácilmente de las siguientes maneras:
-              </p>
-              
-              <div class="modal-step">
-                <i class="fa-solid fa-desktop"></i>
-                <div class="modal-step-content">
-                  <strong>Opción A: Captura de pantalla (Recomendada)</strong>
-                  Presiona <code>Alt + Impr Pant</code> (Windows) o <code>Cmd + Shift + 4</code> (Mac) para realizar una captura rápida y precisa del mapa en tu pantalla.
-                </div>
-              </div>
-              
-              <div class="modal-step">
-                <i class="fa-solid fa-file-pdf"></i>
-                <div class="modal-step-content">
-                  <strong>Opción B: Guardar como PDF de alta calidad</strong>
-                  Presiona <code>Ctrl + P</code> (o <code>Cmd + P</code>) para abrir el diálogo de impresión y selecciona <em>Guardar como PDF</em>. Obtendrás un archivo vectorial nítido e ideal para compartir o imprimir.
-                </div>
-              </div>
-              
-              <div class="modal-step">
-                <i class="fa-solid fa-globe"></i>
-                <div class="modal-step-content">
-                  <strong>Opción C: Ejecutar en un servidor web</strong>
-                  Si subes este archivo HTML a GitHub Pages o lo abres usando un servidor local (como <em>Live Server</em> en VS Code), la exportación PNG directa funcionará perfectamente al eliminarse la restricción del protocolo local.
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button class="modal-btn" onclick="document.getElementById('png-error-modal').classList.remove('show')">Entendido</button>
-      window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', () => {
       renderGraph();
     });
 
     function parseMindmap(text) {
-      function safeNumber(val, fallback = undefined) {
-        if (val === undefined || val === null || val === '') return fallback;
-        const num = Number(val);
-        return isNaN(num) ? fallback : num;
-      }
       const lines = text.split('\\n');
       const nodes = [];
       const edges = [];
       const hasArrows = text.includes('->');
-      
-      const movableEdgesToggle = document.getElementById('movable-edges-toggle');
-      const movableEdges = movableEdgesToggle ? movableEdgesToggle.checked : true;
-      const currentBgVal = document.getElementById('canvas-bg-selector')?.value || 'deep';
-      const isLightTheme = currentBgVal === 'light';
-      const bgColorMap = { deep: '#0b0f19', grid: '#090d16', neuro: '#0a0518', minimal: '#111317', light: '#ffffff' };
-      const canvasBgColor = bgColorMap[currentBgVal] || '#0b0f19';
-      const globalFont = document.getElementById('font-family-selector')?.value || 'Inter';
-      const edgeFontSize = Number(document.getElementById('edge-font-size')?.value) || 11;
-      const edgeLabelWrapLimit = Number(document.getElementById('edge-label-wrap')?.value) || 18;
-      const labelNodeMaxWidth = edgeLabelWrapLimit * 5;
-      
-      const arrowsToggle = document.getElementById('arrows-toggle');
-      const showArrows = arrowsToggle ? arrowsToggle.checked : false;
-      const springLength = Number(document.getElementById('spring-length')?.value) || 150;
-      
-      let nodeIdCounter = 0;
       
       if (hasArrows) {
         let currentSection = 'nodes';
@@ -3258,7 +2575,7 @@
               const attrStr = nodeMatch[3] || '';
               const attrs = parseAttributes(attrStr);
               
-              const nodeObj = {
+              nodes.push({
                 id: id,
                 label: label || id,
                 originalLabel: label || id,
@@ -3267,28 +2584,10 @@
                 bgColor: attrs.bgcolor || attrs.background || undefined,
                 borderColor: attrs.bordercolor || attrs.border || undefined,
                 textColor: attrs.textcolor || attrs.fontcolor || undefined,
-                size: attrs.size ? safeNumber(attrs.size) : undefined,
+                size: attrs.size ? Number(attrs.size) : undefined,
                 image: attrs.image || undefined,
-                widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
-                fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
-                fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
-                fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-                borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-                borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-                shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-                mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
-                margin: attrs.margin ? safeNumber(attrs.margin) : undefined
-              };
-              if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
-                nodeObj.shapeProperties = {
-                  borderDashes: true,
-                  borderRadius: 6,
-                  interpolation: true,
-                  useImageSize: false,
-                  useBorderWithImage: false
-                };
-              }
-              nodes.push(nodeObj);
+                widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
+              });
               nodeIds.add(id);
             }
           } else {
@@ -3308,81 +2607,22 @@
                 nodeIds.add(to);
               }
               
-              const hasLabel = attrs.label && attrs.label.trim();
-              const edgeLen = attrs.length ? safeNumber(attrs.length) : springLength;
-              if (movableEdges && hasLabel) {
-                const labelNodeId = \`edge-label-\${from}-\${to}-\${nodeIdCounter++}\`;
-                
-                nodes.push({
-                  id: labelNodeId,
-                  label: attrs.label,
-                  originalLabel: attrs.label,
-                  shape: 'box',
-                  isEdgeLabelNode: true,
-                  physics: true,
-                  color: {
-                    background: canvasBgColor,
-                    border: canvasBgColor,
-                    highlight: { background: canvasBgColor, border: canvasBgColor },
-                    hover: { background: canvasBgColor, border: canvasBgColor }
-                  },
-                  borderWidth: 0,
-                  widthConstraint: { maximum: labelNodeMaxWidth },
-                  font: {
-                    size: edgeFontSize,
-                    face: globalFont,
-                    color: isLightTheme ? '#475569' : '#d1d5db'
-                  },
-                  shadow: false
-                });
-                
-                const edge1 = {
-                  from: from,
-                  to: labelNodeId,
-                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                  arrows: '',
-                  originalArrows: '',
-                  isSplitEdge: true,
-                  isCustomLength: !!attrs.length,
-                  length: edgeLen / 2
-                };
-                if (attrs.style === 'dashed') edge1.dashes = [5, 5];
-                else if (attrs.style === 'dotted') edge1.dashes = [2, 5];
-                
-                const edge2 = {
-                  from: labelNodeId,
-                  to: to,
-                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                  arrows: showArrows ? 'to' : '',
-                  originalArrows: 'to',
-                  isSplitEdge: true,
-                  isCustomLength: !!attrs.length,
-                  length: edgeLen / 2
-                };
-                if (attrs.style === 'dashed') edge2.dashes = [5, 5];
-                else if (attrs.style === 'dotted') edge2.dashes = [2, 5];
-                
-                edges.push(edge1);
-                edges.push(edge2);
-              } else {
-                const edge = {
-                  from: from,
-                  to: to,
-                  label: attrs.label || undefined,
-                  color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                  arrows: showArrows ? 'to' : '',
-                  originalArrows: 'to',
-                  length: edgeLen
-                };
-                
-                if (attrs.style === 'dashed') {
-                  edge.dashes = [5, 5];
-                } else if (attrs.style === 'dotted') {
-                  edge.dashes = [2, 5];
-                }
-                
-                edges.push(edge);
+              const edge = {
+                from: from,
+                to: to,
+                label: attrs.label || undefined,
+                color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
+                arrows: 'to',
+                length: attrs.length ? Number(attrs.length) : undefined
+              };
+              
+              if (attrs.style === 'dashed') {
+                edge.dashes = [5, 5];
+              } else if (attrs.style === 'dotted') {
+                edge.dashes = [2, 5];
               }
+              
+              edges.push(edge);
             }
           }
         });
@@ -3395,16 +2635,15 @@
           const trimmed = line.trim();
           if (!trimmed) return;
           
-          if (line.startsWith('#') && !line.startsWith('##')) {
-            let rawLabel = line.substring(1).trim();
-            if (!rawLabel) rawLabel = 'Mapa mental';
-            const attrMatch = rawLabel.match(/^(.*?)(?:\\s*\\((.*?)\\))?$/);
-            const label = attrMatch[1].trim() || 'Mapa mental';
+          if (line.startsWith('# ')) {
+            const rawLabel = line.substring(2).trim();
+            const attrMatch = rawLabel.match(/^(.*?)(?:\s*\\((.*?)\\))?$/);
+            const label = attrMatch[1].trim();
             const attrStr = attrMatch[2] || '';
             const attrs = parseAttributes(attrStr);
             const id = 'root';
             
-            const rootNodeObj = {
+            rootNode = {
               id: id,
               label: label,
               originalLabel: label,
@@ -3414,29 +2653,11 @@
               bgColor: attrs.bgcolor || attrs.background || undefined,
               borderColor: attrs.bordercolor || attrs.border || undefined,
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
-              size: attrs.size ? safeNumber(attrs.size) : 28,
+              size: attrs.size ? Number(attrs.size) : 28,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
-              fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
-              fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
-              fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-              borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-              borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-              shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-              mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
-              margin: attrs.margin ? safeNumber(attrs.margin) : undefined,
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined),
               font: { size: 16, bold: true }
             };
-            if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
-              rootNodeObj.shapeProperties = {
-                borderDashes: true,
-                borderRadius: 6,
-                interpolation: true,
-                useImageSize: false,
-                useBorderWithImage: false
-              };
-            }
-            rootNode = rootNodeObj;
             nodes.push(rootNode);
             parentStack.push({ id: id, indent: -1, label: label });
             return;
@@ -3447,7 +2668,7 @@
             const indent = listMatch[1].length;
             const rawLabel = listMatch[2].trim();
             
-            const attrMatch = rawLabel.match(/^(.*?)(?:\\s*\\((.*?)\\))?$/);
+            const attrMatch = rawLabel.match(/^(.*?)(?:\s*\\((.*?)\\))?$/);
             const label = attrMatch[1].trim();
             const attrStr = attrMatch[2] || '';
             const attrs = parseAttributes(attrStr);
@@ -3483,7 +2704,7 @@
               size = 22;
             }
             
-            const nodeObj = {
+            nodes.push({
               id: id,
               label: label,
               originalLabel: label,
@@ -3493,51 +2714,21 @@
               bgColor: attrs.bgcolor || attrs.background || undefined,
               borderColor: attrs.bordercolor || attrs.border || undefined,
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
-              size: attrs.size ? safeNumber(attrs.size) : size,
+              size: attrs.size ? Number(attrs.size) : size,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? safeNumber(attrs.width) : (attrs.maxwidth ? { maximum: safeNumber(attrs.maxwidth) } : (attrs.widthconstraint ? safeNumber(attrs.widthconstraint) : undefined)),
-              fontSize: attrs.fontsize ? safeNumber(attrs.fontsize) : (attrs['font-size'] ? safeNumber(attrs['font-size']) : (attrs.sizefont ? safeNumber(attrs.sizefont) : undefined)),
-              fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
-              fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
-              borderWidth: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-              borderWidthSelected: attrs.borderwidth ? safeNumber(attrs.borderwidth) : (attrs['border-width'] ? safeNumber(attrs['border-width']) : undefined),
-              shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
-              mass: attrs.mass ? safeNumber(attrs.mass) : undefined,
-              margin: attrs.margin ? safeNumber(attrs.margin) : undefined
-            };
-            if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
-              nodeObj.shapeProperties = {
-                borderDashes: true,
-                borderRadius: 6,
-                interpolation: true,
-                useImageSize: false,
-                useBorderWithImage: false
-              };
-            }
-            nodes.push(nodeObj);
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
+            });
             
             edges.push({
               from: parent.id,
               to: id,
-              arrows: showArrows ? 'to' : '',
-              originalArrows: 'to'
+              arrows: ''
             });
             
             parentStack.push({ id: id, indent: indent, label: label });
           }
         });
       }
-      
-      // Distribute nodes in a circle if they don't have coordinates to avoid initial coordinate overlaps
-      const totalNodes = nodes.length;
-      nodes.forEach((node, index) => {
-        if (node.x === undefined && node.y === undefined) {
-          const angle = (index / (totalNodes || 1)) * 2 * Math.PI;
-          const radius = 100 + Math.random() * 50;
-          node.x = radius * Math.cos(angle);
-          node.y = radius * Math.sin(angle);
-        }
-      });
       
       return { nodes, edges };
     }
@@ -3600,9 +2791,6 @@
       const edgeFontSize = Number(document.getElementById('edge-font-size').value) || 11;
       const edgeLabelWrapLimit = Number(document.getElementById('edge-label-wrap').value) || 25;
       const edgeLineWidth = Number(document.getElementById('edge-line-width').value) || 2.2;
-      
-      const activeColor = '${themeConfig.accent}';
-      const activeColorRgb = '${themeConfig.rgb}';
       
       const bgColors = {
         deep: '#0b0f19',
@@ -3695,8 +2883,8 @@
           },
           color: {
             color: isLightTheme ? 'rgba(15, 23, 42, 0.15)' : 'rgba(255, 255, 255, 0.22)',
-            highlight: activeColor,
-            hover: activeColor
+            highlight: 'var(--accent)',
+            hover: 'var(--accent)'
           }
         },
         interaction: { hover: true, dragNodes: true, dragView: true, zoomView: true },
@@ -3714,25 +2902,12 @@
       };
 
       data.nodes.forEach(node => {
-        // Skip edge label intermediary nodes — they manage their own transparent style
-        if (node.isEdgeLabelNode) return;
-
         // Load custom image/circularImage URLs
         if ((node.shape === 'image' || node.shape === 'circularImage') && node.image) {
           data.nodes.update({
             id: node.id,
             shape: node.shape,
             image: node.image
-          });
-          
-          loadImageAsDataURL(node.image).then(dataURL => {
-            if (nodesDataset.get(node.id)) {
-              nodesDataset.update({
-                id: node.id,
-                shape: node.shape,
-                image: dataURL
-              });
-            }
           });
         }
         
@@ -3777,7 +2952,7 @@
                 id: node.id,
                 shape: node.shape || 'circle',
                 size: 28,
-                color: { background: activeColor, border: activeColor },
+                color: { background: 'var(--accent)', border: 'var(--accent)' },
                 font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
                 label: formattedLabel
               });
@@ -3787,8 +2962,8 @@
                 shape: node.shape || 'box',
                 size: 22,
                 color: { 
-                  background: isLightTheme ? \`rgba(\${activeColorRgb}, 0.08)\` : \`rgba(\${activeColorRgb}, 0.15)\`, 
-                  border: activeColor 
+                  background: isLightTheme ? 'rgba(var(--accent-rgb), 0.08)' : 'rgba(var(--accent-rgb), 0.15)', 
+                  border: 'var(--accent)' 
                 },
                 font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || (nodeFontSize + 1) },
                 label: formattedLabel
@@ -3800,7 +2975,7 @@
                 size: 18,
                 color: { 
                   background: isLightTheme ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.06)', 
-                  border: isLightTheme ? 'rgba(15,23,42,0.12)' : \`rgba(\${activeColorRgb}, 0.4)\` 
+                  border: isLightTheme ? 'rgba(15,23,42,0.12)' : 'rgba(var(--accent-rgb), 0.4)' 
                 },
                 font: { face: fontFace, color: isLightTheme ? '#334155' : '#e5e7eb', size: fontSize || nodeFontSize },
                 label: formattedLabel
@@ -3817,7 +2992,7 @@
             if (node.id === 'root') {
               data.nodes.update({
                 id: node.id,
-                color: { background: activeColor, border: activeColor },
+                color: { background: 'var(--accent)', border: 'var(--accent)' },
                 font: { face: fontFace, color: '#ffffff', size: fontSize || (nodeFontSize + 3) },
                 label: formattedLabel
               });
@@ -3826,7 +3001,7 @@
                 id: node.id,
                 color: { 
                   background: isLightTheme ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.08)', 
-                  border: activeColor 
+                  border: 'var(--accent)' 
                 },
                 font: { face: fontFace, color: isLightTheme ? '#0f172a' : '#ffffff', size: fontSize || nodeFontSize },
                 label: formattedLabel
@@ -3847,11 +3022,11 @@
           data.nodes.update({
             id: node.id,
             color: { 
-              background: node.bgColor || node.color || activeColor, 
-              border: node.borderColor || node.color || activeColor,
+              background: node.bgColor || node.color || 'var(--accent)', 
+              border: node.borderColor || node.color || 'var(--accent)',
               highlight: {
-                background: node.bgColor || node.color || activeColor, 
-                border: node.borderColor || node.color || activeColor
+                background: node.bgColor || node.color || 'var(--accent)', 
+                border: node.borderColor || node.color || 'var(--accent)'
               }
             },
             font: { face: fontFace, color: node.textColor || (isLightTheme ? '#0f172a' : '#ffffff'), size: fontSize || nodeFontSize },
@@ -3868,28 +3043,28 @@
         }
       });
       
-      // Apply edge font, labels, arrows, and dynamically update split edge lengths
+      // Apply edge font and labels dynamically (supports word wrapping)
       data.edges.forEach(edge => {
         let updatedLabel = edge.label ? wrapText(edge.label, edgeLabelWrapLimit) : undefined;
         
-        const hasArrow = edge.originalArrows === 'to' || edge.arrows === 'to';
-        const updateParams = {
+        data.edges.update({
           id: edge.id,
           label: updatedLabel,
-          arrows: (showArrows && hasArrow) ? 'to' : '',
           font: {
             face: globalFont,
             size: edgeFontSize,
             color: isLightTheme ? '#475569' : '#a1a1aa',
             background: edgeBgColor
           }
-        };
-        
-        if (edge.isSplitEdge && !edge.isCustomLength) {
-          updateParams.length = springLength / 2;
-        }
-        
-        data.edges.update(updateParams);
+        });
+      });
+      
+      // Update arrows based on checkboxes and dataset definitions
+      data.edges.forEach(edge => {
+        data.edges.update({
+          id: edge.id,
+          arrows: showArrows ? 'to' : (edge.arrows || '')
+        });
       });
       
       if (layoutType.startsWith('hierarchical')) {
@@ -4001,10 +3176,7 @@
       setSubtreeVisibility(nodeId, !isCollapsed);
     }
 
-    function setSubtreeVisibility(parentId, visible, visited = new Set()) {
-      if (visited.has(parentId)) return;
-      visited.add(parentId);
-      
+    function setSubtreeVisibility(parentId, visible) {
       const outgoingEdges = edgesDataset.get({
         filter: function(edge) {
           return edge.from === parentId;
@@ -4020,18 +3192,16 @@
         
         const childNode = nodesDataset.get(childId);
         if (childNode) {
-          const isFixed = childNode.fixed && (childNode.fixed === true || childNode.fixed.x === true);
           nodesDataset.update({
             id: childId,
-            hidden: !visible,
-            physics: visible ? (isFixed ? false : true) : false
+            hidden: !visible
           });
           
           if (!visible) {
-            setSubtreeVisibility(childId, false, visited);
+            setSubtreeVisibility(childId, false);
           } else {
             if (!childNode.collapsed) {
-              setSubtreeVisibility(childId, true, visited);
+              setSubtreeVisibility(childId, true);
             } else {
               const childEdges = edgesDataset.get({
                 filter: function(e) { return e.from === childId; }
@@ -4051,14 +3221,12 @@
       const allNodes = nodesDataset.get();
       allNodes.forEach(node => {
         const origLabel = node.originalLabel || node.label;
-        const isFixed = node.fixed && (node.fixed === true || node.fixed.x === true);
         nodesDataset.update({
           id: node.id,
           collapsed: false,
           originalLabel: origLabel,
           label: origLabel,
           hidden: false,
-          physics: isFixed ? false : true,
           borderWidth: 2,
           shapeProperties: {
             borderDashes: false
@@ -4123,13 +3291,12 @@
           }
         }
         
-        const isFixed = node.fixed && (node.fixed === true || node.fixed.x === true);
         nodesDataset.update({
           id: node.id,
           collapsed: setCollapsed,
           originalLabel: origLabel,
           label: setCollapsed ? \`\${origLabel} [+]\` : origLabel,
-          physics: shouldHide ? false : (isFixed ? false : true),
+          hidden: shouldHide,
           borderWidth: setCollapsed ? 3 : 2,
           shapeProperties: {
             borderDashes: setCollapsed ? [4, 4] : false
@@ -4152,15 +3319,10 @@
     function exportPNG() {
       const canvas = document.querySelector('#canvas-container canvas');
       if (!canvas) return;
-      try {
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = 'mapa_mental.png';
-        a.click();
-      } catch (e) {
-        console.error('Error exportando PNG:', e);
-        showPngExportErrorModal();
-      }
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = 'mapa_mental.png';
+      a.click();
     }
   ${'</' + 'script>'}
 </body>
