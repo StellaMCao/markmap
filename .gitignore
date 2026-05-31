@@ -1,9 +1,10 @@
-node_modules
+# System Files
+.DS_Store
+Thumbs.db
+
+# IDEs and Editors
+.vscode/
+.idea/
+
+# Logs
 *.log
-/.idea
-/api
-packages/*/dist
-.nyc_output/
-packages/*/coverage
-packages/*/types
-*.tsbuildinfo

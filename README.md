@@ -1,24 +1,63 @@
-# markmap
+# Herramientas Visuales Interactivas
 
-[![Join the chat at https://gitter.im/gera2ld/markmap](https://badges.gitter.im/gera2ld/markmap.svg)](https://gitter.im/gera2ld/markmap?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+¡Bienvenido/a! Este repositorio contiene dos potentes aplicaciones web estáticas y auto-contenidas diseñadas para facilitar la creación de mapas conceptuales interactivos y el diseño visual estructurado directamente desde tu navegador.
 
-Visualize your Markdown as mindmaps.
+👉 **[Acceder al Menú Principal en GitHub Pages](https://stellamcao.github.io/markmap/)**
 
-This project is heavily inspired by [dundalek's markmap](https://github.com/dundalek/markmap).
+---
 
-👉 [Try it out](https://markmap.js.org/repl).
+## 🚀 Aplicaciones Incluidas
 
-## Related Projects
+El repositorio se organiza de forma extremadamente limpia, conteniendo únicamente las siguientes herramientas accesibles a través de un menú de inicio unificado:
 
-Markmap is also available in:
+### 1. 🗺️ Generador Markmap (`/markmap`)
+Un editor de Markdown avanzado que genera mapas conceptuales interactivos y dinámicos en tiempo real. 
+- **Despliegue Flexible**: Permite forzar el nivel de profundidad inicial del mapa (desde solo título hasta apertura total) y recordar de forma inteligente las ramas abiertas/cerradas manualmente.
+- **Estilo de Texto Enriquecido**: Soporte para negrita, cursiva, código con resaltado de sintaxis (`Highlight.js`), tablas estructuradas e inserción de fórmulas matemáticas complejas mediante `KaTeX`.
+- **Integración Multimedia**: Inserción optimizada de imágenes (con selección de ancho en píxeles) y reproductores de audio embebidos, con soporte especial para enlaces compartidos de **Google Drive**.
+- **Motor de Búsqueda Integrado**: Permite buscar términos dentro de los nodos y resaltar las coincidencias al instante.
+- **Personalización Visual Extensa**:
+  - **Presets**: Lectura, Compacto, Presentación, Dense y Oscuro.
+  - **Paletas de Colores**: Clásico, Océano, Bosque, Atardecer y Monocromático.
+  - **Tipografías**: Sistema, Serif, Mono, Redondeada, Humanista, Geométrica, Condensada, Slab y Libro.
+  - **Ajustes Finos**: Grosor de línea, tamaño de texto global y personalizado por nivel de profundidad, espaciados horizontal/vertical, tiempos de animación de transición y tema claro/oscuro.
+- **Formatos de Exportación**:
+  - **HTML Interactivo**: Exporta el mapa completo y auto-contenido, manteniendo la interactividad, zoom, fórmulas KaTeX, estilos y reproductores de audio.
+  - **Imágenes**: Descarga el mapa como vector `SVG` de alta calidad o como imagen `PNG`.
+  - **Fuentes**: Guarda el archivo `.md` original o cópialo directamente al portapapeles.
 
-- [VSCode](https://marketplace.visualstudio.com/items?itemName=gera2ld.markmap-vscode) and [Open VSX](https://open-vsx.org/extension/gera2ld/markmap-vscode)
-- Vim / Neovim:
-  - [coc-markmap](https://github.com/gera2ld/coc-markmap) ![NPM](https://img.shields.io/npm/v/coc-markmap.svg) - powered by [coc.nvim](https://github.com/neoclide/coc.nvim)
-  - [markmap.vim](https://github.com/Zeioth/markmap.nvim): for using without [coc.nvim](https://github.com/neoclide/coc.nvim)
-- Emacs: [eaf-markmap](https://github.com/emacs-eaf/eaf-markmap) -- powered by [EAF](https://github.com/emacs-eaf/emacs-application-framework)
-- MCP Server: [markmap-mcp-server](https://github.com/jinzcdev/markmap-mcp-server) [![NPM Version](https://img.shields.io/npm/v/@jinzcdev/markmap-mcp-server.svg)](https://www.npmjs.com/package/@jinzcdev/markmap-mcp-server) - powered by [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
+### 2. 🎨 Estudio de Diseños (`/design-studio`)
+Un espacio de trabajo y editor visual multipropósito diseñado para crear una amplia variedad de esquemas estructurados de forma ágil y estética:
+- Diagramas de flujo y mapas mentales interactivos.
+- Wireframes de interfaces y maquetaciones rápidas.
+- Moodboards visuales inspiracionales.
+- Hojas de ruta (Roadmaps) y presentaciones secuenciales por pasos.
+- Interfaz completamente estática, ejecutada al 100% en el navegador del cliente sin necesidad de servidores.
 
-## Usage
+---
 
-👉 [Read the documentation](https://markmap.js.org/docs) for more detail.
+## 🛠️ Estructura del Repositorio
+
+El repositorio ha sido optimizado y limpiado a fondo para eliminar dependencias obsoletas del código fuente de markmap original. Ahora cuenta con una arquitectura puramente estática:
+
+```text
+├── .github/workflows/pages.yml  # Automatización de despliegue en GitHub Pages
+├── design-studio/               # Aplicación Estudio de Diseños
+│   └── index.html               # Aplicación auto-contenida (estilos y lógica embebidos)
+├── markmap/                     # Aplicación Generador Markmap
+│   └── index.html               # Aplicación auto-contenida (estilos y lógica embebidos)
+├── .gitignore                   # Archivos ignorados por Git
+├── .nojekyll                    # Deshabilita el motor Jekyll en GitHub Pages
+├── index.html                   # Menú de inicio (Landing page principal)
+├── LICENSE                      # Licencia del proyecto
+└── README.md                    # Esta guía
+```
+
+---
+
+## 🌐 Despliegue e Integración Continua
+
+El repositorio se compila y despliega automáticamente a GitHub Pages en cada cambio a la rama principal (`master`) a través de **GitHub Actions**.
+
+- **Workflow**: `.github/workflows/pages.yml`
+- **Configuración de Despliegue**: Se sirve directamente desde la raíz del proyecto (`path: .`), permitiendo un acceso directo y veloz a todas las herramientas.
