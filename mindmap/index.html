@@ -1492,10 +1492,19 @@
     }
 
     // Triggered when text in editor changes
+    let debounceTimer;
     function editorChanged() {
       const text = editor.value;
       wordCounter.textContent = `Caracteres: ${text.length}`;
       
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        updatePreviewImmediately();
+      }, 200);
+    }
+    
+    function updatePreviewImmediately() {
+      const text = editor.value;
       const parsedData = parseMindmap(text);
       
       // Update UI elements visibility based on layout select
@@ -1710,10 +1719,11 @@
           const trimmed = line.trim();
           if (!trimmed) return;
           
-          if (line.startsWith('# ')) {
-            const rawLabel = line.substring(2).trim();
+          if (line.startsWith('#') && !line.startsWith('##')) {
+            let rawLabel = line.substring(1).trim();
+            if (!rawLabel) rawLabel = 'Mapa mental';
             const attrMatch = rawLabel.match(/^(.*?)(?:\s*\((.*?)\))?$/);
-            const label = attrMatch[1].trim();
+            const label = attrMatch[1].trim() || 'Mapa mental';
             const attrStr = attrMatch[2] || '';
             const attrs = parseAttributes(attrStr);
             const id = 'root';
@@ -1842,6 +1852,17 @@
           }
         });
       }
+      
+      // Distribute nodes in a circle if they don't have coordinates to avoid initial coordinate overlaps
+      const totalNodes = nodes.length;
+      nodes.forEach((node, index) => {
+        if (node.x === undefined && node.y === undefined) {
+          const angle = (index / (totalNodes || 1)) * 2 * Math.PI;
+          const radius = 100 + Math.random() * 50;
+          node.x = radius * Math.cos(angle);
+          node.y = radius * Math.sin(angle);
+        }
+      });
       
       return { nodes, edges };
     }
@@ -2273,9 +2294,11 @@
         
         const childNode = nodesDataset.get(childId);
         if (childNode) {
+          const isFixed = childNode.fixed && (childNode.fixed === true || childNode.fixed.x === true);
           nodesDataset.update({
             id: childId,
-            hidden: !visible
+            hidden: !visible,
+            physics: visible ? (isFixed ? false : true) : false
           });
           
           if (!visible) {
@@ -2302,12 +2325,14 @@
       const allNodes = nodesDataset.get();
       allNodes.forEach(node => {
         const origLabel = node.originalLabel || node.label;
+        const isFixed = node.fixed && (node.fixed === true || node.fixed.x === true);
         nodesDataset.update({
           id: node.id,
           collapsed: false,
           originalLabel: origLabel,
           label: origLabel,
           hidden: false,
+          physics: isFixed ? false : true,
           borderWidth: 2,
           shapeProperties: {
             borderDashes: false
@@ -2374,12 +2399,14 @@
           }
         }
         
+        const isFixed = node.fixed && (node.fixed === true || node.fixed.x === true);
         nodesDataset.update({
           id: node.id,
           collapsed: setCollapsed,
           originalLabel: origLabel,
           label: setCollapsed ? `${origLabel} [+]` : origLabel,
           hidden: shouldHide,
+          physics: shouldHide ? false : (isFixed ? false : true),
           borderWidth: setCollapsed ? 3 : 2,
           shapeProperties: {
             borderDashes: setCollapsed ? [4, 4] : false
@@ -3356,10 +3383,11 @@
           const trimmed = line.trim();
           if (!trimmed) return;
           
-          if (line.startsWith('# ')) {
-            const rawLabel = line.substring(2).trim();
+          if (line.startsWith('#') && !line.startsWith('##')) {
+            let rawLabel = line.substring(1).trim();
+            if (!rawLabel) rawLabel = 'Mapa mental';
             const attrMatch = rawLabel.match(/^(.*?)(?:\\s*\\((.*?)\\))?$/);
-            const label = attrMatch[1].trim();
+            const label = attrMatch[1].trim() || 'Mapa mental';
             const attrStr = attrMatch[2] || '';
             const attrs = parseAttributes(attrStr);
             const id = 'root';
@@ -3487,6 +3515,17 @@
           }
         });
       }
+      
+      // Distribute nodes in a circle if they don't have coordinates to avoid initial coordinate overlaps
+      const totalNodes = nodes.length;
+      nodes.forEach((node, index) => {
+        if (node.x === undefined && node.y === undefined) {
+          const angle = (index / (totalNodes || 1)) * 2 * Math.PI;
+          const radius = 100 + Math.random() * 50;
+          node.x = radius * Math.cos(angle);
+          node.y = radius * Math.sin(angle);
+        }
+      });
       
       return { nodes, edges };
     }
@@ -3969,9 +4008,11 @@
         
         const childNode = nodesDataset.get(childId);
         if (childNode) {
+          const isFixed = childNode.fixed && (childNode.fixed === true || childNode.fixed.x === true);
           nodesDataset.update({
             id: childId,
-            hidden: !visible
+            hidden: !visible,
+            physics: visible ? (isFixed ? false : true) : false
           });
           
           if (!visible) {
@@ -3998,12 +4039,14 @@
       const allNodes = nodesDataset.get();
       allNodes.forEach(node => {
         const origLabel = node.originalLabel || node.label;
+        const isFixed = node.fixed && (node.fixed === true || node.fixed.x === true);
         nodesDataset.update({
           id: node.id,
           collapsed: false,
           originalLabel: origLabel,
           label: origLabel,
           hidden: false,
+          physics: isFixed ? false : true,
           borderWidth: 2,
           shapeProperties: {
             borderDashes: false
@@ -4068,12 +4111,13 @@
           }
         }
         
+        const isFixed = node.fixed && (node.fixed === true || node.fixed.x === true);
         nodesDataset.update({
           id: node.id,
           collapsed: setCollapsed,
           originalLabel: origLabel,
           label: setCollapsed ? \`\${origLabel} [+]\` : origLabel,
-          hidden: shouldHide,
+          physics: shouldHide ? false : (isFixed ? false : true),
           borderWidth: setCollapsed ? 3 : 2,
           shapeProperties: {
             borderDashes: setCollapsed ? [4, 4] : false
