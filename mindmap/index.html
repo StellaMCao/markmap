@@ -2370,17 +2370,40 @@
       document.body.appendChild(exportDiv);
 
       try {
-        // Clone positions from current live network to preserve dragged layout
         const positions = network.getPositions();
         const clonedNodes = nodesDataset.get().map(function(node) {
           const pos = positions[node.id];
           return Object.assign({}, node, {
             x: pos ? pos.x : undefined,
             y: pos ? pos.y : undefined,
-            physics: false // strictly freeze in place to prevent layout distortion
+            physics: false
           });
         });
         const clonedEdges = edgesDataset.get();
+
+        // Mathematically center all nodes around (0, 0) using bounding box centroid
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        let validCoords = 0;
+        clonedNodes.forEach(function(node) {
+          if (node.x !== undefined && node.y !== undefined) {
+            if (node.x < minX) minX = node.x;
+            if (node.x > maxX) maxX = node.x;
+            if (node.y < minY) minY = node.y;
+            if (node.y > maxY) maxY = node.y;
+            validCoords++;
+          }
+        });
+        if (validCoords > 0) {
+          const centerX = (minX + maxX) / 2;
+          const centerY = (minY + maxY) / 2;
+          clonedNodes.forEach(function(node) {
+            if (node.x !== undefined && node.y !== undefined) {
+              node.x -= centerX;
+              node.y -= centerY;
+            }
+          });
+        }
 
         const tempData = {
           nodes: new vis.DataSet(clonedNodes),
@@ -4065,6 +4088,30 @@
           });
         });
         const clonedEdges = edgesDataset.get();
+
+        // Mathematically center all nodes around (0, 0) using bounding box centroid
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        let validCoords = 0;
+        clonedNodes.forEach(function(node) {
+          if (node.x !== undefined && node.y !== undefined) {
+            if (node.x < minX) minX = node.x;
+            if (node.x > maxX) maxX = node.x;
+            if (node.y < minY) minY = node.y;
+            if (node.y > maxY) maxY = node.y;
+            validCoords++;
+          }
+        });
+        if (validCoords > 0) {
+          const centerX = (minX + maxX) / 2;
+          const centerY = (minY + maxY) / 2;
+          clonedNodes.forEach(function(node) {
+            if (node.x !== undefined && node.y !== undefined) {
+              node.x -= centerX;
+              node.y -= centerY;
+            }
+          });
+        }
 
         const tempData = {
           nodes: new vis.DataSet(clonedNodes),
