@@ -894,7 +894,7 @@
           <div class="setting-row">
             <span>Distancia de los resortes</span>
             <div class="setting-control">
-              <input type="range" id="spring-length" class="slider" min="80" max="300" value="150" oninput="editorChanged()">
+              <input type="range" id="spring-length" class="slider" min="30" max="300" value="150" oninput="editorChanged()">
             </div>
           </div>
         </div>
@@ -1517,6 +1517,10 @@
       const edgeLabelWrapLimit = Number(document.getElementById('edge-label-wrap')?.value) || 18;
       const labelNodeMaxWidth = edgeLabelWrapLimit * 5;
       
+      const arrowsToggle = document.getElementById('arrows-toggle');
+      const showArrows = arrowsToggle ? arrowsToggle.checked : false;
+      const springLength = Number(document.getElementById('spring-length')?.value) || 150;
+      
       let nodeIdCounter = 0;
       
       if (hasArrows) {
@@ -1559,7 +1563,16 @@
                 textColor: attrs.textcolor || attrs.fontcolor || undefined,
                 size: attrs.size ? Number(attrs.size) : undefined,
                 image: attrs.image || undefined,
-                widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
+                widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
+                fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+                fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
+                fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
+                borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+                borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+                shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
+                shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
+                mass: attrs.mass ? Number(attrs.mass) : undefined,
+                margin: attrs.margin ? Number(attrs.margin) : undefined
               });
               nodeIds.add(id);
             }
@@ -1581,6 +1594,7 @@
               }
               
               const hasLabel = attrs.label && attrs.label.trim();
+              const edgeLen = attrs.length ? Number(attrs.length) : springLength;
               if (movableEdges && hasLabel) {
                 const labelNodeId = `edge-label-${from}-${to}-${nodeIdCounter++}`;
                 
@@ -1612,7 +1626,10 @@
                   to: labelNodeId,
                   color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
                   arrows: '',
-                  length: attrs.length ? Number(attrs.length)/2 : undefined
+                  originalArrows: '',
+                  isSplitEdge: true,
+                  isCustomLength: !!attrs.length,
+                  length: edgeLen / 2
                 };
                 if (attrs.style === 'dashed') edge1.dashes = [5, 5];
                 else if (attrs.style === 'dotted') edge1.dashes = [2, 5];
@@ -1621,8 +1638,11 @@
                   from: labelNodeId,
                   to: to,
                   color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                  arrows: 'to',
-                  length: attrs.length ? Number(attrs.length)/2 : undefined
+                  arrows: showArrows ? 'to' : '',
+                  originalArrows: 'to',
+                  isSplitEdge: true,
+                  isCustomLength: !!attrs.length,
+                  length: edgeLen / 2
                 };
                 if (attrs.style === 'dashed') edge2.dashes = [5, 5];
                 else if (attrs.style === 'dotted') edge2.dashes = [2, 5];
@@ -1635,8 +1655,9 @@
                   to: to,
                   label: attrs.label || undefined,
                   color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                  arrows: 'to',
-                  length: attrs.length ? Number(attrs.length) : undefined
+                  arrows: showArrows ? 'to' : '',
+                  originalArrows: 'to',
+                  length: edgeLen
                 };
                 
                 if (attrs.style === 'dashed') {
@@ -1680,7 +1701,16 @@
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
               size: attrs.size ? Number(attrs.size) : 28,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined),
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
+              fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+              fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
+              fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
+              borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
+              shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
+              mass: attrs.mass ? Number(attrs.mass) : undefined,
+              margin: attrs.margin ? Number(attrs.margin) : undefined,
               font: { size: 16, bold: true }
             };
             nodes.push(rootNode);
@@ -1742,16 +1772,23 @@
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
               size: attrs.size ? Number(attrs.size) : size,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
+              fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+              fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
+              fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
+              borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
+              shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
+              mass: attrs.mass ? Number(attrs.mass) : undefined,
+              margin: attrs.margin ? Number(attrs.margin) : undefined
             });
-            
-            const arrowsToggle = document.getElementById('arrows-toggle');
-            const showArrows = arrowsToggle ? arrowsToggle.checked : false;
             
             edges.push({
               from: parent.id,
               to: id,
-              arrows: showArrows ? 'to' : ''
+              arrows: showArrows ? 'to' : '',
+              originalArrows: 'to'
             });
             
             parentStack.push({ id: id, indent: indent, label: label });
@@ -2060,11 +2097,11 @@
         }
       });
       
-      // Apply edge font and labels dynamically (supports word wrapping)
+      // Apply edge font, labels, and dynamically update split edge lengths
       data.edges.forEach(edge => {
         let updatedLabel = edge.label ? wrapText(edge.label, edgeLabelWrapLimit) : undefined;
         
-        data.edges.update({
+        const updateParams = {
           id: edge.id,
           label: updatedLabel,
           font: {
@@ -2073,7 +2110,13 @@
             color: isLightTheme ? '#475569' : '#a1a1aa',
             background: edgeBgColor
           }
-        });
+        };
+        
+        if (edge.isSplitEdge && !edge.isCustomLength) {
+          updateParams.length = springLength / 2;
+        }
+        
+        data.edges.update(updateParams);
       });
       
       // Hierarchical adjustments
@@ -2840,7 +2883,7 @@
 
       <div class="control-row" id="row-spring">
         <span>Longitud resortes</span>
-        <input type="range" id="spring-length" class="slider" min="80" max="300" value="${springLengthValue}" oninput="renderGraph()">
+        <input type="range" id="spring-length" class="slider" min="30" max="300" value="${springLengthValue}" oninput="renderGraph()">
       </div>
 
       <div style="font-size: 10px; color: var(--text-muted); line-height: 1.45; margin-top: 4px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px;">
@@ -3069,22 +3112,7 @@
             </div>
             <div class="modal-footer">
               <button class="modal-btn" onclick="document.getElementById('png-error-modal').classList.remove('show')">Entendido</button>
-            </div>
-          </div>
-        \`;
-        document.body.appendChild(modal);
-      }
-      
-      setTimeout(() => {
-        modal.classList.add('show');
-      }, 50);
-    }
-
-    // Restore arrays from pre-rendered states
-    const initialCollapsedIds = ${JSON.stringify(collapsedNodeIds)};
-    const initialFixedNodeIds = ${JSON.stringify(fixedNodeIds)};
-
-    window.addEventListener('DOMContentLoaded', () => {
+      window.addEventListener('DOMContentLoaded', () => {
       renderGraph();
     });
 
@@ -3104,6 +3132,10 @@
       const edgeFontSize = Number(document.getElementById('edge-font-size')?.value) || 11;
       const edgeLabelWrapLimit = Number(document.getElementById('edge-label-wrap')?.value) || 18;
       const labelNodeMaxWidth = edgeLabelWrapLimit * 5;
+      
+      const arrowsToggle = document.getElementById('arrows-toggle');
+      const showArrows = arrowsToggle ? arrowsToggle.checked : false;
+      const springLength = Number(document.getElementById('spring-length')?.value) || 150;
       
       let nodeIdCounter = 0;
       
@@ -3143,7 +3175,16 @@
                 textColor: attrs.textcolor || attrs.fontcolor || undefined,
                 size: attrs.size ? Number(attrs.size) : undefined,
                 image: attrs.image || undefined,
-                widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
+                widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
+                fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+                fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
+                fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
+                borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+                borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+                shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
+                shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
+                mass: attrs.mass ? Number(attrs.mass) : undefined,
+                margin: attrs.margin ? Number(attrs.margin) : undefined
               });
               nodeIds.add(id);
             }
@@ -3165,8 +3206,9 @@
               }
               
               const hasLabel = attrs.label && attrs.label.trim();
+              const edgeLen = attrs.length ? Number(attrs.length) : springLength;
               if (movableEdges && hasLabel) {
-                const labelNodeId = \`edge-label-\${from}-\${to}-\${nodeIdCounter++}\`;
+                const labelNodeId = `edge-label-\${from}-\${to}-\${nodeIdCounter++}`;
                 
                 nodes.push({
                   id: labelNodeId,
@@ -3196,7 +3238,10 @@
                   to: labelNodeId,
                   color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
                   arrows: '',
-                  length: attrs.length ? Number(attrs.length)/2 : undefined
+                  originalArrows: '',
+                  isSplitEdge: true,
+                  isCustomLength: !!attrs.length,
+                  length: edgeLen / 2
                 };
                 if (attrs.style === 'dashed') edge1.dashes = [5, 5];
                 else if (attrs.style === 'dotted') edge1.dashes = [2, 5];
@@ -3205,8 +3250,11 @@
                   from: labelNodeId,
                   to: to,
                   color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                  arrows: 'to',
-                  length: attrs.length ? Number(attrs.length)/2 : undefined
+                  arrows: showArrows ? 'to' : '',
+                  originalArrows: 'to',
+                  isSplitEdge: true,
+                  isCustomLength: !!attrs.length,
+                  length: edgeLen / 2
                 };
                 if (attrs.style === 'dashed') edge2.dashes = [5, 5];
                 else if (attrs.style === 'dotted') edge2.dashes = [2, 5];
@@ -3219,8 +3267,9 @@
                   to: to,
                   label: attrs.label || undefined,
                   color: attrs.color ? { color: attrs.color, highlight: attrs.color } : undefined,
-                  arrows: 'to',
-                  length: attrs.length ? Number(attrs.length) : undefined
+                  arrows: showArrows ? 'to' : '',
+                  originalArrows: 'to',
+                  length: edgeLen
                 };
                 
                 if (attrs.style === 'dashed') {
@@ -3263,7 +3312,16 @@
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
               size: attrs.size ? Number(attrs.size) : 28,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined),
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
+              fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+              fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
+              fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
+              borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
+              shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
+              mass: attrs.mass ? Number(attrs.mass) : undefined,
+              margin: attrs.margin ? Number(attrs.margin) : undefined,
               font: { size: 16, bold: true }
             };
             nodes.push(rootNode);
@@ -3281,7 +3339,7 @@
             const attrStr = attrMatch[2] || '';
             const attrs = parseAttributes(attrStr);
             
-            const id = \`node-\${nodeIdCounter++}\`;
+            const id = `node-\${nodeIdCounter++}`;
             
             if (!rootNode) {
               rootNode = {
@@ -3324,13 +3382,23 @@
               textColor: attrs.textcolor || attrs.fontcolor || undefined,
               size: attrs.size ? Number(attrs.size) : size,
               image: attrs.image || undefined,
-              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : undefined)
+              widthConstraint: attrs.width ? Number(attrs.width) : (attrs.maxwidth ? { maximum: Number(attrs.maxwidth) } : (attrs.widthconstraint ? Number(attrs.widthconstraint) : undefined)),
+              fontSize: attrs.fontsize ? Number(attrs.fontsize) : (attrs['font-size'] ? Number(attrs['font-size']) : (attrs.sizefont ? Number(attrs.sizefont) : undefined)),
+              fontFace: attrs.fontface || attrs['font-face'] || attrs.font || undefined,
+              fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
+              borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
+              shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
+              shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
+              mass: attrs.mass ? Number(attrs.mass) : undefined,
+              margin: attrs.margin ? Number(attrs.margin) : undefined
             });
             
             edges.push({
               from: parent.id,
               to: id,
-              arrows: ''
+              arrows: showArrows ? 'to' : '',
+              originalArrows: 'to'
             });
             
             parentStack.push({ id: id, indent: indent, label: label });
@@ -3664,28 +3732,28 @@
         }
       });
       
-      // Apply edge font and labels dynamically (supports word wrapping)
+      // Apply edge font, labels, arrows, and dynamically update split edge lengths
       data.edges.forEach(edge => {
         let updatedLabel = edge.label ? wrapText(edge.label, edgeLabelWrapLimit) : undefined;
         
-        data.edges.update({
+        const hasArrow = edge.originalArrows === 'to' || edge.arrows === 'to';
+        const updateParams = {
           id: edge.id,
           label: updatedLabel,
+          arrows: (showArrows && hasArrow) ? 'to' : '',
           font: {
             face: globalFont,
             size: edgeFontSize,
             color: isLightTheme ? '#475569' : '#a1a1aa',
             background: edgeBgColor
           }
-        });
-      });
-      
-      // Update arrows based on checkboxes and dataset definitions
-      data.edges.forEach(edge => {
-        data.edges.update({
-          id: edge.id,
-          arrows: showArrows ? 'to' : (edge.arrows || '')
-        });
+        };
+        
+        if (edge.isSplitEdge && !edge.isCustomLength) {
+          updateParams.length = springLength / 2;
+        }
+        
+        data.edges.update(updateParams);
       });
       
       if (layoutType.startsWith('hierarchical')) {
