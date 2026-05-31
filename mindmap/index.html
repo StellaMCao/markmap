@@ -1560,7 +1560,7 @@
               const attrStr = nodeMatch[3] || '';
               const attrs = parseAttributes(attrStr);
               
-              nodes.push({
+              const nodeObj = {
                 id: id,
                 label: label || id,
                 originalLabel: label || id,
@@ -1577,11 +1577,20 @@
                 fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
                 borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
                 borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-                shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
                 shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
                 mass: attrs.mass ? Number(attrs.mass) : undefined,
                 margin: attrs.margin ? Number(attrs.margin) : undefined
-              });
+              };
+              if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
+                nodeObj.shapeProperties = {
+                  borderDashes: true,
+                  borderRadius: 6,
+                  interpolation: true,
+                  useImageSize: false,
+                  useBorderWithImage: false
+                };
+              }
+              nodes.push(nodeObj);
               nodeIds.add(id);
             }
           } else {
@@ -1697,7 +1706,7 @@
             const attrs = parseAttributes(attrStr);
             const id = 'root';
             
-            rootNode = {
+            const rootNodeObj = {
               id: id,
               label: label,
               originalLabel: label,
@@ -1715,12 +1724,21 @@
               fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
               borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
               borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-              shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
               shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
               mass: attrs.mass ? Number(attrs.mass) : undefined,
               margin: attrs.margin ? Number(attrs.margin) : undefined,
               font: { size: 16, bold: true }
             };
+            if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
+              rootNodeObj.shapeProperties = {
+                borderDashes: true,
+                borderRadius: 6,
+                interpolation: true,
+                useImageSize: false,
+                useBorderWithImage: false
+              };
+            }
+            rootNode = rootNodeObj;
             nodes.push(rootNode);
             parentStack.push({ id: id, indent: -1, label: label });
             return;
@@ -1768,7 +1786,7 @@
               size = 22;
             }
             
-            nodes.push({
+            const nodeObj = {
               id: id,
               label: label,
               originalLabel: label,
@@ -1786,11 +1804,20 @@
               fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
               borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
               borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-              shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
               shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
               mass: attrs.mass ? Number(attrs.mass) : undefined,
               margin: attrs.margin ? Number(attrs.margin) : undefined
-            });
+            };
+            if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
+              nodeObj.shapeProperties = {
+                borderDashes: true,
+                borderRadius: 6,
+                interpolation: true,
+                useImageSize: false,
+                useBorderWithImage: false
+              };
+            }
+            nodes.push(nodeObj);
             
             edges.push({
               from: parent.id,
@@ -3172,7 +3199,7 @@
               const attrStr = nodeMatch[3] || '';
               const attrs = parseAttributes(attrStr);
               
-              nodes.push({
+              const nodeObj = {
                 id: id,
                 label: label || id,
                 originalLabel: label || id,
@@ -3189,11 +3216,20 @@
                 fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
                 borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
                 borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-                shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
                 shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
                 mass: attrs.mass ? Number(attrs.mass) : undefined,
                 margin: attrs.margin ? Number(attrs.margin) : undefined
-              });
+              };
+              if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
+                nodeObj.shapeProperties = {
+                  borderDashes: true,
+                  borderRadius: 6,
+                  interpolation: true,
+                  useImageSize: false,
+                  useBorderWithImage: false
+                };
+              }
+              nodes.push(nodeObj);
               nodeIds.add(id);
             }
           } else {
@@ -3308,7 +3344,7 @@
             const attrs = parseAttributes(attrStr);
             const id = 'root';
             
-            rootNode = {
+            const rootNodeObj = {
               id: id,
               label: label,
               originalLabel: label,
@@ -3326,12 +3362,21 @@
               fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
               borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
               borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-              shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
               shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
               mass: attrs.mass ? Number(attrs.mass) : undefined,
               margin: attrs.margin ? Number(attrs.margin) : undefined,
               font: { size: 16, bold: true }
             };
+            if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
+              rootNodeObj.shapeProperties = {
+                borderDashes: true,
+                borderRadius: 6,
+                interpolation: true,
+                useImageSize: false,
+                useBorderWithImage: false
+              };
+            }
+            rootNode = rootNodeObj;
             nodes.push(rootNode);
             parentStack.push({ id: id, indent: -1, label: label });
             return;
@@ -3378,7 +3423,7 @@
               size = 22;
             }
             
-            nodes.push({
+            const nodeObj = {
               id: id,
               label: label,
               originalLabel: label,
@@ -3396,11 +3441,20 @@
               fontStyle: attrs.fontstyle || attrs['font-style'] || attrs.stylefont || undefined,
               borderWidth: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
               borderWidthSelected: attrs.borderwidth ? Number(attrs.borderwidth) : (attrs['border-width'] ? Number(attrs['border-width']) : undefined),
-              shapeProperties: (attrs.dashed === 'true' || attrs.borderdashes === 'true') ? { borderDashes: true } : undefined,
               shadow: attrs.shadow === 'true' ? true : (attrs.shadow === 'false' ? false : undefined),
               mass: attrs.mass ? Number(attrs.mass) : undefined,
               margin: attrs.margin ? Number(attrs.margin) : undefined
-            });
+            };
+            if (attrs.dashed === 'true' || attrs.borderdashes === 'true') {
+              nodeObj.shapeProperties = {
+                borderDashes: true,
+                borderRadius: 6,
+                interpolation: true,
+                useImageSize: false,
+                useBorderWithImage: false
+              };
+            }
+            nodes.push(nodeObj);
             
             edges.push({
               from: parent.id,
