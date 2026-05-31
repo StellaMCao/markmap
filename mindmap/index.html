@@ -2350,7 +2350,7 @@
       }
     }
 
-    // PNG image downloader
+    // PNG image downloader in High Definition (3000x2000px) with custom theme background
     function exportPNG() {
       const canvas = document.querySelector('#mindmap-canvas canvas');
       if (!canvas) {
@@ -2358,17 +2358,275 @@
         return;
       }
       
+      showToast('Generando imagen de alta resolución...', 'info');
+
+      // Create a hidden, positive-sized container off-screen
+      const exportDiv = document.createElement('div');
+      exportDiv.style.position = 'absolute';
+      exportDiv.style.left = '-9999px';
+      exportDiv.style.top = '-9999px';
+      exportDiv.style.width = '3000px';
+      exportDiv.style.height = '2000px';
+      document.body.appendChild(exportDiv);
+
       try {
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = `mapa_mental.png`;
-        a.click();
-        showToast('Imagen PNG descargada con éxito.');
+        // Clone positions from current live network to preserve dragged layout
+        const positions = network.getPositions();
+        const clonedNodes = nodesDataset.get().map(function(node) {
+          const pos = positions[node.id];
+          return Object.assign({}, node, {
+            x: pos ? pos.x : undefined,
+            y: pos ? pos.y : undefined,
+            physics: false // strictly freeze in place to prevent layout distortion
+          });
+        });
+        const clonedEdges = edgesDataset.get();
+
+        const tempData = {
+          nodes: new vis.DataSet(clonedNodes),
+          edges: new vis.DataSet(clonedEdges)
+        };
+
+        // Read active styling parameters from UI
+        const isLightTheme = document.getElementById('canvas-bg-selector').value === 'light';
+        const globalFont = document.getElementById('font-family-selector').value || 'Inter';
+        const nodeFontSize = Number(document.getElementById('node-font-size').value) || 13;
+        const edgeFontSize = Number(document.getElementById('edge-font-size').value) || 11;
+        const edgeLineWidth = Number(document.getElementById('edge-line-width').value) || 2.2;
+        const currentBgVal = document.getElementById('canvas-bg-selector').value || 'deep';
+        
+        let accentColor = '#3b82f6';
+        let accentRgb = '59, 130, 246';
+        try {
+          const rootStyle = getComputedStyle(document.documentElement);
+          accentColor = rootStyle.getPropertyValue('--accent').trim() || '#3b82f6';
+          accentRgb = rootStyle.getPropertyValue('--accent-rgb').trim() || '59, 130, 246';
+        } catch (err) {}
+
+        const smoothSelector = document.getElementById('edge-smooth-selector');
+        const smoothVal = smoothSelector ? smoothSelector.value : 'smooth';
+        let smoothOpt = false;
+        if (smoothVal === 'smooth') {
+          smoothOpt = {
+            enabled: true,
+            type: 'cubicBezier',
+            forceDirection: 'none',
+            roundness: 0.5
+          };
+        } else if (smoothVal === 'dynamic') {
+          smoothOpt = {
+            enabled: true,
+            type: 'dynamic',
+            roundness: 0.5
+          };
+        } else {
+          smoothOpt = false;
+        }
+
+        const arrowsToggle = document.getElementById('arrows-toggle');
+        const isArrowsEnabled = arrowsToggle ? arrowsToggle.checked : false;
+
+        const bgColors = {
+          deep: '#0b0f19',
+          grid: '#090d16',
+          neuro: '#0a0518',
+          minimal: '#111317',
+          light: '#ffffff'
+        };
+        const edgeBgColor = bgColors[currentBgVal] || '#0b0f19';
+
+        const tempOptions = {
+          nodes: {
+            borderWidth: 2,
+            shadow: {
+              enabled: !isLightTheme,
+              color: 'rgba(0,0,0,0.15)',
+              size: 6,
+              x: 0,
+              y: 4
+            },
+            widthConstraint: {
+              maximum: 180
+            },
+            font: {
+              face: globalFont,
+              size: nodeFontSize,
+              color: isLightTheme ? '#0f172a' : '#ffffff',
+              multi: 'md'
+            }
+          },
+          edges: {
+            width: edgeLineWidth,
+            smooth: smoothOpt,
+            shadow: {
+              enabled: !isLightTheme,
+              color: 'rgba(0,0,0,0.08)',
+              size: 3,
+              x: 0,
+              y: 2
+            },
+            font: {
+              face: globalFont,
+              size: edgeFontSize,
+              color: isLightTheme ? '#475569' : '#a1a1aa',
+              strokeWidth: 0,
+              align: 'horizontal',
+              background: edgeBgColor
+            },
+            color: {
+              color: isLightTheme ? 'rgba(15, 23, 42, 0.15)' : 'rgba(255, 255, 255, 0.22)',
+              highlight: accentColor,
+              hover: accentColor
+            },
+            arrows: {
+              to: { enabled: isArrowsEnabled, scaleFactor: 0.8 }
+            }
+          },
+          interaction: {
+            dragNodes: false,
+            dragView: false,
+            zoomView: false,
+            hover: false
+          },
+          physics: {
+            enabled: false
+          }
+        };
+
+        // Create secondary high-definition Vis Network instance
+        const tempNetwork = new vis.Network(exportDiv, tempData, tempOptions);
+
+        tempNetwork.once('afterDrawing', function() {
+          // Allow layout initialization to settle
+          setTimeout(function() {
+            try {
+              // Center and scale map perfectly inside 3000x2000 canvas boundary
+              tempNetwork.fit();
+              
+              // Short delay to draw the resized nodes
+              setTimeout(function() {
+                try {
+                  const visCanvas = exportDiv.querySelector('canvas');
+                  if (!visCanvas) {
+                    showToast('Error al generar la imagen.', 'error');
+                    document.body.removeChild(exportDiv);
+                    tempNetwork.destroy();
+                    return;
+                  }
+                  
+                  // Setup composed canvas
+                  const bgCanvas = document.createElement('canvas');
+                  bgCanvas.width = 3000;
+                  bgCanvas.height = 2000;
+                  const bgCtx = bgCanvas.getContext('2d');
+                  
+                  const w = 3000;
+                  const h = 2000;
+                  
+                  // Render premium backgrounds according to active selection
+                  if (currentBgVal === 'deep') {
+                    bgCtx.fillStyle = '#0b0f19';
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    const grad1 = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.6);
+                    grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.12)');
+                    grad1.addColorStop(1, 'transparent');
+                    bgCtx.fillStyle = grad1;
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    const grad2 = bgCtx.createRadialGradient(w * 0.9, h * 0.8, 0, w * 0.9, h * 0.8, Math.max(w, h) * 0.6);
+                    grad2.addColorStop(0, 'rgba(31, 41, 55, 0.5)');
+                    grad2.addColorStop(1, 'transparent');
+                    bgCtx.fillStyle = grad2;
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                  } else if (currentBgVal === 'grid') {
+                    bgCtx.fillStyle = '#080b11';
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    const grad = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.5);
+                    grad.addColorStop(0, 'rgba(' + accentRgb + ', 0.06)');
+                    grad.addColorStop(1, 'transparent');
+                    bgCtx.fillStyle = grad;
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    bgCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                    const gap = 36;
+                    for (let x = 0; x < w; x += gap) {
+                      for (let y = 0; y < h; y += gap) {
+                        bgCtx.beginPath();
+                        bgCtx.arc(x, y, 1.5, 0, 2 * Math.PI);
+                        bgCtx.fill();
+                      }
+                    }
+                    
+                  } else if (currentBgVal === 'neuro') {
+                    bgCtx.fillStyle = '#0a0518';
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    const grad1 = bgCtx.createRadialGradient(w * 0.5, h * 0.5, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.7);
+                    grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.15)');
+                    grad1.addColorStop(1, 'transparent');
+                    bgCtx.fillStyle = grad1;
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    const grad2 = bgCtx.createRadialGradient(w * 0.2, h * 0.8, 0, w * 0.2, h * 0.8, Math.max(w, h) * 0.6);
+                    grad2.addColorStop(0, 'rgba(236, 72, 153, 0.1)');
+                    grad2.addColorStop(1, 'transparent');
+                    bgCtx.fillStyle = grad2;
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                  } else if (currentBgVal === 'minimal') {
+                    bgCtx.fillStyle = '#111317';
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                  } else if (currentBgVal === 'light') {
+                    bgCtx.fillStyle = '#ffffff';
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    bgCtx.fillStyle = 'rgba(15, 23, 42, 0.08)';
+                    const gap = 30;
+                    for (let x = 0; x < w; x += gap) {
+                      for (let y = 0; y < h; y += gap) {
+                        bgCtx.beginPath();
+                        bgCtx.arc(x, y, 1.8, 0, 2 * Math.PI);
+                        bgCtx.fill();
+                      }
+                    }
+                  }
+                  
+                  // Draw mindmap graphics over composing canvas
+                  bgCtx.drawImage(visCanvas, 0, 0);
+                  
+                  // Download high-resolution PNG
+                  const a = document.createElement('a');
+                  a.href = bgCanvas.toDataURL('image/png');
+                  a.download = 'mapa_mental_hd.png';
+                  a.click();
+                  
+                  showToast('Imagen PNG en alta resolución descargada con éxito.');
+                } catch (e) {
+                  console.error('Error al componer imagen:', e);
+                  showToast('Error al componer la imagen final.', 'error');
+                } finally {
+                  document.body.removeChild(exportDiv);
+                  tempNetwork.destroy();
+                }
+              }, 150);
+            } catch (e) {
+              console.error(e);
+              document.body.removeChild(exportDiv);
+              tempNetwork.destroy();
+            }
+          }, 150);
+        });
       } catch (e) {
         console.error('Error exportando PNG:', e);
+        document.body.removeChild(exportDiv);
         showPngExportErrorModal();
       }
     }
+
 
     // Show dynamic toast alerts
     function showToast(message, type = 'success') {
@@ -3787,14 +4045,258 @@
     function exportPNG() {
       const canvas = document.querySelector('#canvas-container canvas');
       if (!canvas) return;
+      
+      const exportDiv = document.createElement('div');
+      exportDiv.style.position = 'absolute';
+      exportDiv.style.left = '-9999px';
+      exportDiv.style.top = '-9999px';
+      exportDiv.style.width = '3000px';
+      exportDiv.style.height = '2000px';
+      document.body.appendChild(exportDiv);
+
       try {
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = 'mapa_mental.png';
-        a.click();
+        const positions = network.getPositions();
+        const clonedNodes = nodesDataset.get().map(function(node) {
+          const pos = positions[node.id];
+          return Object.assign({}, node, {
+            x: pos ? pos.x : undefined,
+            y: pos ? pos.y : undefined,
+            physics: false
+          });
+        });
+        const clonedEdges = edgesDataset.get();
+
+        const tempData = {
+          nodes: new vis.DataSet(clonedNodes),
+          edges: new vis.DataSet(clonedEdges)
+        };
+
+        const isLightTheme = document.getElementById('canvas-bg-selector').value === 'light';
+        const globalFont = document.getElementById('font-family-selector').value || 'Inter';
+        const nodeFontSize = Number(document.getElementById('node-font-size').value) || 13;
+        const edgeFontSize = Number(document.getElementById('edge-font-size').value) || 11;
+        const edgeLineWidth = Number(document.getElementById('edge-line-width').value) || 2.2;
+        const currentBgVal = document.getElementById('canvas-bg-selector').value || 'deep';
+        
+        let accentColor = '#3b82f6';
+        let accentRgb = '59, 130, 246';
+        try {
+          const rootStyle = getComputedStyle(document.documentElement);
+          accentColor = rootStyle.getPropertyValue('--accent').trim() || '#3b82f6';
+          accentRgb = rootStyle.getPropertyValue('--accent-rgb').trim() || '59, 130, 246';
+        } catch (err) {}
+
+        const smoothSelector = document.getElementById('edge-smooth-selector');
+        const smoothVal = smoothSelector ? smoothSelector.value : 'smooth';
+        let smoothOpt = false;
+        if (smoothVal === 'smooth') {
+          smoothOpt = {
+            enabled: true,
+            type: 'cubicBezier',
+            forceDirection: 'none',
+            roundness: 0.5
+          };
+        } else if (smoothVal === 'dynamic') {
+          smoothOpt = {
+            enabled: true,
+            type: 'dynamic',
+            roundness: 0.5
+          };
+        } else {
+          smoothOpt = false;
+        }
+
+        const arrowsToggle = document.getElementById('arrows-toggle');
+        const isArrowsEnabled = arrowsToggle ? arrowsToggle.checked : false;
+
+        const bgColors = {
+          deep: '#0b0f19',
+          grid: '#090d16',
+          neuro: '#0a0518',
+          minimal: '#111317',
+          light: '#ffffff'
+        };
+        const edgeBgColor = bgColors[currentBgVal] || '#0b0f19';
+
+        const tempOptions = {
+          nodes: {
+            borderWidth: 2,
+            shadow: {
+              enabled: !isLightTheme,
+              color: 'rgba(0,0,0,0.15)',
+              size: 6,
+              x: 0,
+              y: 4
+            },
+            widthConstraint: {
+              maximum: 180
+            },
+            font: {
+              face: globalFont,
+              size: nodeFontSize,
+              color: isLightTheme ? '#0f172a' : '#ffffff',
+              multi: 'md'
+            }
+          },
+          edges: {
+            width: edgeLineWidth,
+            smooth: smoothOpt,
+            shadow: {
+              enabled: !isLightTheme,
+              color: 'rgba(0,0,0,0.08)',
+              size: 3,
+              x: 0,
+              y: 2
+            },
+            font: {
+              face: globalFont,
+              size: edgeFontSize,
+              color: isLightTheme ? '#475569' : '#a1a1aa',
+              strokeWidth: 0,
+              align: 'horizontal',
+              background: edgeBgColor
+            },
+            color: {
+              color: isLightTheme ? 'rgba(15, 23, 42, 0.15)' : 'rgba(255, 255, 255, 0.22)',
+              highlight: accentColor,
+              hover: accentColor
+            },
+            arrows: {
+              to: { enabled: isArrowsEnabled, scaleFactor: 0.8 }
+            }
+          },
+          interaction: {
+            dragNodes: false,
+            dragView: false,
+            zoomView: false,
+            hover: false
+          },
+          physics: {
+            enabled: false
+          }
+        };
+
+        const tempNetwork = new vis.Network(exportDiv, tempData, tempOptions);
+
+        tempNetwork.once('afterDrawing', function() {
+          setTimeout(function() {
+            try {
+              tempNetwork.fit();
+              
+              setTimeout(function() {
+                try {
+                  const visCanvas = exportDiv.querySelector('canvas');
+                  if (!visCanvas) {
+                    document.body.removeChild(exportDiv);
+                    tempNetwork.destroy();
+                    return;
+                  }
+                  
+                  const bgCanvas = document.createElement('canvas');
+                  bgCanvas.width = 3000;
+                  bgCanvas.height = 2000;
+                  const bgCtx = bgCanvas.getContext('2d');
+                  
+                  const w = 3000;
+                  const h = 2000;
+                  
+                  if (currentBgVal === 'deep') {
+                    bgCtx.fillStyle = '#0b0f19';
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    const grad1 = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.6);
+                    grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.12)');
+                    grad1.addColorStop(1, 'transparent');
+                    bgCtx.fillStyle = grad1;
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    const grad2 = bgCtx.createRadialGradient(w * 0.9, h * 0.8, 0, w * 0.9, h * 0.8, Math.max(w, h) * 0.6);
+                    grad2.addColorStop(0, 'rgba(31, 41, 55, 0.5)');
+                    grad2.addColorStop(1, 'transparent');
+                    bgCtx.fillStyle = grad2;
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                  } else if (currentBgVal === 'grid') {
+                    bgCtx.fillStyle = '#080b11';
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    const grad = bgCtx.createRadialGradient(w * 0.1, h * 0.2, 0, w * 0.1, h * 0.2, Math.max(w, h) * 0.5);
+                    grad.addColorStop(0, 'rgba(' + accentRgb + ', 0.06)');
+                    grad.addColorStop(1, 'transparent');
+                    bgCtx.fillStyle = grad;
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    bgCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                    const gap = 36;
+                    for (let x = 0; x < w; x += gap) {
+                      for (let y = 0; y < h; y += gap) {
+                        bgCtx.beginPath();
+                        bgCtx.arc(x, y, 1.5, 0, 2 * Math.PI);
+                        bgCtx.fill();
+                      }
+                    }
+                    
+                  } else if (currentBgVal === 'neuro') {
+                    bgCtx.fillStyle = '#0a0518';
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    const grad1 = bgCtx.createRadialGradient(w * 0.5, h * 0.5, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.7);
+                    grad1.addColorStop(0, 'rgba(' + accentRgb + ', 0.15)');
+                    grad1.addColorStop(1, 'transparent');
+                    bgCtx.fillStyle = grad1;
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    const grad2 = bgCtx.createRadialGradient(w * 0.2, h * 0.8, 0, w * 0.2, h * 0.8, Math.max(w, h) * 0.6);
+                    grad2.addColorStop(0, 'rgba(236, 72, 153, 0.1)');
+                    grad2.addColorStop(1, 'transparent');
+                    bgCtx.fillStyle = grad2;
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                  } else if (currentBgVal === 'minimal') {
+                    bgCtx.fillStyle = '#111317';
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                  } else if (currentBgVal === 'light') {
+                    bgCtx.fillStyle = '#ffffff';
+                    bgCtx.fillRect(0, 0, w, h);
+                    
+                    bgCtx.fillStyle = 'rgba(15, 23, 42, 0.08)';
+                    const gap = 30;
+                    for (let x = 0; x < w; x += gap) {
+                      for (let y = 0; y < h; y += gap) {
+                        bgCtx.beginPath();
+                        bgCtx.arc(x, y, 1.8, 0, 2 * Math.PI);
+                        bgCtx.fill();
+                      }
+                    }
+                  }
+                  
+                  bgCtx.drawImage(visCanvas, 0, 0);
+                  
+                  const a = document.createElement('a');
+                  a.href = bgCanvas.toDataURL('image/png');
+                  a.download = 'mapa_mental_hd.png';
+                  a.click();
+                } catch (e) {
+                  console.error('Error al componer imagen:', e);
+                } finally {
+                  document.body.removeChild(exportDiv);
+                  tempNetwork.destroy();
+                }
+              }, 150);
+            } catch (e) {
+              console.error(e);
+              document.body.removeChild(exportDiv);
+              tempNetwork.destroy();
+            }
+          }, 150);
+        });
       } catch (e) {
         console.error('Error exportando PNG:', e);
-        showPngExportErrorModal();
+        document.body.removeChild(exportDiv);
+        if (typeof showPngExportErrorModal === 'function') {
+          showPngExportErrorModal();
+        }
       }
     }
   ${'</' + 'script>'}
