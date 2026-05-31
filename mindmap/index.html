@@ -1525,6 +1525,14 @@
       
       network = new vis.Network(container, data, options);
       
+      if (layoutType.startsWith('hierarchical')) {
+        setTimeout(() => {
+          if (network) {
+            network.setOptions({ layout: { hierarchical: false } });
+          }
+        }, 100);
+      }
+      
       // Double click fixed position toggler
       network.on("doubleClick", function(params) {
         if (params.nodes.length > 0) {
@@ -2618,6 +2626,14 @@
       
       if (network) network.destroy();
       network = new vis.Network(container, data, options);
+      
+      if (layoutType.startsWith('hierarchical')) {
+        setTimeout(() => {
+          if (network) {
+            network.setOptions({ layout: { hierarchical: false } });
+          }
+        }, 100);
+      }
       
       // Restore collapsed states
       initialCollapsedIds.forEach(nodeId => {
