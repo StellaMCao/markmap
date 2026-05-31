@@ -752,9 +752,10 @@
             <i class="fa-solid fa-circle-info"></i> Consejos de interacción en el lienzo
           </div>
           <div style="font-size: 12.5px; line-height: 1.6; color: #d1d5db; display: flex; flex-direction: column; gap: 8px;">
-            <p><i class="fa-solid fa-hand-pointer" style="color: var(--accent);"></i> **Arrastrar**: Haz clic en cualquier concepto y arrástralo libremente para cambiar su distribución temporal.</p>
-            <p><i class="fa-solid fa-lock" style="color: var(--accent);"></i> **Fijar concepto**: Haz **doble clic** en cualquier concepto para fijar su posición en la pantalla (las físicas dejarán de afectarlo a él de forma individual). Haz doble clic de nuevo para soltarlo.</p>
-            <p><i class="fa-solid fa-magnifying-glass" style="color: var(--accent);"></i> **Zoom**: Desliza la rueda del ratón o haz zoom con gestos táctiles de pinza para alejar o acercar el mapa mental.</p>
+            <p><i class="fa-solid fa-hand-pointer" style="color: var(--accent);"></i> **Arrastrar**: Haz clic en cualquier concepto y arrástralo libremente para cambiar su distribución.</p>
+            <p><i class="fa-solid fa-folder-open" style="color: var(--accent);"></i> **Contraer/Expandir**: Haz **doble clic** en un concepto con hijos para ocultar o mostrar su sub-árbol completo (las ramas cerradas mostrarán un indicador `[+]` y borde punteado).</p>
+            <p><i class="fa-solid fa-lock" style="color: var(--accent);"></i> **Fijar concepto**: Mantén presionado **Ctrl** (o **Shift**) y haz **doble clic** en cualquier concepto para congelar su posición en el lienzo.</p>
+            <p><i class="fa-solid fa-magnifying-glass" style="color: var(--accent);"></i> **Zoom**: Desliza la rueda del ratón o haz gestos táctiles de pinza para alejar o acercar el mapa mental.</p>
           </div>
         </div>
 
@@ -1064,6 +1065,7 @@
               nodes.push({
                 id: id,
                 label: label || id,
+                originalLabel: label || id,
                 shape: attrs.shape || 'ellipse',
                 color: attrs.color || undefined,
                 size: attrs.size ? Number(attrs.size) : undefined
@@ -1079,11 +1081,11 @@
               const attrs = parseAttributes(attrStr);
               
               if (!nodeIds.has(from)) {
-                nodes.push({ id: from, label: from, shape: 'ellipse' });
+                nodes.push({ id: from, label: from, originalLabel: from, shape: 'ellipse' });
                 nodeIds.add(from);
               }
               if (!nodeIds.has(to)) {
-                nodes.push({ id: to, label: to, shape: 'ellipse' });
+                nodes.push({ id: to, label: to, originalLabel: to, shape: 'ellipse' });
                 nodeIds.add(to);
               }
               
@@ -1121,6 +1123,7 @@
             rootNode = {
               id: id,
               label: label,
+              originalLabel: label,
               shape: 'circle',
               size: 28,
               font: { size: 16, bold: true }
@@ -1140,6 +1143,7 @@
               rootNode = {
                 id: 'root',
                 label: 'Mapa mental',
+                originalLabel: 'Mapa mental',
                 shape: 'circle',
                 size: 28,
                 font: { size: 16, bold: true }
@@ -1166,6 +1170,7 @@
             nodes.push({
               id: id,
               label: label,
+              originalLabel: label,
               shape: shape,
               size: size
             });
@@ -1334,14 +1339,92 @@
           const node = nodesDataset.get(clickedId);
           
           if (node) {
-            const isCurrentlyFixed = node.physics === false;
-            nodesDataset.update({
-              id: clickedId,
-              physics: isCurrentlyFixed ? undefined : false,
-              fixed: isCurrentlyFixed ? false : { x: true, y: true },
-              borderWidth: isCurrentlyFixed ? 2 : 4
-            });
-            showToast(isCurrentlyFixed ? 'Concepto liberado (Físicas activas)' : 'Concepto bloqueado en posición');
+            const isModifierPressed = params.event && params.event.srcEvent && 
+                                      (params.event.srcEvent.ctrlKey || 
+                                       params.event.srcEvent.shiftKey || 
+                                       params.event.srcEvent.metaKey);
+            
+            if (isModifierPressed) {
+              const isCurrentlyFixed = node.physics === false;
+              nodesDataset.update({
+                id: clickedId,
+                physics: isCurrentlyFixed ? undefined : false,
+                fixed: isCurrentlyFixed ? false : { x: true, y: true },
+                borderWidth: isCurrentlyFixed ? 3 : 2
+              });
+              showToast(isCurrentlyFixed ? 'Concepto liberado (Físicas activas)' : 'Concepto fijado en posición');
+            } else {
+              toggleNodeCollapse(clickedId);
+            }
+          }
+        }
+      });
+    }
+
+    function toggleNodeCollapse(nodeId) {
+      const node = nodesDataset.get(nodeId);
+      if (!node) return;
+      
+      const isCollapsed = !node.collapsed;
+      
+      const outgoingEdges = edgesDataset.get({
+        filter: function(edge) {
+          return edge.from === nodeId;
+        }
+      });
+      
+      if (outgoingEdges.length === 0) return;
+      
+      const origLabel = node.originalLabel || node.label;
+      nodesDataset.update({
+        id: nodeId,
+        collapsed: isCollapsed,
+        originalLabel: origLabel,
+        label: isCollapsed ? `${origLabel} [+]` : origLabel,
+        borderWidth: isCollapsed ? 3 : 2,
+        shapeProperties: {
+          borderDashes: isCollapsed ? [4, 4] : false
+        }
+      });
+      
+      setSubtreeVisibility(nodeId, !isCollapsed);
+      showToast(isCollapsed ? 'Rama contraída' : 'Rama expandida');
+    }
+
+    function setSubtreeVisibility(parentId, visible) {
+      const outgoingEdges = edgesDataset.get({
+        filter: function(edge) {
+          return edge.from === parentId;
+        }
+      });
+      
+      outgoingEdges.forEach(edge => {
+        const childId = edge.to;
+        edgesDataset.update({
+          id: edge.id,
+          hidden: !visible
+        });
+        
+        const childNode = nodesDataset.get(childId);
+        if (childNode) {
+          nodesDataset.update({
+            id: childId,
+            hidden: !visible
+          });
+          
+          if (!visible) {
+            setSubtreeVisibility(childId, false);
+          } else {
+            if (!childNode.collapsed) {
+              setSubtreeVisibility(childId, true);
+            } else {
+              const childEdges = edgesDataset.get({
+                filter: function(e) { return e.from === childId; }
+              });
+              childEdges.forEach(e => {
+                edgesDataset.update({ id: e.id, hidden: true });
+              });
+            }
           }
         }
       });
@@ -1750,8 +1833,9 @@
         <input type="range" id="spring-length" class="slider" min="80" max="300" value="${springLengthValue}" oninput="renderGraph()">
       </div>
 
-      <div style="font-size: 10px; color: var(--text-muted); line-height: 1.4; margin-top: 4px;">
-        <i class="fa-solid fa-circle-info"></i> Haz <b>doble clic</b> en un concepto para fijarlo en su posición.
+      <div style="font-size: 10px; color: var(--text-muted); line-height: 1.45; margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
+        <p><i class="fa-solid fa-circle-info"></i> Haz <b>doble clic</b> en un concepto con ramificaciones para contraer o expander su rama.</p>
+        <p><i class="fa-solid fa-lock"></i> Mantén presionado <b>Ctrl</b> (o <b>Shift</b>) y haz <b>doble clic</b> para fijar/soltar su posición.</p>
       </div>
     </div>
   </main>
@@ -1803,6 +1887,7 @@
               nodes.push({
                 id: id,
                 label: label || id,
+                originalLabel: label || id,
                 shape: attrs.shape || 'ellipse',
                 color: attrs.color || undefined,
                 size: attrs.size ? Number(attrs.size) : undefined
@@ -1818,11 +1903,11 @@
               const attrs = parseAttributes(attrStr);
               
               if (!nodeIds.has(from)) {
-                nodes.push({ id: from, label: from, shape: 'ellipse' });
+                nodes.push({ id: from, label: from, originalLabel: from, shape: 'ellipse' });
                 nodeIds.add(from);
               }
               if (!nodeIds.has(to)) {
-                nodes.push({ id: to, label: to, shape: 'ellipse' });
+                nodes.push({ id: to, label: to, originalLabel: to, shape: 'ellipse' });
                 nodeIds.add(to);
               }
               
@@ -1859,6 +1944,7 @@
             rootNode = {
               id: id,
               label: label,
+              originalLabel: label,
               shape: 'circle',
               size: 28,
               font: { size: 16, bold: true }
@@ -1878,6 +1964,7 @@
               rootNode = {
                 id: 'root',
                 label: 'Mapa mental',
+                originalLabel: 'Mapa mental',
                 shape: 'circle',
                 size: 28,
                 font: { size: 16, bold: true }
@@ -1904,6 +1991,7 @@
             nodes.push({
               id: id,
               label: label,
+              originalLabel: label,
               shape: shape,
               size: size
             });
@@ -2048,13 +2136,89 @@
           const clickedId = params.nodes[0];
           const node = nodesDataset.get(clickedId);
           if (node) {
-            const isCurrentlyFixed = node.physics === false;
-            nodesDataset.update({
-              id: clickedId,
-              physics: isCurrentlyFixed ? undefined : false,
-              fixed: isCurrentlyFixed ? false : { x: true, y: true },
-              borderWidth: isCurrentlyFixed ? 2 : 4
-            });
+            const isModifierPressed = params.event && params.event.srcEvent && 
+                                      (params.event.srcEvent.ctrlKey || 
+                                       params.event.srcEvent.shiftKey || 
+                                       params.event.srcEvent.metaKey);
+            if (isModifierPressed) {
+              const isCurrentlyFixed = node.physics === false;
+              nodesDataset.update({
+                id: clickedId,
+                physics: isCurrentlyFixed ? undefined : false,
+                fixed: isCurrentlyFixed ? false : { x: true, y: true },
+                borderWidth: isCurrentlyFixed ? 3 : 2
+              });
+            } else {
+              toggleNodeCollapse(clickedId);
+            }
+          }
+        }
+      });
+    }
+
+    function toggleNodeCollapse(nodeId) {
+      const node = nodesDataset.get(nodeId);
+      if (!node) return;
+      
+      const isCollapsed = !node.collapsed;
+      
+      const outgoingEdges = edgesDataset.get({
+        filter: function(edge) {
+          return edge.from === nodeId;
+        }
+      });
+      
+      if (outgoingEdges.length === 0) return;
+      
+      const origLabel = node.originalLabel || node.label;
+      nodesDataset.update({
+        id: nodeId,
+        collapsed: isCollapsed,
+        originalLabel: origLabel,
+        label: isCollapsed ? \`\${origLabel} [+]\` : origLabel,
+        borderWidth: isCollapsed ? 3 : 2,
+        shapeProperties: {
+          borderDashes: isCollapsed ? [4, 4] : false
+        }
+      });
+      
+      setSubtreeVisibility(nodeId, !isCollapsed);
+    }
+
+    function setSubtreeVisibility(parentId, visible) {
+      const outgoingEdges = edgesDataset.get({
+        filter: function(edge) {
+          return edge.from === parentId;
+        }
+      });
+      
+      outgoingEdges.forEach(edge => {
+        const childId = edge.to;
+        edgesDataset.update({
+          id: edge.id,
+          hidden: !visible
+        });
+        
+        const childNode = nodesDataset.get(childId);
+        if (childNode) {
+          nodesDataset.update({
+            id: childId,
+            hidden: !visible
+          });
+          
+          if (!visible) {
+            setSubtreeVisibility(childId, false);
+          } else {
+            if (!childNode.collapsed) {
+              setSubtreeVisibility(childId, true);
+            } else {
+              const childEdges = edgesDataset.get({
+                filter: function(e) { return e.from === childId; }
+              });
+              childEdges.forEach(e => {
+                edgesDataset.update({ id: e.id, hidden: true });
+              });
+            }
           }
         }
       });
