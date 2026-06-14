@@ -139,6 +139,21 @@ function setupListeners() {
   });
 
   // Save/Load/Clear
+  const exportFileBtn = document.getElementById('exportFileBtn');
+  if (exportFileBtn) {
+    exportFileBtn.addEventListener('click', () => {
+      const text = markdownTextarea.value;
+      const blob = new Blob([text], { type: 'text/markdown;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'automata_estados.md');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  }
+
   saveBtn.addEventListener('click', () => {
     localStorage.setItem('states_md', markdownTextarea.value);
     localStorage.setItem('states_positions', JSON.stringify(positionsCache));
