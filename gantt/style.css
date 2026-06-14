@@ -585,3 +585,46 @@ textarea {
     max-height: 350px;
   }
 }
+
+/* Print Styles for PDF Export */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .app {
+    display: block !important;
+    height: auto !important;
+  }
+  .topbar, .sidebar, .gantt-controls, #helpOverlay {
+    display: none !important;
+  }
+  .main-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+  .gantt-wrapper {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+  .gantt-scrollable {
+    overflow: visible !important;
+  }
+  .gantt-chart {
+    min-width: 100% !important;
+    width: 100% !important;
+  }
+  .gantt-timeline-header {
+    position: static !important;
+    background: #eee !important;
+  }
+  .gantt-row {
+    page-break-inside: avoid;
+  }
+}

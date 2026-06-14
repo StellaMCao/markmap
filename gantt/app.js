@@ -145,6 +145,28 @@ function setupListeners() {
   });
 
   // Toolbar Actions
+  const exportFileBtn = document.getElementById('exportFileBtn');
+  if (exportFileBtn) {
+    exportFileBtn.addEventListener('click', () => {
+      const text = markdownTextarea.value;
+      const blob = new Blob([text], { type: 'text/markdown;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'roadmap_proyecto.md');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  }
+
+  const printBtn = document.getElementById('printBtn');
+  if (printBtn) {
+    printBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
   saveBtn.addEventListener('click', () => {
     localStorage.setItem('gantt_md', markdownTextarea.value);
     alert('Proyecto guardado localmente.');
