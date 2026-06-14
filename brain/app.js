@@ -1,11 +1,11 @@
 /* app.js - Explorador de Neuropsicología y Anatomía Cerebral */
 
-// Contenido Markdown inicial con información anatómica y clínica detallada
+// Contenido Markdown inicial con información anatómica y clínica detallada (12 estructuras)
 const INITIAL_MARKDOWN = `# Lóbulo Frontal
 - Función: Planificación de la conducta, toma de decisiones, control motor voluntario, razonamiento lógico, modulación de la personalidad y producción fluida del habla (Área de Broca).
 - Neurotransmisores: Dopamina, Acetilcolina.
 - Caso Clínico: Phineas Gage (1848), quien tras atravesar su lóbulo frontal con una barra de hierro sufrió un cambio drástico de personalidad, volviéndose desinhibido e irritable.
-- Lesión: Síndrome des-ejecutivo, desinhibición conductual, apatía, hemiparesia contralateral y afasia motora de Broca (dificultad severa para producir lenguaje hablado).
+- Lesión: Síndrome des-ejecutivo, desinhibición conductual, apatía, hemiparesia contralateral y afasia motora de Broca (dificultad severa para hablar).
 
 # Lóbulo Parietal
 - Función: Procesamiento somatosensorial (tacto, dolor, temperatura, presión), integración de información multisensorial, orientación espacial y procesamiento numérico/cálculo.
@@ -14,22 +14,22 @@ const INITIAL_MARKDOWN = `# Lóbulo Frontal
 - Lesión: Heminegligencia espacial, agnosia táctil (astereognosia), apraxia constructiva y Síndrome de Gerstmann (acalculia, agrafia, desorientación izquierda-derecha).
 
 # Lóbulo Temporal
-- Función: Procesamiento y decodificación auditiva, comprensión del lenguaje hablado (Área de Wernicke), memoria declarativa a largo plazo y reconocimiento facial/visual complejo.
+- Función: Procesamiento y decodificación auditiva, comprensión del lenguaje hablado (Área de Wernicke), memoria declarativa a largo plazo y reconocimiento facial/visual complejo (Área Fusiforme).
 - Neurotransmisores: Acetilcolina, Glutamato.
 - Caso Clínico: Paciente H.M. (Henry Molaison), a quien se le extirpó bilateralmente el lóbulo temporal medial (incluido el hipocampo) y perdió de por vida la capacidad de formar nuevas memorias.
-- Lesión: Amnesia anterógrada severa, afasia sensorial de Wernicke (habla fluida pero carente de significado, jergafasia) y agnosia visual para caras (prosopagnosia).
+- Lesión: Amnesia anterógrada severa, afasia sensorial de Wernicke (habla fluida pero carente de significado) y agnosia visual para caras (prosopagnosia).
 
 # Lóbulo Occipital
 - Función: Procesamiento visual primario y de asociación (percepción de formas, colores, movimiento, orientación y reconocimiento de patrones visuales).
 - Neurotransmisores: GABA, Glutamato.
-- Caso Clínico: Paciente con ceguera cortical que insiste en que puede ver, tropezando con objetos (Síndrome de Anton-Babinski, una anosognosia visual).
-- Lesión: Ceguera cortical (ceguera de origen cerebral), hemianopsia homónima, alucinaciones visuales y agnosia visual de objetos (dificultad para reconocer lo que ve).
+- Caso Clínico: Pacientes con ceguera cortical que insisten en que pueden ver, tropezando con objetos (Síndrome de Anton-Babinski, una anosognosia visual).
+- Lesión: Ceguera cortical (ceguera de origen cerebral), hemianopsia homónima, alucinaciones visuales y agnosia visual de objetos.
 
 # Cerebelo
 - Función: Coordinación fina del movimiento voluntario, regulación del equilibrio postural, tono muscular, control de la precisión temporal y aprendizaje motor procedimental.
 - Neurotransmisores: GABA (células de Purkinje), Glutamato.
 - Caso Clínico: Paciente con degeneración cerebelosa que muestra una marcha inestable ("de borracho"), dismetría al intentar tocarse la nariz y temblor de intención.
-- Lesión: Ataxia cerebelosa (falta de coordinación), dismetría, disdiadococinesia, temblor intencional e hipotonía muscular.
+- Lesión: Ataxia cerebelosa (falta de coordinación motora), dismetría, disdiadococinesia, temblor intencional e hipotonía muscular.
 
 # Tronco Encefálico
 - Función: Control de funciones vitales autónomas (respiración, frecuencia cardíaca, presión arterial), modulación de los ciclos de sueño y vigilia (SARA) y origen de nervios craneales.
@@ -47,12 +47,37 @@ const INITIAL_MARKDOWN = `# Lóbulo Frontal
 - Función: Procesamiento y regulación de las emociones (especialmente miedo, agresión y respuestas de defensa ante amenazas), condicionamiento del miedo y memoria emocional.
 - Neurotransmisores: Noradrenalina, Adrenalina, Serotonina.
 - Caso Clínico: Paciente S.M. con la enfermedad de Urbach-Wiethe (destrucción selectiva de la amígdala) que carece por completo de la sensación de miedo ante peligros y animales venenosos.
-- Lesión: Ausencia patológica de miedo frente a amenazas, doralidad e hipersexualidad (Síndrome de Klüver-Bucy), y déficit para identificar el miedo en rostros ajenos.`;
+- Lesión: Ausencia patológica de miedo frente a amenazas, docilidad extrema (Síndrome de Klüver-Bucy), y déficit para identificar el miedo en rostros ajenos.
+
+# Cuerpo Calloso
+- Función: Facilitar la comunicación interhemisférica, permitiendo la transferencia e integración de información sensorial, motora y cognitiva entre ambos hemisferios.
+- Neurotransmisores: Glutamato, GABA.
+- Caso Clínico: Pacientes con "cerebro escindido" (split-brain) sometidos a comisurotomía para tratar epilepsia severa; podían dibujar un objeto con la mano izquierda pero eran incapaces de nombrarlo verbalmente.
+- Lesión: Síndrome de desconexión interhemisférica, apraxia unilateral izquierda, alexia sin agrafia y mutismo transitorio.
+
+# Tálamo
+- Función: Estación de relevo y procesamiento sensorial principal para todas las vías sensitivas (excepto el olfato) antes de proyectar a la corteza cerebral, regulación del estado de alerta y conciencia.
+- Neurotransmisores: Glutamato, GABA, Acetilcolina.
+- Caso Clínico: Síndrome de Dejerine-Roussy (síndrome de dolor talámico central), caracterizado por dolor quemante severo y persistente en el lado opuesto del cuerpo tras un infarto talámico.
+- Lesión: Hemihipoestesia contralateral (pérdida de sensibilidad), dolor talámico central, coreoatetosis y deterioro cognitivo/amnésico (síndrome talámico).
+
+# Hipotálamo
+- Función: Regulación de la homeostasis corporal (temperatura, hambre, sed, saciedad), control del sistema endocrino mediante la hipófisis, control de los ritmos circadianos y respuestas autónomas del estrés.
+- Neurotransmisores: Dopamina, Serotonina, Oxitocina, Vasopresina.
+- Caso Clínico: Pacientes con tumores hipotalámicos (ej. craneofaringioma) que desarrollan obesidad hipotalámica (hambre insaciable) y diabetes insípida.
+- Lesión: Diabetes insípida, hipertermia/hipotermia, obesidad hipotalámica, alteraciones del sueño (narcolepsia) y disfunción sexual o endocrina.
+
+# Giro Cingulado
+- Función: Procesamiento emocional, regulación del comportamiento conductual, detección de errores y conflictos cognitivos, control autonómico motor y modulación del dolor físico y emocional.
+- Neurotransmisores: Glutamato, GABA, Serotonina.
+- Caso Clínico: Pacientes con cingulotomía anterior (cirugía estereotáctica) realizada para aliviar el dolor crónico refractario o el trastorno obsesivo-compulsivo severo.
+- Lesión: Apatía severa, mutismo acinético (incapacidad para hablar o moverse voluntariamente), indiferencia al dolor y labilidad emocional.`;
 
 // Estado de la aplicación
 let structures = {};
 let selectedRegionId = "frontal"; // Región actualmente visualizada
 let isLesionMode = false;
+let currentView = "lateral"; // "lateral" o "medial"
 
 // DOM Elements
 const brainSvg = document.getElementById('brain-svg');
@@ -60,6 +85,12 @@ const toggleLesionMode = document.getElementById('toggle-lesion-mode');
 const clearLesionsBtn = document.getElementById('clear-lesions-btn');
 const modeBanner = document.getElementById('mode-banner');
 const modeText = document.getElementById('mode-text');
+
+// Views Toggle DOM
+const btnViewLateral = document.getElementById('btn-view-lateral');
+const btnViewMedial = document.getElementById('btn-view-medial');
+const viewLateralGroup = document.getElementById('view-lateral-group');
+const viewMedialGroup = document.getElementById('view-medial-group');
 
 // Tabs DOM
 const tabBtnDetails = document.getElementById('tab-btn-details');
@@ -101,6 +132,10 @@ window.addEventListener('DOMContentLoaded', () => {
   tabBtnDetails.addEventListener('click', () => switchTab('details'));
   tabBtnEditor.addEventListener('click', () => switchTab('editor'));
   
+  // Eventos de las Vistas (Lateral / Medial)
+  btnViewLateral.addEventListener('click', () => switchView('lateral'));
+  btnViewMedial.addEventListener('click', () => switchView('medial'));
+  
   // Eventos del Editor
   applyMarkdownBtn.addEventListener('click', applyEditorChanges);
   downloadMarkdownBtn.addEventListener('click', downloadMarkdownFile);
@@ -115,6 +150,7 @@ window.addEventListener('DOMContentLoaded', () => {
   
   // Renderizar la primera ficha y el reporte
   updateStructureDetails(selectedRegionId);
+  updateSvgStates();
   generateDiagnosticReport();
 });
 
@@ -131,6 +167,32 @@ function switchTab(tab) {
     tabDetails.classList.remove('active');
     tabEditor.classList.add('active');
   }
+}
+
+// Cambiar de Vista Cerebral (Lateral / Medial)
+function switchView(view) {
+  currentView = view;
+  
+  if (view === 'lateral') {
+    btnViewLateral.classList.add('active-view');
+    btnViewMedial.classList.remove('active-view');
+    viewLateralGroup.style.display = 'block';
+    viewMedialGroup.style.display = 'none';
+    
+    // Si la región seleccionada actualmente solo es visible en corte medial, revertir a frontal
+    const medialOnly = ['calloso', 'talamo', 'hipotalamo', 'cingulado'];
+    if (medialOnly.includes(selectedRegionId)) {
+      selectedRegionId = 'frontal';
+      updateStructureDetails('frontal');
+    }
+  } else {
+    btnViewLateral.classList.remove('active-view');
+    btnViewMedial.classList.add('active-view');
+    viewLateralGroup.style.display = 'none';
+    viewMedialGroup.style.display = 'block';
+  }
+  
+  updateSvgStates();
 }
 
 // Configurar Eventos del SVG Cerebral
@@ -179,28 +241,25 @@ function setupBrainSvgEvents() {
   });
 }
 
-// Obtener ID canónico desde el ID del elemento SVG
+// Obtener ID canónico desde el ID del elemento SVG (ej. "region-frontal-medial" -> "frontal")
 function getCanonicalId(svgId) {
-  return svgId.replace('region-', '');
+  let id = svgId.replace('region-', '');
+  if (id.endsWith('-medial')) {
+    id = id.substring(0, id.length - 7);
+  }
+  return id;
 }
 
 // Seleccionar Región (Modo Inspeccionar)
 function selectRegion(id, element) {
-  // Limpiar selección previa
-  const prevSelected = brainSvg.querySelector('.selected-region');
-  if (prevSelected) prevSelected.classList.remove('selected-region');
-  
-  // Aplicar nueva selección
-  element.classList.add('selected-region');
   selectedRegionId = id;
-  
+  updateSvgStates();
   updateStructureDetails(id);
 }
 
 function clearRegionSelection() {
-  const prevSelected = brainSvg.querySelector('.selected-region');
-  if (prevSelected) prevSelected.classList.remove('selected-region');
   selectedRegionId = "frontal"; // Default de vuelta a frontal
+  updateSvgStates();
   updateStructureDetails(selectedRegionId);
 }
 
@@ -211,17 +270,38 @@ function toggleRegionLesion(id, element) {
   const isDamaged = !structures[id].isDamaged;
   structures[id].isDamaged = isDamaged;
   
-  if (isDamaged) {
-    element.classList.add('damaged');
-    element.setAttribute('filter', 'url(#glow)');
-  } else {
-    element.classList.remove('damaged');
-    element.removeAttribute('filter');
-  }
+  // Sincronizar todos los elementos SVG de ambas vistas
+  updateSvgStates();
   
   // Actualizar Ficha y Generar Reporte de Déficits
   updateStructureDetails(id);
   generateDiagnosticReport();
+}
+
+// Actualizar estados visuales de los elementos SVG
+function updateSvgStates() {
+  const regions = brainSvg.querySelectorAll('.brain-region');
+  regions.forEach(region => {
+    const structId = getCanonicalId(region.id);
+    const data = structures[structId];
+    if (data) {
+      // Sincronizar clase seleccionada
+      if (structId === selectedRegionId) {
+        region.classList.add('selected-region');
+      } else {
+        region.classList.remove('selected-region');
+      }
+      
+      // Sincronizar clase dañada
+      if (data.isDamaged) {
+        region.classList.add('damaged');
+        region.setAttribute('filter', 'url(#glow)');
+      } else {
+        region.classList.remove('damaged');
+        region.removeAttribute('filter');
+      }
+    }
+  });
 }
 
 // Restablecer todas las lesiones
@@ -230,12 +310,7 @@ function resetAllLesions() {
     structures[id].isDamaged = false;
   }
   
-  const regions = brainSvg.querySelectorAll('.brain-region');
-  regions.forEach(r => {
-    r.classList.remove('damaged');
-    r.removeAttribute('filter');
-  });
-  
+  updateSvgStates();
   generateDiagnosticReport();
   updateStructureDetails(selectedRegionId);
 }
@@ -247,16 +322,11 @@ function handleModeChange() {
   if (isLesionMode) {
     modeBanner.classList.add('lesion-active');
     modeText.textContent = "Modo: Simulación de Lesiones (Haz clic)";
-    // Quitar selección visual temporal
-    const prevSelected = brainSvg.querySelector('.selected-region');
-    if (prevSelected) prevSelected.classList.remove('selected-region');
+    updateSvgStates(); // Limpia clase select visual temporal
   } else {
     modeBanner.classList.remove('lesion-active');
     modeText.textContent = "Modo: Inspeccionar Estructuras";
-    
-    // Re-seleccionar la región actual
-    const currentEl = document.getElementById(`region-${selectedRegionId}`);
-    if (currentEl) currentEl.classList.add('selected-region');
+    updateSvgStates();
   }
 }
 
@@ -308,6 +378,7 @@ function showSvgFloatingLabel(regionElement) {
   }, 10);
 }
 
+// Ocultar etiqueta flotante
 function hideSvgFloatingLabel() {
   document.getElementById('hover-labels').innerHTML = '';
 }
@@ -321,9 +392,15 @@ function updateStructureDetails(id) {
   
   // Cambiar el estilo de la insignia del tipo
   structureBadge.className = `badge badge-${id}`;
-  if (id === 'hipocampo' || id === 'amigdala') {
+  if (id === 'hipocampo' || id === 'amigdala' || id === 'cingulado') {
     structureBadge.textContent = "Sistema Límbico";
     structureBadge.className = `badge badge-limbic`;
+  } else if (id === 'talamo' || id === 'hipotalamo') {
+    structureBadge.textContent = "Región Subcortical";
+    structureBadge.className = `badge badge-talamo`;
+  } else if (id === 'calloso') {
+    structureBadge.textContent = "Fibras de Comisura";
+    structureBadge.className = `badge badge-calloso`;
   } else if (id === 'tronco') {
     structureBadge.textContent = "Tronco Encefálico";
   } else if (id === 'cerebelo') {
@@ -391,19 +468,44 @@ function generateDiagnosticReport() {
   const hasTronco = structures['tronco']?.isDamaged;
   const hasHipo = structures['hipocampo']?.isDamaged;
   const hasAmig = structures['amigdala']?.isDamaged;
+  const hasCalloso = structures['calloso']?.isDamaged;
+  const hasTalamo = structures['talamo']?.isDamaged;
+  const hasHipotalamo = structures['hipotalamo']?.isDamaged;
+  const hasCingulado = structures['cingulado']?.isDamaged;
   
   // Combinaciones complejas
-  if (damagedIds.length === 8) {
-    integrationText = "<strong>Muerte Encefálica / Estado de Coma Profundo:</strong> Daño masivo generalizado en la totalidad de las áreas corticales y subcorticales. Se requiere soporte vital completo. Incompatible con funciones conscientes de la corteza cerebral.";
+  if (damagedIds.length === 12) {
+    integrationText = "<strong>Muerte Encefálica / Coma Generalizado:</strong> Daño masivo incompatible con la vida consciente. Cese absoluto de funciones corticales y autónomas subcorticales. Se requiere soporte vital asistido permanente.";
   } else if (hasTronco) {
-    integrationText = "<strong>Alerta Crítica Vegetativa:</strong> El daño en el tronco encefálico pone en riesgo directo la regulación autónoma respiratoria y cardíaca. " + 
-      (hasTemporal || hasHipo ? "Además, presenta amnesia severa. " : "") + 
-      "El estado hemodinámico y de conciencia del paciente requiere monitorización de terapia intensiva.";
+    integrationText = "<strong>Alerta Crítica Vegetativa:</strong> El compromiso en el tronco encefálico pone en riesgo la regulación vital autónoma cardiorrespiratoria y los ciclos de conciencia (SARA). " + 
+      (hasHipo || hasTemporal ? "Adicionalmente, se presenta amnesia anterógrada severa. " : "") + 
+      "El paciente requiere monitorización intensiva y soporte vital.";
   } else {
     const syndromes = [];
     
+    // Split-brain
+    if (hasCalloso) {
+      syndromes.push("<strong>Síndrome de Cerebro Escindido (Desconexión Interhemisférica):</strong> Ausencia de transferencia de información entre hemisferios. El paciente puede realizar tareas mecánicas independientes con cada mano sin cruzar información asociativa o lingüística.");
+    }
+    
+    // Tálamo
+    if (hasTalamo) {
+      syndromes.push("<strong>Síndrome de Dolor Talámico (Dejerine-Roussy):</strong> Dolor neuropático central crónico intolerable y pérdida de modulación sensorial somatodegradable en el hemicuerpo contralateral.");
+    }
+
+    // Hipotálamo
+    if (hasHipotalamo) {
+      syndromes.push("<strong>Disfunción Homeostática e Hipotalámica:</strong> Alteraciones metabólicas drásticas, diabetes insípida por falta de vasopresina, y obesidad hipotalámica severa por ausencia de centros de saciedad.");
+    }
+
+    // Giro Cingulado
+    if (hasCingulado) {
+      syndromes.push("<strong>Mutismo Acinético y Apatía Cingulada:</strong> Pérdida del impulso conductual y motor para hablar o moverse. Indiferencia emocional y fallos de detección de conflicto cognitivo.");
+    }
+    
+    // Combinaciones Corticales
     if (hasFrontal && hasTemporal) {
-      syndromes.push("<strong>Afasia Global y Síndrome Mixto Desejecutivo-Amnésico:</strong> El paciente experimenta una desconexión crítica entre la producción expresiva verbal (Broca) y la decodificación acústica (Wernicke), complementado por déficits severos de memoria de trabajo.");
+      syndromes.push("<strong>Afasia Mixta Global y Síndrome Desejecutivo-Amnésico:</strong> El paciente experimenta desconexión lingüística global (afasia expresiva de Broca + afasia comprensiva de Wernicke) junto a una pérdida severa de memoria funcional de trabajo.");
     } else if (hasFrontal) {
       syndromes.push("<strong>Síndrome Desejecutivo Frontal:</strong> Pérdida marcada de iniciativa, planificación a futuro y autocontrol de la conducta social, similar al perfil histórico de Phineas Gage.");
     }
@@ -422,7 +524,7 @@ function generateDiagnosticReport() {
     }
     
     if (hasAmig) {
-      syndromes.push("<strong>Síndrome Emocional Planificado / Ausencia de Miedo:</strong> La calcificación o ablación amigdalina inhibe por completo el reflejo motor autonómico de alerta y lucha ante peligros externos, junto a incapacidad de reconocer expresiones faciales hostiles.");
+      syndromes.push("<strong>Síndrome Emocional / Ausencia de Miedo:</strong> Pérdida del condicionamiento al miedo, comportamiento dócil (Síndrome de Klüver-Bucy) y déficit crítico para identificar la hostilidad en rostros ajenos.");
     }
     
     if (hasCerebelo) {
@@ -457,6 +559,10 @@ function parseBrainMarkdown(text) {
     else if (id.includes('tronco') || id.includes('encefalico')) id = 'tronco';
     else if (id.includes('hipocampo')) id = 'hipocampo';
     else if (id.includes('amigdala') || id.includes('amígdala')) id = 'amigdala';
+    else if (id.includes('calloso') || id.includes('cuerpo')) id = 'calloso';
+    else if (id.includes('talamo') || id.includes('tálamo')) id = 'talamo';
+    else if (id.includes('hipotalamo') || id.includes('hipotálamo')) id = 'hipotalamo';
+    else if (id.includes('cingulado') || id.includes('cingulo') || id.includes('cíngulo')) id = 'cingulado';
     
     const data = {
       name: name,
@@ -495,8 +601,8 @@ function applyEditorChanges() {
   try {
     const parsed = parseBrainMarkdown(text);
     
-    // Validar que tengamos las áreas requeridas
-    const requiredKeys = ['frontal', 'parietal', 'temporal', 'occipital', 'cerebelo', 'tronco', 'hipocampo', 'amigdala'];
+    // Validar que tengamos las áreas requeridas (12 estructuras)
+    const requiredKeys = ['frontal', 'parietal', 'temporal', 'occipital', 'cerebelo', 'tronco', 'hipocampo', 'amigdala', 'calloso', 'talamo', 'hipotalamo', 'cingulado'];
     const missing = requiredKeys.filter(k => !parsed[k]);
     
     if (missing.length > 0) {
@@ -512,6 +618,7 @@ function applyEditorChanges() {
     
     structures = parsed;
     updateStructureDetails(selectedRegionId);
+    updateSvgStates();
     generateDiagnosticReport();
     switchTab('details');
     

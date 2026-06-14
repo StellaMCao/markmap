@@ -224,6 +224,52 @@ h1 {
 #region-hipocampo { fill: url(#hipocampo-grad); }
 #region-amigdala { fill: #f43f5e; }
 
+/* Medial views mappings */
+#region-frontal-medial { fill: url(#frontal-grad); }
+#region-parietal-medial { fill: url(#parietal-grad); }
+#region-temporal-medial { fill: url(#temporal-grad); }
+#region-occipital-medial { fill: url(#occipital-grad); }
+#region-cerebelo-medial { fill: url(#cerebelo-grad); }
+#region-tronco-medial { fill: url(#tronco-grad); }
+#region-hipocampo-medial { fill: url(#hipocampo-grad); }
+#region-amigdala-medial { fill: #f43f5e; }
+
+/* Medial central structures mappings */
+#region-calloso { fill: url(#calloso-grad); }
+#region-talamo { fill: url(#talamo-grad); }
+#region-hipotalamo { fill: url(#hipotalamo-grad); }
+#region-cingulado { fill: url(#cingulado-grad); }
+
+/* View Button Styles */
+.view-btn {
+  background: rgba(17, 24, 39, 0.7);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.view-btn.active-view {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: var(--primary);
+  color: #fca5a5;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.2);
+}
+
+/* Badges for new structures */
+.badge-calloso { background: rgba(255, 255, 255, 0.1); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.2); }
+.badge-talamo { background: rgba(168, 85, 247, 0.15); color: #e9d5ff; border: 1px solid rgba(168, 85, 247, 0.3); }
+.badge-hipotalamo { background: rgba(236, 72, 153, 0.15); color: #fbcfe8; border: 1px solid rgba(236, 72, 153, 0.3); }
+.badge-cingulado { background: rgba(244, 63, 94, 0.15); color: #fca5a5; border: 1px solid rgba(244, 63, 94, 0.3); }
+
 /* Active (selected) Region */
 .brain-region.selected-region {
   stroke: rgba(255, 255, 255, 0.7);
