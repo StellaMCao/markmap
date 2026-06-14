@@ -3,327 +3,458 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Suite de herramientas visuales e interactivas</title>
-  <!-- Google Fonts: Outfit (headings) and Inter (body) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <style>
-    :root {
-      --bg: #0b0f19;
-      --card-bg: rgba(17, 24, 39, 0.7);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
-      
-      --accent-markmap: #06b6d4;
-      --accent-studio: #ec4899;
-      --accent-timeline: #f59e0b;
-      --accent-slides: #10b981;
-      --accent-dilemmas: #8b5cf6;
-      --accent-mindmap: #3b82f6;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body {
-      background-color: var(--bg);
-      background-image: 
-        radial-gradient(at 10% 20%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-        radial-gradient(at 90% 80%, rgba(236, 72, 153, 0.12) 0px, transparent 50%),
-        radial-gradient(at 50% 50%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
-      background-attachment: fixed;
-      color: var(--text);
-      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 20px;
-    }
-
-    main {
-      width: min(1120px, 100%);
-      display: flex;
-      flex-direction: column;
-      gap: 40px;
-    }
-
-    header {
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 10px;
-    }
-
-    h1 {
-      font-family: 'Outfit', sans-serif;
-      font-size: clamp(32px, 5vw, 52px);
-      font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    p {
-      max-width: 720px;
-      margin: 0 auto;
-      color: var(--text-muted);
-      font-size: clamp(16px, 2.5vw, 19px);
-      line-height: 1.55;
-      font-weight: 400;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 24px;
-    }
-
-    a.card {
-      position: relative;
-      min-height: 230px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 32px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      color: inherit;
-      text-decoration: none;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      overflow: hidden;
-      cursor: pointer;
-    }
-
-    a.card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 4px;
-      transition: all 0.35s ease;
-    }
-
-    /* Brand accents for each card */
-    a.card.markmap::before { background: var(--accent-markmap); }
-    a.card.studio::before { background: var(--accent-studio); }
-    a.card.timeline::before { background: var(--accent-timeline); }
-    a.card.slides::before { background: var(--accent-slides); }
-    a.card.dilemmas::before { background: var(--accent-dilemmas); }
-    a.card.mindmap::before { background: var(--accent-mindmap); }
-
-    a.card:hover {
-      transform: translateY(-6px);
-      border-color: rgba(255, 255, 255, 0.18);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      background: rgba(22, 30, 49, 0.85);
-    }
-
-    a.card.markmap:hover {
-      box-shadow: 0 15px 35px rgba(6, 182, 212, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
-    }
-    a.card.studio:hover {
-      box-shadow: 0 15px 35px rgba(236, 72, 153, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
-    }
-    a.card.timeline:hover {
-      box-shadow: 0 15px 35px rgba(245, 158, 11, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
-    }
-    a.card.slides:hover {
-      box-shadow: 0 15px 35px rgba(16, 185, 129, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
-    }
-    a.card.dilemmas:hover {
-      box-shadow: 0 15px 35px rgba(139, 92, 246, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
-    }
-    a.card.mindmap:hover {
-      box-shadow: 0 15px 35px rgba(59, 130, 246, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
-    }
-
-    .card-top {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .card-icon {
-      font-size: 28px;
-      margin-bottom: 4px;
-    }
-
-    strong {
-      font-family: 'Outfit', sans-serif;
-      display: block;
-      font-size: clamp(20px, 3.5vw, 24px);
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      transition: color 0.3s ease;
-    }
-
-    a.card.markmap strong { color: #e0f2fe; }
-    a.card.studio strong { color: #fdf2f8; }
-    a.card.timeline strong { color: #fffbeb; }
-    a.card.slides strong { color: #ecfdf5; }
-    a.card.dilemmas strong { color: #f5f3ff; }
-    a.card.mindmap strong { color: #eff6ff; }
-
-    a.card.markmap:hover strong { color: var(--accent-markmap); }
-    a.card.studio:hover strong { color: var(--accent-studio); }
-    a.card.timeline:hover strong { color: var(--accent-timeline); }
-    a.card.slides:hover strong { color: var(--accent-slides); }
-    a.card.dilemmas:hover strong { color: var(--accent-dilemmas); }
-    a.card.mindmap:hover strong { color: var(--accent-mindmap); }
-
-    span.desc {
-      color: var(--text-muted);
-      font-size: 15px;
-      line-height: 1.5;
-      font-weight: 400;
-    }
-
-    .card-bottom {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 24px;
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-      transition: all 0.3s ease;
-    }
-
-    a.card.markmap .go { color: var(--accent-markmap); }
-    a.card.studio .go { color: var(--accent-studio); }
-    a.card.timeline .go { color: var(--accent-timeline); }
-    a.card.slides .go { color: var(--accent-slides); }
-    a.card.dilemmas .go { color: var(--accent-dilemmas); }
-    a.card.mindmap .go { color: var(--accent-mindmap); }
-
-    .arrow {
-      transform: translateX(0);
-      transition: transform 0.3s ease;
-      display: inline-block;
-      margin-left: 6px;
-      font-size: 16px;
-      font-weight: 400;
-    }
-
-    a.card:hover .arrow {
-      transform: translateX(6px);
-    }
-
-    footer {
-      text-align: center;
-      margin-top: 20px;
-      color: rgba(255, 255, 255, 0.25);
-      font-size: 13px;
-      letter-spacing: 0.05em;
-    }
-
-    @media (max-width: 820px) {
-      .grid { grid-template-columns: 1fr; }
-      a.card { min-height: 200px; padding: 26px; }
-      body { padding: 30px 16px; }
-    }
-  </style>
+  <title>Markmap REPL Pro</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <main>
-    <header>
-      <h1>Suite de herramientas visuales</h1>
-      <p>Seis espacios interactivos para crear mapas conceptuales, diagramar flujos, estructurar líneas de tiempo, impartir presentaciones dinámicas, simular dilemas éticos y trazar mapas mentales con físicas animadas.</p>
+<body data-theme="light">
+  <div class="app">
+    <!-- Top Navbar -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><path d="M7 12v4"/><path d="M10 7.5h4"/><path d="M10 18.5h4"/></svg>
+        </div>
+        <h1>Markmap REPL Pro</h1>
+      </div>
+      
+      <div class="header-actions">
+        <!-- Editor Controls -->
+        <button class="btn btn-secondary" id="toggle-editor-btn" title="Mostrar/Ocultar Editor">
+          <i data-lucide="eye-off"></i><span>Ocultar Editor</span>
+        </button>
+        <button class="btn btn-secondary btn-icon" id="undo" title="Deshacer (Ctrl+Z)" disabled>
+          <i data-lucide="undo-2"></i>
+        </button>
+        <button class="btn btn-secondary btn-icon" id="redo" title="Rehacer (Ctrl+Y)" disabled>
+          <i data-lucide="redo-2"></i>
+        </button>
+        
+        <!-- View Controls -->
+        <button class="btn btn-secondary" id="reading-btn" title="Modo Lectura">
+          <i data-lucide="book-open"></i><span>Lectura</span>
+        </button>
+        <button class="btn btn-secondary" id="presentation-btn" title="Modo Presentación (Esc para salir)">
+          <i data-lucide="play"></i><span>Presentación</span>
+        </button>
+        
+        <!-- Theme Toggle Switch -->
+        <button class="theme-toggle" id="theme-toggle-btn" title="Cambiar Tema">
+          <div class="theme-toggle-thumb">
+            <i data-lucide="sun"></i>
+          </div>
+        </button>
+        
+        <!-- Sidebar Toggle -->
+        <button class="btn btn-secondary btn-icon" id="toggle-sidebar-btn" title="Configuración / Ajustes">
+          <i data-lucide="settings"></i>
+        </button>
+        
+        <!-- Help Trigger -->
+        <button class="btn btn-secondary btn-icon" id="help-btn" title="Ayuda y Guía">
+          <i data-lucide="help-circle"></i>
+        </button>
+      </div>
     </header>
-    
-    <section class="grid" aria-label="Aplicaciones disponibles">
-      
-      <!-- CARD 1: MARKMAP -->
-      <a href="./markmap/" class="card markmap">
-        <div class="card-top">
-          <div class="card-icon">🗺️</div>
-          <strong>Generador Markmap</strong>
-          <span class="desc">Transforma tus archivos Markdown en mapas conceptuales interactivos y tridimensionales con estilos personalizables y exportación estable.</span>
-        </div>
-        <div class="card-bottom">
-          <span class="go">Abrir Markmap <span class="arrow">→</span></span>
-        </div>
-      </a>
-      
-      <!-- CARD 2: DESIGN STUDIO -->
-      <a href="./design-studio/" class="card studio">
-        <div class="card-top">
-          <div class="card-icon">🎨</div>
-          <strong>Estudio de diseños</strong>
-          <span class="desc">Dibuja y diseña esquemas interactivos, diagramas de flujo, wireframes de interfaces, moodboards visuales y hojas de ruta.</span>
-        </div>
-        <div class="card-bottom">
-          <span class="go">Abrir estudio <span class="arrow">→</span></span>
-        </div>
-      </a>
-      
-      <!-- CARD 3: TIMELINE -->
-      <a href="./timeline/" class="card timeline">
-        <div class="card-top">
-          <div class="card-icon">⏱️</div>
-          <strong>Líneas de tiempo</strong>
-          <span class="desc">Escribe cronologías en Markdown y genera líneas de tiempo interactivas en formato horizontal o vertical con filtrado dinámico.</span>
-        </div>
-        <div class="card-bottom">
-          <span class="go">Abrir líneas de tiempo <span class="arrow">→</span></span>
-        </div>
-      </a>
-      
-      <!-- CARD 4: SLIDES -->
-      <a href="./slides/" class="card slides">
-        <div class="card-top">
-          <div class="card-icon">🎭</div>
-          <strong>Presentador de diapositivas</strong>
-          <span class="desc">Genera diapositivas animadas a partir de texto estructurado con modo presentación a escala, notas del orador y pizarra de dibujo digital.</span>
-        </div>
-        <div class="card-bottom">
-          <span class="go">Abrir presentador <span class="arrow">→</span></span>
-        </div>
-      </a>
 
-      <!-- CARD 5: DILEMMAS -->
-      <a href="./dilemmas/" class="card dilemmas">
-        <div class="card-top">
-          <div class="card-icon">🧠</div>
-          <strong>Creador de dilemas</strong>
-          <span class="desc">Redacta árboles de decisión cognitivos y dilemas éticos en Markdown. Genera simuladores ramificados interactivos, mapas de decisión en SVG e hilos de recorrido.</span>
+    <!-- Main Workspace -->
+    <div class="workspace">
+      <!-- Left Panel: Markdown Editor -->
+      <section class="editor-pane" id="editor-pane">
+        <div class="editor-toolbar">
+          <div class="toolbar-group">
+            <button id="bold-btn" class="toolbar-btn" title="Negrita (B)"><i data-lucide="bold"></i></button>
+            <button id="italic-btn" class="toolbar-btn" title="Cursiva (I)"><i data-lucide="italic"></i></button>
+            <button id="code-btn" class="toolbar-btn" title="Código en Bloque"><i data-lucide="code-2"></i></button>
+          </div>
+          <div class="toolbar-group">
+            <button id="table-btn" class="toolbar-btn" title="Insertar Tabla (Asistente)"><i data-lucide="table"></i></button>
+            <button id="image-btn" class="toolbar-btn" title="Insertar Imagen"><i data-lucide="image"></i></button>
+            <button id="audio-btn" class="toolbar-btn" title="Insertar Audio"><i data-lucide="music"></i></button>
+            <button id="clear-editor-btn" class="toolbar-btn" title="Limpiar Editor"><i data-lucide="trash-2"></i></button>
+          </div>
+          <div class="toolbar-group select-wrapper">
+            <select id="template-select" class="select-compact">
+              <option value="" disabled selected>Plantillas...</option>
+              <option value="standard">Ejemplo Estándar</option>
+              <option value="simple">Mapa Mental Simple</option>
+              <option value="math">Fórmulas KaTeX</option>
+              <option value="table">Tablas y Listas</option>
+            </select>
+          </div>
         </div>
-        <div class="card-bottom">
-          <span class="go">Diseñar dilemas <span class="arrow">→</span></span>
+        
+        <div class="editor-container">
+          <textarea class="markdown-editor" id="markdown" spellcheck="false" placeholder="Escribe tu Markdown aquí usando cabeceras (#) y listas (-) para formar el mapa mental..."></textarea>
         </div>
-      </a>
+        
+        <div class="editor-footer">
+          <span id="count">0 caracteres</span>
+          <div class="autosave-indicator">
+            <span id="autosave-dot" class="autosave-dot"></span>
+            <span id="autosave-label">Guardado</span>
+          </div>
+        </div>
+      </section>
 
-      <!-- CARD 6: MINDMAP -->
-      <a href="./mindmap/" class="card mindmap">
-        <div class="card-top">
-          <div class="card-icon">🪐</div>
-          <strong>Mapas mentales interactivos</strong>
-          <span class="desc">Dibuja mapas mentales radiales o redes de conceptos elásticas con físicas de rebote y arrastre. Personaliza formas de nodos, colores y estilos de enlaces.</span>
-        </div>
-        <div class="card-bottom">
-          <span class="go">Crear mapa mental <span class="arrow">→</span></span>
-        </div>
-      </a>
-      
-    </section>
+      <!-- Drag Splitter -->
+      <div class="splitter" id="splitter"></div>
 
-    <footer>
-      SUITE DIDÁCTICA • 100% CLIENT-SIDE & STATIC
-    </footer>
-  </main>
+      <!-- Center Panel: Interactive Mindmap SVG -->
+      <section class="map-pane">
+        <svg class="markmap" id="mindmap"></svg>
+        
+        <!-- Floating Zoom Controls -->
+        <div class="map-controls">
+          <button id="zoom-in-btn" class="map-control-btn" title="Acercar"><i data-lucide="plus"></i></button>
+          <button id="zoom-out-btn" class="map-control-btn" title="Alejar"><i data-lucide="minus"></i></button>
+          <button id="fit-btn" class="map-control-btn" title="Ajustar Vista"><i data-lucide="maximize"></i></button>
+          <div class="map-control-divider"></div>
+          <button id="lock-zoom-btn" class="map-control-btn" title="Bloquear Movimiento"><i data-lucide="unlock"></i></button>
+        </div>
+
+        <!-- Floating toast indicator -->
+        <div id="status-toast" class="status-toast hidden"></div>
+      </section>
+
+      <!-- Right Panel: Settings Sidebar -->
+      <aside class="sidebar-pane" id="sidebar-pane">
+        <div class="sidebar-header">
+          <h2>Ajustes</h2>
+        </div>
+        
+        <div class="sidebar-content">
+          <!-- Accordion 1: Mapa (Niveles y Búsqueda) -->
+          <div class="accordion-item open">
+            <button class="accordion-header">
+              <span>Estructura de Mapa</span>
+              <i data-lucide="chevron-down" class="chevron"></i>
+            </button>
+            <div class="accordion-content">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="level">Nivel Inicial</label>
+                  <input id="level" class="input-number" type="number" min="-1" max="99" step="1" value="-1" title="-1 abre todo; 0 título; 1, 2, 3... más niveles">
+                </div>
+                <div class="form-group">
+                  <label for="fold-mode">Despliegue</label>
+                  <select id="fold-mode" class="input-select">
+                    <option value="memory">Recordar ramas</option>
+                    <option value="strict" selected>Forzar nivel</option>
+                  </select>
+                </div>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-secondary" id="apply-level" type="button">Aplicar</button>
+                <button class="btn btn-secondary" id="open-all" type="button">Abrir todo</button>
+                <button class="btn btn-secondary" id="title-only" type="button">Solo título</button>
+              </div>
+              
+              <hr style="border: 0; border-top: 1px solid var(--panel-border); margin: 6px 0;">
+              
+              <!-- Search -->
+              <div class="form-group">
+                <label for="search-map">Buscar en Mapa</label>
+                <input id="search-map" class="input-search" type="search" placeholder="Buscar texto...">
+                <span class="summary-tag" id="search-summary" style="margin-top: 4px; display: inline-block;"></span>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-secondary" id="find-map" type="button">Buscar</button>
+                <button class="btn btn-secondary" id="clear-search" type="button">Limpiar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Accordion 2: Estilo y Apariencia -->
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <span>Diseño y Apariencia</span>
+              <i data-lucide="chevron-down" class="chevron"></i>
+            </button>
+            <div class="accordion-content">
+              <!-- Preset -->
+              <div class="form-group">
+                <label for="preset">Preajustes Estéticos</label>
+                <div class="form-row">
+                  <select id="preset" class="input-select">
+                    <option value="lecture">Estilo Lectura</option>
+                    <option value="compact">Mapa Compacto</option>
+                    <option value="presentation">Presentación Grande</option>
+                    <option value="dense">Mapa Denso</option>
+                    <option value="dark">Tema Oscuro</option>
+                  </select>
+                  <button class="btn btn-primary" id="apply-preset" type="button">Aplicar</button>
+                </div>
+              </div>
+
+              <!-- Color Palette -->
+              <div class="form-group">
+                <label>Paleta de Colores</label>
+                <!-- Custom interactive grid loaded via app.js -->
+                <div id="palette-selector-grid" class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div>
+                <select id="palette" class="input-select" style="display: none;">
+                  <option value="classic">Clásico</option>
+                  <option value="ocean">Océano</option>
+                  <option value="forest">Bosque</option>
+                  <option value="sunset">Atardecer</option>
+                  <option value="neon">Neón / Cyberpunk</option>
+                  <option value="pastel">Pastel Suave</option>
+                  <option value="vintage">Vintage Retro</option>
+                  <option value="grape">Uva / Lavanda</option>
+                  <option value="candy">Caramelo</option>
+                  <option value="mono">Mono</option>
+                </select>
+              </div>
+
+              <!-- App Accent Color -->
+              <div class="form-group">
+                <label>Color de Acentuación (App)</label>
+                <div class="accent-picker" id="accent-picker-container">
+                  <button type="button" class="accent-color-btn active" data-color="teal" style="background-color: #0f766e;" title="Teal"></button>
+                  <button type="button" class="accent-color-btn" data-color="indigo" style="background-color: #4f46e5;" title="Indigo"></button>
+                  <button type="button" class="accent-color-btn" data-color="violet" style="background-color: #7c3aed;" title="Violeta"></button>
+                  <button type="button" class="accent-color-btn" data-color="rose" style="background-color: #e11d48;" title="Rosa"></button>
+                  <button type="button" class="accent-color-btn" data-color="amber" style="background-color: #d97706;" title="Ámbar"></button>
+                  <button type="button" class="accent-color-btn" data-color="emerald" style="background-color: #059669;" title="Esmeralda"></button>
+                </div>
+              </div>
+
+              <!-- Font & Text Options -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="font">Fuente</label>
+                  <select id="font" class="input-select">
+                    <option value="system">Sistema (Outfit)</option>
+                    <option value="inter">Inter (Limpia)</option>
+                    <option value="poppins">Poppins (Moderna)</option>
+                    <option value="quicksand">Quicksand (Redondeada Suave)</option>
+                    <option value="rounded">Trebuchet (Redondeada Estándar)</option>
+                    <option value="serif">Lora (Serif Estética)</option>
+                    <option value="playfair">Playfair Display (Serif Elegante)</option>
+                    <option value="cinzel">Cinzel (Clásica Romana)</option>
+                    <option value="mono">Fira Code (Monospace)</option>
+                    <option value="jetbrains">JetBrains Mono (Código)</option>
+                    <option value="humanist">Humanista (Segoe/Aptos)</option>
+                    <option value="geometric">Geométrica (Montserrat)</option>
+                    <option value="narrow">Condensada</option>
+                    <option value="slab">Slab Serif (Rockwell)</option>
+                    <option value="book">Palatino (Elegante Libro)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="text-size">Tamaño Base</label>
+                  <select id="text-size" class="input-select">
+                    <option value="0.86">Pequeño</option>
+                    <option value="1" selected>Normal</option>
+                    <option value="1.18">Grande</option>
+                    <option value="1.36">Muy grande</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="text-color">Color Letras</label>
+                  <select id="text-color" class="input-select">
+                    <option value="auto" selected>Automático</option>
+                    <option value="#111827">Negro Slate</option>
+                    <option value="#f8fafc">Blanco Nieve</option>
+                    <option value="#64748b">Gris Cool</option>
+                    <option value="#0ea5e9">Azul Sky</option>
+                    <option value="#f59e0b">Ámbar Warm</option>
+                    <option value="#22c55e">Verde Forest</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="line-width">Grosor Línea (px)</label>
+                  <input id="line-width" class="input-number" type="number" min="0.5" max="12" step="0.1" value="1.6" title="Grosor base de línea en px">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="circle-size">Botones Rama (px)</label>
+                  <input id="circle-size" class="input-number" type="number" min="4" max="18" step="1" value="7" title="Tamaño de los círculos para contraer/expandir">
+                </div>
+                <div class="form-group">
+                  <label for="duration">Animación (ms)</label>
+                  <input id="duration" class="input-number" type="number" min="0" max="1500" step="20" value="180">
+                </div>
+              </div>
+
+              <!-- Theme Hidden Selection (Synced with toggle) -->
+              <select id="theme" class="input-select" style="display: none;">
+                <option value="light">Claro</option>
+                <option value="dark">Oscuro</option>
+              </select>
+
+              <!-- Node Width Adjustments -->
+              <div class="form-group" style="border-top: 1px solid var(--panel-border); padding-top: 10px;">
+                <label>Ancho Máximo por Nivel</label>
+                <div class="form-row-three">
+                  <div class="form-group">
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">Nivel</span>
+                    <input id="width-level" class="input-number" type="number" min="1" max="99" step="1" value="1">
+                  </div>
+                  <div class="form-group">
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">Ancho px</span>
+                    <input id="width-px" class="input-number" type="number" min="80" max="1200" step="10" value="420">
+                  </div>
+                  <button class="btn btn-secondary btn-icon" id="set-width" type="button" title="Aplicar Ancho"><i data-lucide="check"></i></button>
+                </div>
+                <div class="btn-group" style="margin-top: 6px;">
+                  <button class="btn btn-secondary btn-sm" id="reset-width" type="button">Ancho Base</button>
+                </div>
+                <span class="summary-tag" id="width-summary"></span>
+              </div>
+
+              <!-- Text Size Rules -->
+              <div class="form-group" style="border-top: 1px solid var(--panel-border); padding-top: 10px;">
+                <label>Escalado Texto por Nivel</label>
+                <div class="form-row-three">
+                  <div class="form-group">
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">Nivel</span>
+                    <input id="text-level" class="input-number" type="number" min="1" max="99" step="1" value="1">
+                  </div>
+                  <div class="form-group">
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">Escala %</span>
+                    <input id="text-percent" class="input-number" type="number" min="40" max="240" step="2" value="118">
+                  </div>
+                  <button class="btn btn-secondary btn-icon" id="set-text-size" type="button" title="Aplicar Tamaño"><i data-lucide="check"></i></button>
+                </div>
+                <div class="btn-group" style="margin-top: 6px;">
+                  <button class="btn btn-secondary btn-sm" id="reset-text-size" type="button">Escala Base</button>
+                </div>
+                <span class="summary-tag" id="text-size-summary"></span>
+              </div>
+
+              <!-- Spacings -->
+              <div class="form-group" style="border-top: 1px solid var(--panel-border); padding-top: 10px;">
+                <label>Espaciado de Nodos</label>
+                <div class="form-row">
+                  <div class="form-group">
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">Esp. H</span>
+                    <input id="spacing-h" class="input-number" type="number" min="24" max="220" step="2" value="78">
+                  </div>
+                  <div class="form-group">
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">Esp. V</span>
+                    <input id="spacing-v" class="input-number" type="number" min="0" max="40" step="1" value="7">
+                  </div>
+                </div>
+              </div>
+
+
+              <div class="btn-group" style="margin-top: 10px;">
+                <button class="btn btn-secondary" id="reset-visual" type="button">Resetear Todo</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Accordion 3: Importación / Exportación -->
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <span>Importar / Exportar</span>
+              <i data-lucide="chevron-down" class="chevron"></i>
+            </button>
+            <div class="accordion-content">
+              <label>Importar Archivo</label>
+              <input id="import-file" type="file" accept=".md,.markdown,text/markdown,text/plain" style="display: none;">
+              <button class="btn btn-secondary" id="import" type="button">
+                <i data-lucide="upload"></i><span>Seleccionar Markdown</span>
+              </button>
+              
+              <hr style="border: 0; border-top: 1px solid var(--panel-border); margin: 6px 0;">
+              
+              <label>Guardar Markdown</label>
+              <div class="btn-group">
+                <button class="btn btn-secondary" id="copy-md" type="button">Copiar MD</button>
+                <button class="btn btn-secondary" id="save-md" type="button">Descargar MD</button>
+              </div>
+              
+              <hr style="border: 0; border-top: 1px solid var(--panel-border); margin: 6px 0;">
+              
+              <label>Exportar Mapa Mental</label>
+              <button class="btn btn-primary" id="save-html" type="button">
+                <i data-lucide="download"></i><span>Guardar HTML Interactivo</span>
+              </button>
+              <div class="btn-group">
+                <button class="btn btn-secondary" id="save-svg" type="button">SVG Vectorial</button>
+                <button class="btn btn-secondary" id="save-png" type="button">PNG Imagen</button>
+              </div>
+              <button class="btn btn-secondary" id="save-pdf" type="button" style="margin-top: 6px; width: 100%;">
+                <i data-lucide="printer"></i><span>Imprimir / Guardar PDF</span>
+              </button>
+              
+              <hr style="border: 0; border-top: 1px solid var(--panel-border); margin: 6px 0;">
+              
+              <label>Compartir</label>
+              <button class="btn btn-secondary" id="share" type="button">
+                <i data-lucide="link"></i><span>Copiar Enlace de Compartir</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Help Modal Overlay -->
+    <div id="help-overlay" class="help-overlay">
+      <div class="help-modal">
+        <div class="help-modal-header">
+          <h3><i data-lucide="help-circle"></i> Ayuda de Markmap REPL Pro</h3>
+          <button class="toolbar-btn" id="close-help-btn"><i data-lucide="x"></i></button>
+        </div>
+        <div class="help-modal-body">
+          <div class="help-grid-item">
+            <h4><i data-lucide="layers"></i> Estructura y Niveles</h4>
+            <p><strong>-1</strong> abre todas las ramas. <strong>0</strong> muestra únicamente el título. Elige otros números para controlar qué tan profundo se despliega inicialmente el mapa.</p>
+          </div>
+          <div class="help-grid-item">
+            <h4><i data-lucide="git-branch"></i> Interactividad de Ramas</h4>
+            <p>En <em>Forzar nivel</em>, al presionar botones de nivel se reinicia el mapa. En <em>Recordar ramas</em>, los círculos conservan tus aperturas manuales. Clic en círculos abre/cierra; Ctrl+Clic aplica a toda esa rama.</p>
+          </div>
+          <div class="help-grid-item">
+            <h4><i data-lucide="layout"></i> Modos de Visualización</h4>
+            <p>Oculta el editor para enfocarte solo en el mapa. El modo <em>Lectura</em> oculta el editor para una lectura limpia, y el modo <em>Presentación</em> oculta todos los paneles para proyectar tu mapa conceptual.</p>
+          </div>
+          <div class="help-grid-item">
+            <h4><i data-lucide="search"></i> Búsqueda en el Mapa</h4>
+            <p>Resalta coincidencias visibles. Si un nodo está en una rama contraída, no se marcará; despliega primero las ramas o haz clic en <em>Abrir todo</em> para buscar en todo el mapa.</p>
+          </div>
+          <div class="help-grid-item">
+            <h4><i data-lucide="palette"></i> Presets y Diseños</h4>
+            <p>Los presets son combinaciones automáticas de fuentes, colores y espaciados diseñados con criterios ergonómicos. Aplica uno y ajústalo luego a tu gusto.</p>
+          </div>
+          <div class="help-grid-item">
+            <h4><i data-lucide="file-type"></i> Imágenes, Audios y Tablas</h4>
+            <p>Puedes insertar imágenes usando URLs públicas o compartidas de Google Drive. También puedes insertar un reproductor de audio, o usar el asistente para insertar tablas Markdown de cualquier tamaño.</p>
+          </div>
+          <div class="help-grid-item">
+            <h4><i data-lucide="keyboard"></i> Atajos de Teclado</h4>
+            <p style="line-height: 1.7;">
+              <kbd>Ctrl</kbd> + <kbd>Z</kbd> Deshacer / <kbd>Ctrl</kbd> + <kbd>Y</kbd> Rehacer<br>
+              <kbd>Ctrl</kbd> + <kbd>S</kbd> Descargar archivo Markdown (.md)<br>
+              <kbd>Ctrl</kbd> + <kbd>O</kbd> Abrir/Importar archivo Markdown<br>
+              <kbd>Alt</kbd> + <kbd>P</kbd> Alternar Modo Presentación (ESC para salir)<br>
+              <kbd>Alt</kbd> + <kbd>F</kbd> Enfocar buscador del mapa
+            </p>
+          </div>
+          <div class="help-grid-item">
+            <h4><i data-lucide="sparkles"></i> Funciones Avanzadas (Pro)</h4>
+            <p><strong>Foco Bidireccional</strong>: Doble clic sobre cualquier nodo del mapa mental para centrar y resaltar su línea en el editor. <strong>Arrastrar y Soltar</strong>: Arrastra un archivo <code>.md</code> o <code>.txt</code> de tu PC al editor para cargarlo al instante. <strong>Papelera</strong>: Vaciado rápido de editor.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CDN scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.439.0/dist/umd/lucide.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
