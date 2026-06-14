@@ -224,6 +224,12 @@ h1 {
 #region-hipocampo { fill: url(#hipocampo-grad); }
 #region-amigdala { fill: #f43f5e; }
 
+/* New Structures - Broca, Wernicke, Ganglios */
+#region-broca   { fill: #ef4444; opacity: 0.9; }
+#region-wernicke { fill: #06b6d4; opacity: 0.9; }
+#region-ganglios { fill: url(#ganglios-grad); }
+#region-ganglios-medial { fill: url(#ganglios-grad); }
+
 /* Medial views mappings */
 #region-frontal-medial { fill: url(#frontal-grad); }
 #region-parietal-medial { fill: url(#parietal-grad); }
@@ -233,12 +239,14 @@ h1 {
 #region-tronco-medial { fill: url(#tronco-grad); }
 #region-hipocampo-medial { fill: url(#hipocampo-grad); }
 #region-amigdala-medial { fill: #f43f5e; }
+#region-prefrontal-medial { fill: url(#prefrontal-grad); }
 
 /* Medial central structures mappings */
 #region-calloso { fill: url(#calloso-grad); }
 #region-talamo { fill: url(#talamo-grad); }
 #region-hipotalamo { fill: url(#hipotalamo-grad); }
 #region-cingulado { fill: url(#cingulado-grad); }
+#region-ganglios { fill: url(#ganglios-grad); }
 
 /* View Button Styles */
 .view-btn {
@@ -269,6 +277,10 @@ h1 {
 .badge-talamo { background: rgba(168, 85, 247, 0.15); color: #e9d5ff; border: 1px solid rgba(168, 85, 247, 0.3); }
 .badge-hipotalamo { background: rgba(236, 72, 153, 0.15); color: #fbcfe8; border: 1px solid rgba(236, 72, 153, 0.3); }
 .badge-cingulado { background: rgba(244, 63, 94, 0.15); color: #fca5a5; border: 1px solid rgba(244, 63, 94, 0.3); }
+.badge-prefrontal { background: rgba(245, 158, 11, 0.15); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.3); }
+.badge-broca { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+.badge-wernicke { background: rgba(6, 182, 212, 0.15); color: #a5f3fc; border: 1px solid rgba(6, 182, 212, 0.3); }
+.badge-ganglios { background: rgba(132, 204, 22, 0.15); color: #bef264; border: 1px solid rgba(132, 204, 22, 0.3); }
 
 /* Active (selected) Region */
 .brain-region.selected-region {
@@ -289,7 +301,7 @@ h1 {
 
 /* Right Sidebar */
 .sidebar {
-  width: 460px;
+  width: 580px; /* Expanded from 460px to leave much more space for text details and reports */
   background: var(--bg-card);
   backdrop-filter: blur(12px);
   display: flex;
@@ -521,6 +533,40 @@ h1 {
 .editor-actions {
   display: flex;
   gap: 12px;
+}
+
+/* Primary / Secondary Buttons (editor) */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), #e11d48);
+  border: 1px solid transparent;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-primary:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Animations */

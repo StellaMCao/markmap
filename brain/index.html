@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Explorador Cerebral y Neuropsicología - Suite Educativa</title>
+  <title>Explorador de Neuropsicología y Anatomía Cerebral</title>
+  <meta name="description" content="Explorador interactivo de neuropsicología y anatomía cerebral con simulador de lesiones y reporte clínico diagnóstico.">
   <!-- Google Fonts: Outfit, Inter & Fira Code -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,8 +37,8 @@
       <!-- Toolbar -->
       <div class="canvas-toolbar">
         <div class="view-toggle-buttons" style="display: flex; gap: 0px; margin-right: 8px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; backdrop-filter: blur(8px);">
-          <button id="btn-view-lateral" class="view-btn active-view" style="border: none; border-radius: 0; padding: 8px 12px; font-size: 12.5px;">Vista Lateral</button>
-          <button id="btn-view-medial" class="view-btn" style="border: none; border-radius: 0; padding: 8px 12px; border-left: 1px solid var(--border-color); font-size: 12.5px;">Vista Medial</button>
+          <button id="btn-view-lateral" class="view-btn active-view" style="border: none; border-radius: 0; padding: 8px 14px; font-size: 12.5px;">Vista Lateral</button>
+          <button id="btn-view-medial" class="view-btn" style="border: none; border-radius: 0; padding: 8px 14px; border-left: 1px solid var(--border-color); font-size: 12.5px;">Vista Medial</button>
         </div>
         <input type="checkbox" id="toggle-lesion-mode">
         <label for="toggle-lesion-mode" id="lesion-mode-label">
@@ -48,8 +49,8 @@
         </button>
       </div>
 
-      <!-- Brain SVG -->
-      <svg viewBox="0 0 600 500" class="brain-svg" id="brain-svg">
+      <!-- Brain SVG — viewBox 0 0 620 520 -->
+      <svg viewBox="0 0 620 520" class="brain-svg" id="brain-svg">
         <defs>
           <!-- Glowing filter for damaged/active regions -->
           <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -63,31 +64,31 @@
             <stop offset="65%" stop-color="hsl(14, 75%, 45%)" />
             <stop offset="100%" stop-color="hsl(14, 60%, 30%)" />
           </radialGradient>
-          
+
           <radialGradient id="parietal-grad" cx="55%" cy="35%" r="65%">
             <stop offset="0%" stop-color="hsl(220, 80%, 65%)" />
             <stop offset="70%" stop-color="hsl(220, 70%, 42%)" />
             <stop offset="100%" stop-color="hsl(220, 60%, 28%)" />
           </radialGradient>
-          
+
           <radialGradient id="temporal-grad" cx="45%" cy="45%" r="65%">
             <stop offset="0%" stop-color="hsl(150, 75%, 55%)" />
             <stop offset="70%" stop-color="hsl(150, 60%, 36%)" />
             <stop offset="100%" stop-color="hsl(150, 50%, 24%)" />
           </radialGradient>
-          
+
           <radialGradient id="occipital-grad" cx="40%" cy="40%" r="65%">
             <stop offset="0%" stop-color="hsl(190, 80%, 60%)" />
             <stop offset="70%" stop-color="hsl(190, 65%, 40%)" />
             <stop offset="100%" stop-color="hsl(190, 50%, 25%)" />
           </radialGradient>
-          
+
           <radialGradient id="cerebelo-grad" cx="50%" cy="45%" r="60%">
             <stop offset="0%" stop-color="hsl(330, 80%, 62%)" />
             <stop offset="75%" stop-color="hsl(330, 60%, 42%)" />
             <stop offset="100%" stop-color="hsl(330, 50%, 28%)" />
           </radialGradient>
-          
+
           <linearGradient id="tronco-grad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stop-color="hsl(45, 80%, 55%)" />
             <stop offset="50%" stop-color="hsl(45, 70%, 38%)" />
@@ -98,15 +99,11 @@
             <stop offset="0%" stop-color="hsl(270, 85%, 65%)" />
             <stop offset="100%" stop-color="hsl(270, 65%, 35%)" />
           </radialGradient>
-        </defs>
 
-            <stop offset="100%" stop-color="hsl(270, 65%, 35%)" />
-          </radialGradient>
-          
           <linearGradient id="calloso-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#ffffff" />
-            <stop offset="40%" stop-color="#f1f5f9" />
-            <stop offset="100%" stop-color="#cbd5e1" />
+            <stop offset="0%" stop-color="#e2e8f0" />
+            <stop offset="40%" stop-color="#cbd5e1" />
+            <stop offset="100%" stop-color="#94a3b8" />
           </linearGradient>
 
           <radialGradient id="talamo-grad" cx="50%" cy="50%" r="65%">
@@ -126,164 +123,190 @@
             <stop offset="70%" stop-color="hsl(340, 70%, 42%)" />
             <stop offset="100%" stop-color="hsl(340, 50%, 28%)" />
           </radialGradient>
+
+          <radialGradient id="ganglios-grad" cx="45%" cy="45%" r="60%">
+            <stop offset="0%" stop-color="hsl(90, 70%, 55%)" />
+            <stop offset="70%" stop-color="hsl(90, 60%, 35%)" />
+            <stop offset="100%" stop-color="hsl(90, 45%, 22%)" />
+          </radialGradient>
         </defs>
 
         <!-- Outer group for brain structures -->
         <g id="brain-group">
-          <!-- VIEW 1: LATERAL (Default view) -->
+
+          <!-- ============================================================ -->
+          <!--  VIEW 1: LATERAL (Default view)                               -->
+          <!-- ============================================================ -->
           <g id="view-lateral-group" class="brain-view-group">
-            <!-- 1. Tronco Encefálico -->
-            <path id="region-tronco" class="brain-region" 
-                  d="M 310,290 C 310,320 315,350 315,420 C 315,435 285,435 285,420 C 285,350 295,320 295,290 Z" />
-            
+
+            <!-- 1. Tronco Encefálico (brainstem, lowest - render first) -->
+            <path id="region-tronco" class="brain-region"
+                  d="M 310,295 C 310,325 316,355 316,430 C 316,445 286,445 286,430 C 286,355 296,325 296,295 Z" />
+
             <!-- 2. Cerebelo -->
-            <path id="region-cerebelo" class="brain-region" 
-                  d="M 475,310 C 490,330 480,365 440,380 C 400,390 375,360 375,335 C 375,315 415,295 475,310 Z" />
+            <path id="region-cerebelo" class="brain-region"
+                  d="M 480,315 C 498,338 488,372 448,388 C 408,400 382,368 382,342 C 382,320 420,300 480,315 Z" />
 
             <!-- 3. Lóbulo Occipital -->
-            <path id="region-occipital" class="brain-region" 
-                  d="M 495,225 C 515,260 505,295 475,310 C 445,325 415,295 425,245 C 445,210 495,215 495,225 Z" />
+            <path id="region-occipital" class="brain-region"
+                  d="M 500,228 C 520,264 510,300 480,315 C 450,330 420,300 430,248 C 450,212 500,218 500,228 Z" />
 
-            <!-- 4. Lóbulo Temporal -->
-            <path id="region-temporal" class="brain-region" 
-                  d="M 170,265 C 200,245 220,220 275,200 C 310,180 330,170 350,180 C 390,200 445,210 425,245 C 405,280 350,290 310,290 C 270,290 220,295 170,265 Z" />
+            <!-- 4. Lóbulo Temporal (main body) -->
+            <path id="region-temporal" class="brain-region"
+                  d="M 172,270 C 200,248 222,224 278,202 C 314,182 336,172 356,182 C 396,202 450,212 430,248 C 410,284 355,294 314,294 C 274,294 222,298 172,270 Z" />
 
             <!-- 5. Lóbulo Frontal -->
-            <path id="region-frontal" class="brain-region" 
-                  d="M 170,265 C 130,240 100,180 120,130 C 140,80 200,60 270,70 C 310,75 330,90 350,110 C 330,150 310,180 275,200 C 240,220 220,245 200,265 Z" />
+            <path id="region-frontal" class="brain-region"
+                  d="M 172,270 C 130,244 100,182 120,130 C 140,80 202,60 272,70 C 312,76 334,92 354,112 C 332,152 312,182 278,202 C 244,222 222,248 202,270 Z" />
 
             <!-- 6. Lóbulo Parietal -->
-            <path id="region-parietal" class="brain-region" 
-                  d="M 350,110 C 390,75 440,80 470,120 C 500,160 505,190 495,225 C 445,210 390,200 350,180 C 330,170 330,140 350,110 Z" />
+            <path id="region-parietal" class="brain-region"
+                  d="M 354,112 C 394,76 444,82 474,122 C 504,162 508,192 500,228 C 450,212 394,202 356,182 C 334,172 334,142 354,112 Z" />
 
-            <!-- Internal structures / Limbic System boundary cutout -->
-            <g id="limbic-system-group" style="cursor: pointer;">
-              <!-- Dashed outline indicating depth -->
-              <path id="limbic-boundary" d="M 240,240 C 240,180 360,180 360,240 C 360,300 240,300 240,240" 
-                    fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.5" stroke-dasharray="4,4" />
-              
-              <!-- 7. Hipocampo -->
-              <path id="region-hipocampo" class="brain-region" 
-                    d="M 330,245 C 320,215 285,215 275,240 C 265,265 295,280 315,265 C 325,255 330,250 330,245 Z" />
-              
-              <!-- 8. Amígdala -->
-              <circle id="region-amigdala" class="brain-region" cx="275" cy="245" r="12" />
-            </g>
+            <!-- ── Sub-regions overlaid on lobes ── -->
 
-            <!-- Detailed Sulci & Gyri (wrinkles) Overlay -->
-            <g id="brain-wrinkles" stroke="rgba(9, 13, 22, 0.5)" stroke-width="1.8" fill="none" pointer-events="none">
+            <!-- 7. Área de Broca (inferior frontal gyrus, left hemisphere) -->
+            <ellipse id="region-broca" class="brain-region"
+                     cx="200" cy="218" rx="26" ry="16" />
+
+            <!-- 8. Área de Wernicke (superior temporal gyrus, posterior) -->
+            <ellipse id="region-wernicke" class="brain-region"
+                     cx="370" cy="218" rx="28" ry="14" />
+
+            <!-- 9. Ganglios Basales (deep, visible under lobe boundary) -->
+            <path id="region-ganglios" class="brain-region"
+                  d="M 250,215 C 245,195 275,185 305,185 C 330,185 350,198 348,215 C 346,232 320,240 295,240 C 270,240 254,232 250,215 Z" />
+
+            <!-- Limbic boundary dashes -->
+            <path id="limbic-boundary" d="M 244,242 C 244,184 364,184 364,242 C 364,302 244,302 244,242"
+                  fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" stroke-dasharray="4,4" />
+
+            <!-- 10. Hipocampo -->
+            <path id="region-hipocampo" class="brain-region"
+                  d="M 335,248 C 325,218 288,218 278,242 C 268,266 298,282 318,268 C 328,258 335,253 335,248 Z" />
+
+            <!-- 11. Amígdala -->
+            <circle id="region-amigdala" class="brain-region" cx="276" cy="248" r="13" />
+
+            <!-- ── Sulci & Gyri (wrinkles) overlay ── -->
+            <g id="brain-wrinkles" stroke="rgba(9,13,22,0.52)" stroke-width="1.8" fill="none" pointer-events="none">
               <!-- Major fissures -->
-              <path d="M 170,265 C 200,245 220,220 275,200 C 310,180 330,170 350,180 C 390,200 445,210 425,245" stroke="rgba(9, 13, 22, 0.75)" stroke-width="2.5" /> <!-- Lateral Fissure -->
-              <path d="M 350,110 C 335,140 325,160 320,185" stroke="rgba(9, 13, 22, 0.75)" stroke-width="2.5" /> <!-- Central Fissure -->
-              <path d="M 470,120 C 460,160 445,185 425,245" stroke="rgba(9, 13, 22, 0.6)" stroke-width="2" /> <!-- Parieto-occipital boundary -->
-              
-              <!-- Frontal wrinkles -->
-              <path d="M 150,150 Q 180,170 220,160" />
-              <path d="M 170,120 Q 210,140 250,110" />
-              <path d="M 210,90 Q 240,120 270,90" />
-              <path d="M 160,200 Q 200,210 240,190" />
-              <path d="M 230,220 Q 260,230 270,250" />
-              
-              <!-- Parietal wrinkles -->
-              <path d="M 370,120 Q 400,150 430,130" />
-              <path d="M 390,95 Q 430,120 460,110" />
-              <path d="M 420,160 Q 450,175 470,165" />
-              
-              <!-- Temporal wrinkles -->
-              <path d="M 200,260 Q 250,240 300,245" />
-              <path d="M 240,275 Q 290,260 350,255" />
-              <path d="M 320,280 Q 360,270 400,265" />
-              
-              <!-- Occipital wrinkles -->
-              <path d="M 440,230 Q 470,240 490,235" />
-              <path d="M 435,260 Q 465,270 480,260" />
-              <path d="M 450,285 Q 470,290 480,285" />
+              <path d="M 172,270 C 200,248 222,224 278,202 C 314,182 336,172 356,182 C 396,202 450,212 430,248" stroke="rgba(9,13,22,0.76)" stroke-width="2.5" /> <!-- Lateral/Sylvian fissure -->
+              <path d="M 354,112 C 338,142 328,162 322,187" stroke="rgba(9,13,22,0.76)" stroke-width="2.5" /> <!-- Central sulcus -->
+              <path d="M 474,122 C 464,162 450,187 430,248" stroke="rgba(9,13,22,0.62)" stroke-width="2" /> <!-- Parieto-occipital boundary -->
 
-              <!-- Cerebellum parallel folds (folia) -->
-              <path d="M 380,330 Q 425,320 470,305" stroke-width="1.2" />
-              <path d="M 380,340 Q 425,335 465,325" stroke-width="1.2" />
-              <path d="M 378,350 Q 425,348 455,340" stroke-width="1.2" />
-              <path d="M 380,360 Q 420,360 445,355" stroke-width="1.2" />
-              <path d="M 390,370 Q 420,370 435,368" stroke-width="1.2" />
+              <!-- Frontal wrinkles (gyri) -->
+              <path d="M 152,152 Q 184,172 224,162" />
+              <path d="M 172,122 Q 212,142 252,112" />
+              <path d="M 212,92 Q 242,122 272,92" />
+              <path d="M 162,202 Q 202,212 242,192" />
+              <path d="M 232,222 Q 262,232 272,252" />
+
+              <!-- Parietal wrinkles -->
+              <path d="M 372,122 Q 404,152 434,132" />
+              <path d="M 394,97 Q 434,122 464,112" />
+              <path d="M 424,162 Q 454,177 474,167" />
+
+              <!-- Temporal wrinkles -->
+              <path d="M 202,262 Q 254,242 304,247" />
+              <path d="M 242,278 Q 292,262 352,257" />
+              <path d="M 322,282 Q 362,272 402,267" />
+
+              <!-- Occipital wrinkles -->
+              <path d="M 444,232 Q 472,242 492,237" />
+              <path d="M 438,262 Q 466,272 482,262" />
+              <path d="M 452,287 Q 472,292 482,287" />
+
+              <!-- Cerebellum folia -->
+              <path d="M 384,334 Q 428,322 474,308" stroke-width="1.2" />
+              <path d="M 384,344 Q 428,338 468,328" stroke-width="1.2" />
+              <path d="M 382,354 Q 428,352 458,344" stroke-width="1.2" />
+              <path d="M 384,364 Q 422,364 448,358" stroke-width="1.2" />
+              <path d="M 394,374 Q 422,374 438,372" stroke-width="1.2" />
 
               <!-- Brainstem vertical tracts -->
-              <path d="M 295,310 L 295,410" stroke-width="1.2" />
-              <path d="M 305,310 L 305,410" stroke-width="1.2" />
-              <path d="M 300,340 Q 308,370 308,400" stroke-width="1.2" />
+              <path d="M 297,315 L 297,418" stroke-width="1.2" />
+              <path d="M 307,315 L 307,418" stroke-width="1.2" />
+              <path d="M 302,344 Q 310,374 310,404" stroke-width="1.2" />
             </g>
           </g>
 
-          <!-- VIEW 2: MEDIAL (Sagittal Slice) -->
+          <!-- ============================================================ -->
+          <!--  VIEW 2: MEDIAL (Sagittal Slice)                              -->
+          <!-- ============================================================ -->
           <g id="view-medial-group" class="brain-view-group" style="display: none;">
-            <!-- Outer Cortex boundaries (Medial slice) -->
+
             <!-- 1. Tronco Encefálico (Medial) -->
-            <path id="region-tronco-medial" class="brain-region" 
-                  d="M 310,290 C 310,320 315,350 315,420 C 315,435 285,435 285,420 C 285,350 295,320 295,290 Z" />
+            <path id="region-tronco-medial" class="brain-region"
+                  d="M 310,295 C 310,325 316,355 316,430 C 316,445 286,445 286,430 C 286,355 296,325 296,295 Z" />
 
             <!-- 2. Cerebelo (Medial) -->
-            <path id="region-cerebelo-medial" class="brain-region" 
-                  d="M 475,310 C 490,330 480,365 440,380 C 400,390 375,360 375,335 C 375,315 415,295 475,310 Z" />
+            <path id="region-cerebelo-medial" class="brain-region"
+                  d="M 480,315 C 498,338 488,372 448,388 C 408,400 382,368 382,342 C 382,320 420,300 480,315 Z" />
 
             <!-- 3. Lóbulo Occipital (Medial) -->
-            <path id="region-occipital-medial" class="brain-region" 
-                  d="M 495,225 C 515,260 505,295 475,310 C 420,290 390,260 390,240 C 390,230 425,230 495,225 Z" />
+            <path id="region-occipital-medial" class="brain-region"
+                  d="M 500,228 C 520,264 510,300 480,315 C 424,294 394,262 394,242 C 394,232 428,232 500,228 Z" />
 
-            <!-- 4. Lóbulo Temporal (Medial/Internal) -->
-            <path id="region-temporal-medial" class="brain-region" 
-                  d="M 230,280 C 240,250 250,220 270,200 C 290,180 310,140 330,160 C 360,180 420,195 400,225 C 380,255 330,270 290,280 C 260,285 245,285 230,280 Z" />
+            <!-- 4. Lóbulo Temporal (Medial) -->
+            <path id="region-temporal-medial" class="brain-region"
+                  d="M 232,282 C 242,252 252,222 272,202 C 292,182 312,142 334,162 C 362,182 422,197 402,227 C 382,257 334,272 292,282 C 262,287 247,287 232,282 Z" />
 
             <!-- 5. Lóbulo Frontal (Medial) -->
-            <path id="region-frontal-medial" class="brain-region" 
-                  d="M 170,265 C 130,240 100,180 120,130 C 140,80 200,60 270,70 C 310,75 320,95 C 220,100 210,170 210,240 Z" />
+            <path id="region-frontal-medial" class="brain-region"
+                  d="M 172,270 C 130,244 100,182 120,130 C 140,80 202,60 272,70 C 310,76 320,96 320,96 C 250,102 214,172 214,242 Z" />
 
             <!-- 6. Lóbulo Parietal (Medial) -->
-            <path id="region-parietal-medial" class="brain-region" 
-                  d="M 320,95 C 350,75 390,75 420,100 C 450,125 460,160 460,190 C 430,190 390,170 390,240 C 360,180 330,160 320,95 Z" />
+            <path id="region-parietal-medial" class="brain-region"
+                  d="M 320,96 C 352,76 392,76 422,102 C 452,127 462,162 462,192 C 432,192 394,172 394,242 C 362,182 334,162 320,96 Z" />
 
-            <!-- Medial structures layered in center -->
-            <!-- 9. Giro Cingulado -->
-            <path id="region-cingulado" class="brain-region" 
-                  d="M 210,240 C 210,170 390,170 390,240 C 390,255 380,260 375,250 C 375,185 225,185 225,250 C 220,260 210,255 210,240 Z" />
+            <!-- 9. Giro Cingulado (arching over corpus callosum) -->
+            <path id="region-cingulado" class="brain-region"
+                  d="M 214,242 C 214,172 394,172 394,242 C 394,257 384,262 378,252 C 378,187 228,187 228,252 C 222,262 214,257 214,242 Z" />
 
             <!-- 10. Cuerpo Calloso -->
-            <path id="region-calloso" class="brain-region" 
-                  d="M 230,240 C 230,195 370,195 370,240 C 370,245 365,250 355,245 C 355,215 245,215 245,245 C 235,250 230,245 230,240 Z" />
+            <path id="region-calloso" class="brain-region"
+                  d="M 234,242 C 234,197 372,197 372,242 C 372,248 367,252 358,248 C 358,217 248,217 248,248 C 238,252 234,248 234,242 Z" />
 
             <!-- 11. Tálamo -->
-            <path id="region-talamo" class="brain-region" 
-                  d="M 270,255 C 270,230 330,230 330,255 C 330,280 270,280 270,255 Z" />
+            <path id="region-talamo" class="brain-region"
+                  d="M 272,258 C 272,233 332,233 332,258 C 332,283 272,283 272,258 Z" />
 
-            <!-- 12. Hipotálamo -->
-            <path id="region-hipotalamo" class="brain-region" 
-                  d="M 270,255 L 290,285 L 250,285 Z" />
+            <!-- 12. Hipotálamo (small triangle below thalamus) -->
+            <path id="region-hipotalamo" class="brain-region"
+                  d="M 272,258 L 302,293 L 256,293 Z" />
+
+            <!-- 13. Ganglios Basales (medial, flanking thalamus) -->
+            <ellipse id="region-ganglios-medial" class="brain-region"
+                     cx="302" cy="234" rx="26" ry="14" />
 
             <!-- 7. Hipocampo (Medial view) -->
-            <path id="region-hipocampo-medial" class="brain-region" 
-                  d="M 330,245 C 320,215 285,215 275,240 C 265,265 295,280 315,265 C 325,255 330,250 330,245 Z" />
-            
-            <!-- 8. Amígdala (Medial view) -->
-            <circle id="region-amigdala-medial" class="brain-region" cx="275" cy="245" r="12" />
+            <path id="region-hipocampo-medial" class="brain-region"
+                  d="M 335,248 C 325,218 288,218 278,242 C 268,266 298,282 318,268 C 328,258 335,253 335,248 Z" />
 
-            <!-- Medial view detailed wrinkles -->
-            <g id="medial-wrinkles" stroke="rgba(9, 13, 22, 0.45)" stroke-width="1.8" fill="none" pointer-events="none">
+            <!-- 8. Amígdala (Medial view) -->
+            <circle id="region-amigdala-medial" class="brain-region" cx="276" cy="248" r="13" />
+
+            <!-- Medial-view detailed wrinkles -->
+            <g id="medial-wrinkles" stroke="rgba(9,13,22,0.45)" stroke-width="1.8" fill="none" pointer-events="none">
               <!-- Cingulate sulcus -->
-              <path d="M 195,240 C 195,160 405,160 405,240" stroke-width="2.2" />
+              <path d="M 197,242 C 197,162 407,162 407,242" stroke-width="2.2" />
               <!-- Calcarine sulcus -->
-              <path d="M 390,240 C 420,250 450,230 490,225" stroke-width="2.2" />
+              <path d="M 394,242 C 424,252 452,232 492,228" stroke-width="2.2" />
               <!-- Parieto-occipital sulcus -->
-              <path d="M 420,100 C 415,150 400,195 390,240" stroke-width="2.2" />
-              
+              <path d="M 422,102 C 416,152 402,197 394,242" stroke-width="2.2" />
+
               <!-- Frontal medial wrinkles -->
-              <path d="M 160,200 Q 185,185 200,200" />
-              <path d="M 230,140 Q 250,170 270,150" />
-              
-              <!-- Cerebellum Arbor Vitae (Tree of Life) white matter branches -->
-              <path d="M 395,335 C 410,335 430,345 440,350" stroke="#ffffff" stroke-width="2.5" /> <!-- Main trunk -->
-              <path d="M 410,335 Q 420,320 440,315" stroke="#ffffff" stroke-width="1.5" />
-              <path d="M 425,342 Q 435,330 455,325" stroke="#ffffff" stroke-width="1.5" />
-              <path d="M 430,345 Q 445,360 460,355" stroke="#ffffff" stroke-width="1.5" />
-              <path d="M 415,338 Q 405,350 395,360" stroke="#ffffff" stroke-width="1.5" />
-              <path d="M 420,340 Q 415,360 410,370" stroke="#ffffff" stroke-width="1.5" />
+              <path d="M 162,202 Q 187,187 202,202" />
+              <path d="M 234,142 Q 252,172 272,152" />
+
+              <!-- Cerebellum Arbor Vitae (Tree of Life) branches -->
+              <path d="M 397,337 C 412,337 432,347 442,352" stroke="#ffffff" stroke-width="2.5" />
+              <path d="M 412,337 Q 422,322 442,317" stroke="#ffffff" stroke-width="1.5" />
+              <path d="M 427,344 Q 437,332 457,327" stroke="#ffffff" stroke-width="1.5" />
+              <path d="M 432,347 Q 447,362 462,357" stroke="#ffffff" stroke-width="1.5" />
+              <path d="M 417,340 Q 407,352 397,362" stroke="#ffffff" stroke-width="1.5" />
+              <path d="M 422,342 Q 417,362 412,372" stroke="#ffffff" stroke-width="1.5" />
             </g>
           </g>
         </g>
@@ -309,9 +332,9 @@
           <div class="structure-card" id="detail-card">
             <div class="structure-header">
               <span id="structure-name" class="structure-title">Lóbulo Frontal</span>
-              <span id="structure-badge" class="badge badge-frontal">Cortex</span>
+              <span id="structure-badge" class="badge badge-frontal">Corteza Cerebral</span>
             </div>
-            
+
             <div class="detail-item">
               <span class="detail-label">Función Principal</span>
               <span id="structure-funcion" class="detail-value">
@@ -355,7 +378,7 @@
             </div>
 
             <div class="report-section">
-              <span class="report-section-title">Déficits Cognitivos & Conductuales</span>
+              <span class="report-section-title">Déficits Cognitivos &amp; Conductuales</span>
               <ul id="report-deficits" class="deficit-list">
                 <li>Sin déficits neurológicos. Conducta y funciones superiores normales.</li>
               </ul>
