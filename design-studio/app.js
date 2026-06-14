@@ -1322,8 +1322,27 @@ function importMarkdown(text) {
 
     const type = item.depth <= 2 ? "concept" : "process";
     const nodeId = "n" + state.nextId++;
-    const width = type === "concept" ? 170 : 150;
-    const height = type === "concept" ? 72 : 64;
+    
+    // Estimate optimal node size based on text length
+    let estWidth = 200;
+    if (title.length > 20 || body.length > 30) {
+      estWidth = 240;
+    }
+    
+    // Approximate wrapping: 15px font (approx 8.5px/char) for title, 12px font (approx 7px/char) for body
+    const titleCharsPerLine = Math.max(12, Math.floor((estWidth - 28) / 8.5));
+    const bodyCharsPerLine = Math.max(15, Math.floor((estWidth - 28) / 7.0));
+    
+    const titleLines = Math.ceil(title.length / titleCharsPerLine);
+    const bodyLines = body ? Math.ceil(body.length / bodyCharsPerLine) : 0;
+    
+    let estHeight = 28 + (titleLines * 18);
+    if (body) {
+      estHeight += 8 + (bodyLines * 15);
+    }
+    
+    const width = snapValue(estWidth);
+    const height = snapValue(Math.max(type === "concept" ? 80 : 70, estHeight));
 
     const node = {
       id: nodeId,
@@ -1793,6 +1812,13 @@ window.addEventListener("keydown", event => {
     if (key === "a") {
       event.preventDefault();
       selectAllNodes();
+      return;
+    }
+  }
+  if (!["INPUT", "TEXTAREA"].includes(document.activeElement.tagName) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    if (event.key.toLowerCase() === "c" || event.key.toLowerCase() === "l") {
+      event.preventDefault();
+      connectSelected();
       return;
     }
   }
