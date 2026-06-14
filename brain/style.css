@@ -202,16 +202,16 @@ h1 {
 .brain-region {
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  stroke: #060910;
-  stroke-width: 2.5px;
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 1.5px;
   stroke-linejoin: round;
-  fill-opacity: 0.75;
+  fill-opacity: 0; /* Make it transparent so background image is fully visible */
 }
 
 .brain-region:hover {
-  fill-opacity: 0.95;
+  fill-opacity: 0.35; /* Semi-transparent color overlay */
   stroke: #fff;
-  stroke-width: 3px;
+  stroke-width: 2.5px;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
 }
 
@@ -227,16 +227,16 @@ h1 {
 /* Active (selected) Region */
 .brain-region.selected-region {
   stroke: #fff;
-  stroke-width: 3.5px;
-  fill-opacity: 1;
+  stroke-width: 2.5px;
+  fill-opacity: 0.35; /* Keep it highlighted */
 }
 
 /* Damaged Region (Lesion Mode) */
 .brain-region.damaged {
-  fill: #27272a !important; /* Greyed out */
+  fill: #000000 !important; /* Darken the image region to look visually damaged */
   stroke: #ef4444;
   stroke-width: 3px;
-  fill-opacity: 0.85;
+  fill-opacity: 0.65 !important;
   animation: pulse-lesion 2s infinite alternate;
 }
 
