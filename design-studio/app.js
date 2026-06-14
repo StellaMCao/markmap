@@ -1,0 +1,1785 @@
+// JS logic for Estudio de Diseños - Antigravity update
+
+const helpCommands = [
+  ["?", "Abrir ayuda", "Muestra este panel con comandos, atajos y acciones disponibles."],
+  ["F1", "Abrir ayuda", "También abre esta guía rápida desde cualquier parte del editor."],
+  ["Esc", "Cerrar ayuda", "Cierra el panel de ayuda o cancela la lectura actual."],
+  ["Click en modo", "Cambiar diseño", "Carga plantillas para mapa conceptual, flujo, wireframe, moodboard, roadmap, organigrama, canvas o redes."],
+  ["Botones de elementos", "Agregar piezas", "Inserta bloques, conceptos, decisiones, notas, imágenes, pantallas, tarjetas o hitos."],
+  ["Doble click en imagen", "Cargar imagen", "Abre el selector de archivo cuando el elemento seleccionado es de tipo Imagen."],
+  ["Inspector > Archivo", "Cambiar imagen", "Permite cargar o reemplazar una imagen dentro de un bloque Imagen."],
+  ["Arrastrar", "Mover elemento", "Reposiciona cualquier pieza dentro del lienzo."],
+  ["Doble click", "Editar título", "Selecciona el elemento y enfoca el campo de título en el inspector."],
+  ["Shift + click", "Seleccionar dos", "Permite elegir dos elementos para conectarlos."],
+  ["Click en línea", "Editar conexión", "Selecciona una conexión para ajustar tipo, color, grosor, curvatura o desvío."],
+  ["Punto azul", "Ajuste manual", "Arrastralo en una conexión seleccionada para cambiar la Bézier o la ortogonal."],
+  ["Ctrl + Z", "Deshacer", "Revierte el último cambio importante del proyecto."],
+  ["Ctrl + Y", "Rehacer", "Recupera un cambio deshecho."],
+  ["Ctrl + C / Ctrl + V", "Copiar y pegar", "Duplica el elemento seleccionado sin pasar por el menú."],
+  ["Ctrl + A", "Seleccionar todo", "Selecciona todos los elementos para alinear o distribuir."],
+  ["Buscar", "Encontrar elemento", "Busca por título, detalle o etiqueta de conexión."],
+  ["Encajar", "Ver todo", "Ajusta el zoom para que el diseño entre en pantalla."],
+  ["PNG", "Exportar imagen", "Descarga una imagen raster del diseño para compartir rápido."],
+  ["Presentar", "Despliegue progresivo", "Muestra nodos y conexiones por pasos."],
+  ["Auto pasos", "Calcular niveles", "Asigna pasos desde el elemento seleccionado siguiendo conexiones."],
+  ["Conectar seleccionados", "Crear flecha", "Une los dos últimos elementos seleccionados con una conexión."],
+  ["Tipo de conexión", "Cambiar líneas", "Permite elegir conexiones Bézier curvas, rectas u ortogonales."],
+  ["Etiqueta de línea", "Nombrar relación", "Agrega texto breve sobre una conexión, como sí/no o causa/efecto."],
+  ["Inspector", "Estética del elemento", "Edita tipografía, tamaño de texto, alineación, borde, redondez y colores."],
+  ["Adelante / Atrás", "Orden de capas", "Cambia qué elementos quedan visualmente por encima o por debajo."],
+  ["Ajustar a grilla", "Movimiento prolijo", "Hace que los elementos encajen al moverse para alinear diseños."],
+  ["Bloquear posición", "Evitar movimientos", "Impide arrastrar accidentalmente un elemento."],
+  ["Delete / Backspace", "Borrar selección", "Elimina los elementos seleccionados cuando no estás escribiendo texto."],
+  ["Guardar", "Guardar local", "Guarda el proyecto en este navegador para recuperarlo después."],
+  ["Cargar", "Recuperar guardado", "Trae el último proyecto guardado localmente."],
+  ["Importar", "Abrir JSON", "Carga un archivo JSON exportado desde esta misma app."],
+  ["SVG", "Exportar imagen", "Descarga el diseño como archivo SVG editable."],
+  ["JSON", "Exportar proyecto", "Descarga los datos del proyecto para respaldar o reutilizar."],
+  ["+ / −", "Zoom", "Acerca o aleja el lienzo."],
+  ["Inspector", "Editar propiedades", "Cambia texto, tamaño, color de fondo, borde y tipo de pieza."]
+];
+
+const modes = [
+  { id: "concept", name: "Mapa conceptual" },
+  { id: "flow", name: "Flujo" },
+  { id: "wireframe", name: "Wireframe" },
+  { id: "moodboard", name: "Moodboard" },
+  { id: "roadmap", name: "Roadmap" },
+  { id: "org", name: "Organigrama" },
+  { id: "canvas", name: "Canvas negocio" },
+  { id: "social", name: "Redes" }
+];
+
+const templates = {
+  concept: { name: "Ideas conectadas", nodes: [
+    ["concept", "Idea central", "Tema principal", 280, 240, 180, 92, "#e7f0ff", "#2563eb"],
+    ["process", "Causa", "Qué lo impulsa", 40, 140, 140, 70, "#ffffff", "#111827"],
+    ["process", "Efecto", "Qué cambia", 520, 140, 140, 70, "#ffffff", "#111827"],
+    ["note", "Pregunta", "Algo para investigar", 290, 420, 160, 84, "#fff3a3", "#c8940e"]
+  ], links: [[0,1], [0,2], [0,3]] },
+  flow: { name: "Proceso con decisión", nodes: [
+    ["process", "Inicio", "Entrada", 60, 240, 130, 60, "#e8fff4", "#17835b"],
+    ["process", "Paso 1", "Acción", 260, 240, 130, 60, "#ffffff", "#111827"],
+    ["decision", "¿OK?", "Condición", 460, 210, 112, 112, "#fff7ed", "#e05d42"],
+    ["process", "Final", "Salida", 660, 240, 130, 60, "#e7f0ff", "#2563eb"]
+  ], links: [[0,1], [1,2], [2,3]] },
+  wireframe: { name: "App móvil", nodes: [
+    ["phone", "Inicio", "Header, contenido y acción principal", 200, 100, 190, 310, "#fbfdff", "#111827"],
+    ["card", "Hero", "Mensaje principal", 220, 140, 150, 80, "#e7f0ff", "#2563eb"],
+    ["card", "Lista", "Items o cards", 220, 240, 150, 90, "#ffffff", "#94a3b8"],
+    ["process", "CTA", "Continuar", 240, 350, 110, 40, "#111827", "#111827"]
+  ], links: [] },
+  moodboard: { name: "Moodboard visual", nodes: [
+    ["image", "Referencia", "Imagen principal", 80, 120, 220, 140, "#eef4ff", "#2563eb"],
+    ["image", "Textura", "Material o detalle", 340, 120, 180, 140, "#f6f1ff", "#7c3aed"],
+    ["note", "Sensación", "Palabras clave", 560, 140, 150, 110, "#fff3a3", "#c8940e"],
+    ["card", "Paleta", "#2563eb  #17835b  #e05d42", 200, 320, 320, 80, "#ffffff", "#111827"]
+  ], links: [] },
+  roadmap: { name: "Roadmap trimestral", nodes: [
+    ["timeline", "Q1", "Explorar", 60, 240, 180, 56, "#ffffff", "#2563eb"],
+    ["timeline", "Q2", "Construir", 280, 240, 180, 56, "#ffffff", "#17835b"],
+    ["timeline", "Q3", "Lanzar", 500, 240, 180, 56, "#ffffff", "#e05d42"],
+    ["timeline", "Q4", "Escalar", 720, 240, 180, 56, "#ffffff", "#7c3aed"]
+  ], links: [[0,1], [1,2], [2,3]] },
+  org: { name: "Equipo", nodes: [
+    ["concept", "Dirección", "Responsable", 360, 80, 160, 78, "#111827", "#111827"],
+    ["process", "Producto", "Equipo A", 120, 240, 150, 70, "#e7f0ff", "#2563eb"],
+    ["process", "Diseño", "Equipo B", 360, 240, 150, 70, "#fff7ed", "#e05d42"],
+    ["process", "Tecnología", "Equipo C", 600, 240, 150, 70, "#e8fff4", "#17835b"]
+  ], links: [[0,1], [0,2], [0,3]] },
+  canvas: { name: "Business canvas", nodes: [
+    ["card", "Clientes", "Segmentos", 60, 100, 180, 130, "#ffffff", "#2563eb"],
+    ["card", "Propuesta", "Valor", 280, 100, 220, 130, "#ffffff", "#111827"],
+    ["card", "Canales", "Cómo llega", 540, 100, 180, 130, "#ffffff", "#17835b"],
+    ["card", "Costos", "Estructura", 160, 280, 240, 120, "#fff7ed", "#e05d42"],
+    ["card", "Ingresos", "Modelo", 440, 280, 240, 120, "#f6f1ff", "#7c3aed"]
+  ], links: [] },
+  social: { name: "Post + carrusel", nodes: [
+    ["card", "Portada", "Título del post", 60, 100, 220, 220, "#111827", "#111827"],
+    ["image", "Imagen", "Visual principal", 320, 100, 220, 220, "#eef4ff", "#2563eb"],
+    ["note", "Copy", "Texto breve y claro", 580, 120, 170, 150, "#fff3a3", "#c8940e"]
+  ], links: [] }
+};
+
+let state = {
+  mode: "concept",
+  projectName: "Nuevo diseño",
+  nodes: [],
+  links: [],
+  selected: [],
+  selectedLink: null,
+  presenting: false,
+  currentStep: 1,
+  zoom: 1,
+  nextId: 1,
+  nextLinkId: 1,
+  connectionStyle: "bezier",
+  connectionColor: "#3d4652",
+  connectionWidth: 2.5,
+  snapToGrid: true,
+  gridSize: 20,
+  showGrid: true
+};
+
+let history = [];
+let historyIndex = -1;
+let clipboardNode = null;
+let searchMatches = [];
+let searchIndex = -1;
+
+// Elements DOM
+const canvas = document.getElementById("canvas");
+const shell = document.getElementById("canvasShell");
+const connectorLayer = document.getElementById("connectorLayer");
+const modeTabs = document.getElementById("modeTabs");
+const templateList = document.getElementById("templateList");
+const helpOverlay = document.getElementById("helpOverlay");
+const helpSearch = document.getElementById("helpSearch");
+const commandList = document.getElementById("commandList");
+const props = document.getElementById("props");
+const linkProps = document.getElementById("linkProps");
+const emptyInspector = document.getElementById("emptyInspector");
+
+const fields = {
+  title: document.getElementById("titleInput"),
+  body: document.getElementById("bodyInput"),
+  width: document.getElementById("widthInput"),
+  height: document.getElementById("heightInput"),
+  fill: document.getElementById("fillInput"),
+  stroke: document.getElementById("strokeInput"),
+  textColor: document.getElementById("textColorInput"),
+  bodyColor: document.getElementById("bodyColorInput"),
+  borderWidth: document.getElementById("borderWidthInput"),
+  radius: document.getElementById("radiusInput"),
+  fontFamily: document.getElementById("fontFamilyInput"),
+  titleSize: document.getElementById("titleSizeInput"),
+  bodySize: document.getElementById("bodySizeInput"),
+  textAlign: document.getElementById("textAlignInput"),
+  revealStep: document.getElementById("revealStepInput"),
+  opacity: document.getElementById("opacityInput"),
+  shadow: document.getElementById("shadowInput"),
+  locked: document.getElementById("lockedInput"),
+  type: document.getElementById("typeInput"),
+  image: document.getElementById("imageInput")
+};
+const imageControls = document.getElementById("imageControls");
+const linkFields = {
+  label: document.getElementById("linkLabelInput"),
+  style: document.getElementById("linkStyleInput"),
+  color: document.getElementById("linkColorInput"),
+  width: document.getElementById("linkWidthInput"),
+  curve: document.getElementById("linkCurveInput"),
+  offset: document.getElementById("linkOffsetInput"),
+  revealStep: document.getElementById("linkRevealStepInput"),
+  dash: document.getElementById("linkDashInput"),
+  arrow: document.getElementById("linkArrowInput")
+};
+
+// Custom layout variables (Grid & Snap)
+const showGridInput = document.getElementById("showGridInput");
+const snapInputHud = document.getElementById("snapInputHud");
+const snapInputInspector = document.getElementById("snapInput");
+const gridSizeInput = document.getElementById("gridSizeInput");
+
+// Markdown Markmap Drawer Elements
+const markdownDrawer = document.getElementById("markdownDrawer");
+const markdownTextarea = document.getElementById("markdownTextarea");
+const importMarkdownBtn = document.getElementById("importMarkdownBtn");
+const exportMarkdownBtn = document.getElementById("exportMarkdownBtn");
+const closeMarkdownBtn = document.getElementById("closeMarkdownBtn");
+const markdownToggleBtn = document.getElementById("markdownToggleBtn");
+
+// Theme toggler
+const themeToggleBtn = document.getElementById("themeToggleBtn");
+
+function createNode(type, title, body, x, y, width, height, fill, stroke) {
+  return {
+    id: "n" + state.nextId++,
+    type,
+    title,
+    body,
+    x: snapValue(x),
+    y: snapValue(y),
+    width,
+    height,
+    fill,
+    stroke,
+    borderWidth: 2,
+    radius: defaultRadius(type),
+    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+    titleSize: 16,
+    bodySize: 13,
+    textColor: "#202124",
+    bodyColor: "#4c5562",
+    textAlign: type === "concept" || type === "image" ? "center" : "left",
+    revealStep: 1,
+    opacity: 100,
+    shadow: "soft",
+    locked: false,
+    imageSrc: ""
+  };
+}
+
+function createLink(from, to, overrides = {}) {
+  return {
+    id: "l" + state.nextLinkId++,
+    from,
+    to,
+    style: state.connectionStyle || "bezier",
+    color: state.connectionColor || "#3d4652",
+    width: normalizedNumber(state.connectionWidth, 2.5),
+    curve: 120,
+    offset: 0,
+    label: "",
+    revealStep: 1,
+    dash: "solid",
+    arrow: "end",
+    ...overrides
+  };
+}
+
+function defaultRadius(type) {
+  if (type === "concept") return 50;
+  if (type === "phone") return 24;
+  if (type === "note") return 4;
+  return 8;
+}
+
+function loadTemplate(id) {
+  const tpl = templates[id];
+  state.mode = id;
+  state.nextId = 1;
+  state.nextLinkId = 1;
+  state.nodes = tpl.nodes.map(args => createNode(...args));
+  state.links = tpl.links.map(([from, to]) => createLink(state.nodes[from].id, state.nodes[to].id));
+  state.selected = [];
+  state.selectedLink = null;
+  document.getElementById("projectName").value = tpl.name;
+  state.projectName = tpl.name;
+  syncCanvasControls();
+  render();
+  commitHistory();
+}
+
+function renderModes() {
+  modeTabs.innerHTML = "";
+  modes.forEach(mode => {
+    const button = document.createElement("button");
+    button.className = "mode-tab" + (mode.id === state.mode ? " active" : "");
+    button.textContent = mode.name;
+    button.addEventListener("click", () => loadTemplate(mode.id));
+    modeTabs.appendChild(button);
+  });
+}
+
+function renderTemplates() {
+  templateList.innerHTML = "";
+  modes.forEach(mode => {
+    const button = document.createElement("button");
+    button.className = "template";
+    button.innerHTML = `<span>${templates[mode.id].name}</span><strong>Usar</strong>`;
+    button.addEventListener("click", () => loadTemplate(mode.id));
+    templateList.appendChild(button);
+  });
+}
+
+function renderHelp(filter = "") {
+  const term = filter.trim().toLowerCase();
+  const items = helpCommands.filter(command => command.join(" ").toLowerCase().includes(term));
+  commandList.innerHTML = items.length ? items.map(command => `
+    <div class="command">
+      <kbd>${escapeHtml(command[0])}</kbd>
+      <div><strong>${escapeHtml(command[1])}</strong><span>${escapeHtml(command[2])}</span></div>
+    </div>
+  `).join("") : `<div class="empty-state">No encontré comandos con esa búsqueda.</div>`;
+}
+
+function openHelp() {
+  renderHelp(helpSearch.value);
+  helpOverlay.classList.add("open");
+  helpSearch.focus();
+  helpSearch.select();
+}
+
+function closeHelp() {
+  helpOverlay.classList.remove("open");
+}
+
+function render() {
+  renderModes();
+  renderNodes();
+  renderLinks();
+  syncInspector();
+  syncPresentationControls();
+  updateVisualGrid();
+  canvas.style.transform = `scale(${state.zoom})`;
+  document.getElementById("zoomLabel").textContent = Math.round(state.zoom * 100) + "%";
+}
+
+function updateVisualGrid() {
+  if (state.showGrid) {
+    canvas.style.setProperty("--grid-size", `${state.gridSize}px`);
+    canvas.style.backgroundImage = `radial-gradient(var(--grid-dot) 1.5px, transparent 1.5px)`;
+  } else {
+    canvas.style.backgroundImage = 'none';
+  }
+}
+
+function renderNodes() {
+  canvas.querySelectorAll(".node").forEach(node => node.remove());
+  state.nodes.forEach(node => {
+    const el = document.createElement("div");
+    el.className = `node ${node.type}` + (state.selected.includes(node.id) ? " selected" : "") + (isVisibleAtStep(node) ? " revealed-step" : " hidden-step");
+    el.dataset.id = node.id;
+    el.style.left = node.x + "px";
+    el.style.top = node.y + "px";
+    el.style.width = node.width + "px";
+    el.style.height = node.height + "px";
+    el.style.background = node.fill;
+    el.style.borderColor = node.stroke;
+    el.style.borderWidth = normalizedNumber(node.borderWidth, 2) + "px";
+    el.style.borderRadius = normalizedNumber(node.radius, defaultRadius(node.type)) + "px";
+    el.style.fontFamily = node.fontFamily || "Inter, ui-sans-serif, system-ui, sans-serif";
+    el.style.opacity = normalizedNumber(node.opacity, 100) / 100;
+    el.style.boxShadow = getShadow(node.shadow);
+    el.style.textAlign = node.textAlign || "left";
+    el.style.justifyContent = node.textAlign === "center" ? "center" : node.textAlign === "right" ? "flex-end" : "flex-start";
+    el.style.alignItems = node.textAlign === "center" ? "center" : node.textAlign === "right" ? "flex-end" : "flex-start";
+    el.style.cursor = node.locked ? "not-allowed" : "grab";
+    if (node.type === "timeline") el.style.borderBottomColor = node.stroke;
+    if (node.type === "image" && node.imageSrc) el.classList.add("has-image");
+    el.innerHTML = getNodeMarkup(node);
+    el.addEventListener("pointerdown", startDrag);
+    el.addEventListener("dblclick", () => {
+      selectNode(node.id, false);
+      if (node.type === "image") {
+        fields.image.click();
+      } else {
+        fields.title.focus();
+        fields.title.select();
+      }
+    });
+    canvas.appendChild(el);
+  });
+}
+
+function getNodeMarkup(node) {
+  if (node.type === "image" && node.imageSrc) {
+    return `<img src="${escapeAttribute(node.imageSrc)}" alt="${escapeAttribute(node.title || "Imagen")}">`;
+  }
+  const imageIcon = node.type === "image" ? `<div class="image-placeholder"></div>` : "";
+  const titleSize = normalizedNumber(node.titleSize, 16);
+  const bodySize = normalizedNumber(node.bodySize, 13);
+  const textColor = node.textColor || "var(--ink)";
+  const bodyColor = node.bodyColor || "var(--muted)";
+  return `${imageIcon}<div class="title" style="font-size:${titleSize}px;color:${textColor}">${escapeHtml(node.title)}</div><div class="body" style="font-size:${bodySize}px;color:${bodyColor}">${escapeHtml(node.body)}</div>`;
+}
+
+function renderLinks() {
+  connectorLayer.querySelectorAll(".connector-line, .connector-handle").forEach(line => line.remove());
+  canvas.querySelectorAll(".connector-label").forEach(label => label.remove());
+  state.links.forEach(link => {
+    normalizeLink(link);
+    const from = state.nodes.find(node => node.id === link.from);
+    const to = state.nodes.find(node => node.id === link.to);
+    if (!from || !to) return;
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const x1 = from.x + from.width / 2;
+    const y1 = from.y + from.height / 2;
+    const x2 = to.x + to.width / 2;
+    const y2 = to.y + to.height / 2;
+    line.setAttribute("class", "connector-line" + (state.selectedLink === link.id ? " selected" : ""));
+    if (!isVisibleAtStep(link)) line.classList.add("hidden-step");
+    else line.classList.add("revealed-step");
+    line.setAttribute("d", getConnectorPath(x1, y1, x2, y2, link));
+    line.style.stroke = link.color || state.connectionColor || "#3d4652";
+    line.style.strokeWidth = normalizedNumber(link.width, state.connectionWidth || 2.5);
+    line.style.strokeDasharray = getDashArray(link);
+    line.style.markerEnd = link.arrow === "none" ? "none" : "url(#arrow)";
+    line.dataset.id = link.id;
+    line.addEventListener("click", event => {
+      event.stopPropagation();
+      selectLink(link.id);
+    });
+    connectorLayer.appendChild(line);
+    if (link.label) renderConnectorLabel(link, x1, y1, x2, y2);
+    if (state.selectedLink === link.id && link.style !== "straight") {
+      renderConnectorHandle(link, x1, y1, x2, y2);
+    }
+  });
+}
+
+function renderConnectorLabel(link, x1, y1, x2, y2) {
+  const label = document.createElement("div");
+  const point = getConnectorLabelPoint(x1, y1, x2, y2, link);
+  label.className = "connector-label";
+  if (!isVisibleAtStep(link)) label.classList.add("hidden-step");
+  else label.classList.add("revealed-step");
+  label.textContent = link.label;
+  label.style.left = point.x + "px";
+  label.style.top = point.y + "px";
+  canvas.appendChild(label);
+}
+
+function getConnectorLabelPoint(x1, y1, x2, y2, link) {
+  if (link.style === "orthogonal") {
+    return { x: (x1 + x2) / 2 + normalizedNumber(link.offset, 0), y: (y1 + y2) / 2 };
+  }
+  if (link.style === "bezier") {
+    const direction = x2 >= x1 ? 1 : -1;
+    return { x: (x1 + x2) / 2 + direction * normalizedNumber(link.curve, 120) / 8, y: (y1 + y2) / 2 };
+  }
+  return { x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
+}
+
+function renderConnectorHandle(link, x1, y1, x2, y2) {
+  const handle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  const point = getConnectorHandlePoint(x1, y1, x2, y2, link);
+  handle.setAttribute("class", "connector-handle");
+  handle.setAttribute("cx", point.x);
+  handle.setAttribute("cy", point.y);
+  handle.setAttribute("r", Math.max(6, normalizedNumber(link.width, 2.5) + 4));
+  handle.addEventListener("pointerdown", event => startLinkHandleDrag(event, link.id));
+  connectorLayer.appendChild(handle);
+}
+
+function getConnectorHandlePoint(x1, y1, x2, y2, link) {
+  if (link.style === "orthogonal") {
+    return { x: (x1 + x2) / 2 + normalizedNumber(link.offset, 0), y: (y1 + y2) / 2 };
+  }
+  const direction = x2 >= x1 ? 1 : -1;
+  return { x: (x1 + x2) / 2 + direction * normalizedNumber(link.curve, 120) / 2, y: (y1 + y2) / 2 };
+}
+
+function startLinkHandleDrag(event, linkId) {
+  event.stopPropagation();
+  const link = state.links.find(item => item.id === linkId);
+  const from = state.nodes.find(node => node.id === link.from);
+  const to = state.nodes.find(node => node.id === link.to);
+  if (!link || !from || !to) return;
+  const startX = event.clientX;
+  const originalCurve = normalizedNumber(link.curve, 120);
+  const originalOffset = normalizedNumber(link.offset, 0);
+  const direction = (to.x + to.width / 2) >= (from.x + from.width / 2) ? 1 : -1;
+  event.currentTarget.setPointerCapture(event.pointerId);
+
+  function move(moveEvent) {
+    const deltaX = (moveEvent.clientX - startX) / state.zoom;
+    if (link.style === "orthogonal") {
+      link.offset = Math.round(originalOffset + deltaX);
+      linkFields.offset.value = link.offset;
+    } else {
+      link.curve = Math.max(20, Math.round(originalCurve + deltaX * direction * 2));
+      linkFields.curve.value = link.curve;
+    }
+    renderLinks();
+  }
+
+  function stop() {
+    commitHistory();
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", stop);
+  }
+
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", stop);
+}
+
+function getConnectorPath(x1, y1, x2, y2, link = {}) {
+  const style = link.style || state.connectionStyle || "bezier";
+  if (style === "straight") {
+    return `M ${x1} ${y1} L ${x2} ${y2}`;
+  }
+  if (style === "orthogonal") {
+    const midX = (x1 + x2) / 2 + normalizedNumber(link.offset, 0);
+    return `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+  }
+  const direction = x2 >= x1 ? 1 : -1;
+  const curve = normalizedNumber(link.curve, 120);
+  return `M ${x1} ${y1} C ${x1 + direction * curve} ${y1}, ${x2 - direction * curve} ${y2}, ${x2} ${y2}`;
+}
+
+function getDashArray(link) {
+  const width = normalizedNumber(link.width, 2.5);
+  if (link.dash === "dash") return `${width * 4} ${width * 2.5}`;
+  if (link.dash === "dot") return `1 ${width * 2.6}`;
+  return "none";
+}
+
+function normalizeLink(link) {
+  if (!link.id) link.id = "l" + state.nextLinkId++;
+  if (!link.style) link.style = state.connectionStyle || "bezier";
+  if (!link.color) link.color = state.connectionColor || "#3d4652";
+  if (!Number.isFinite(Number(link.width))) link.width = normalizedNumber(state.connectionWidth, 2.5);
+  if (!Number.isFinite(Number(link.curve))) link.curve = 120;
+  if (!Number.isFinite(Number(link.offset))) link.offset = 0;
+  if (typeof link.label !== "string") link.label = "";
+  if (!Number.isFinite(Number(link.revealStep))) link.revealStep = Math.max(getRevealStep(link.from), getRevealStep(link.to));
+  if (!["solid", "dash", "dot"].includes(link.dash)) link.dash = "solid";
+  if (!["end", "none"].includes(link.arrow)) link.arrow = "end";
+  return link;
+}
+
+function getRevealStep(itemOrId) {
+  const item = typeof itemOrId === "string"
+    ? state.nodes.find(node => node.id === itemOrId) || state.links.find(link => link.id === itemOrId)
+    : itemOrId;
+  return Math.max(1, normalizedNumber(item?.revealStep, 1));
+}
+
+function isVisibleAtStep(item) {
+  return !state.presenting || getRevealStep(item) <= state.currentStep;
+}
+
+function getSelectedLink() {
+  return state.links.find(link => link.id === state.selectedLink);
+}
+
+function selectLink(id) {
+  state.selected = [];
+  state.selectedLink = id;
+  render();
+}
+
+function startDrag(event) {
+  const id = event.currentTarget.dataset.id;
+  setSelection(id, event.shiftKey);
+  syncSelectionClasses();
+  syncInspector();
+  const node = state.nodes.find(item => item.id === id);
+  if (node.locked) return;
+  const startX = event.clientX;
+  const startY = event.clientY;
+  const originalX = node.x;
+  const originalY = node.y;
+  event.currentTarget.setPointerCapture(event.pointerId);
+
+  function move(moveEvent) {
+    node.x = snapValue(Math.round(originalX + (moveEvent.clientX - startX) / state.zoom));
+    node.y = snapValue(Math.round(originalY + (moveEvent.clientY - startY) / state.zoom));
+    renderNodes();
+    renderLinks();
+  }
+
+  function stop() {
+    if (node.x !== originalX || node.y !== originalY) commitHistory();
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", stop);
+  }
+
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", stop);
+}
+
+function selectNode(id, multi) {
+  setSelection(id, multi);
+  state.selectedLink = null;
+  render();
+}
+
+function setSelection(id, multi) {
+  state.selectedLink = null;
+  if (multi) {
+    state.selected = state.selected.includes(id)
+      ? state.selected.filter(item => item !== id)
+      : [...state.selected, id];
+  } else {
+    state.selected = [id];
+  }
+}
+
+function syncSelectionClasses() {
+  canvas.querySelectorAll(".node").forEach(el => {
+    el.classList.toggle("selected", state.selected.includes(el.dataset.id));
+  });
+}
+
+function syncInspector() {
+  const node = getPrimaryNode();
+  const link = getSelectedLink();
+  props.hidden = !node;
+  linkProps.hidden = !link;
+  emptyInspector.hidden = !!node || !!link;
+  if (link) {
+    normalizeLink(link);
+    linkFields.label.value = link.label || "";
+    linkFields.style.value = link.style;
+    linkFields.color.value = normalizeColor(link.color);
+    linkFields.width.value = normalizedNumber(link.width, 2.5);
+    linkFields.curve.value = normalizedNumber(link.curve, 120);
+    linkFields.offset.value = normalizedNumber(link.offset, 0);
+    linkFields.revealStep.value = getRevealStep(link);
+    linkFields.dash.value = link.dash || "solid";
+    linkFields.arrow.value = link.arrow || "end";
+    return;
+  }
+  if (!node) return;
+  fields.title.value = node.title;
+  fields.body.value = node.body;
+  fields.width.value = node.width;
+  fields.height.value = node.height;
+  fields.fill.value = normalizeColor(node.fill);
+  fields.stroke.value = normalizeColor(node.stroke);
+  fields.textColor.value = normalizeColor(node.textColor || "#202124");
+  fields.bodyColor.value = normalizeColor(node.bodyColor || "#4c5562");
+  fields.borderWidth.value = normalizedNumber(node.borderWidth, 2);
+  fields.radius.value = normalizedNumber(node.radius, defaultRadius(node.type));
+  fields.fontFamily.value = node.fontFamily || "Inter, ui-sans-serif, system-ui, sans-serif";
+  fields.titleSize.value = normalizedNumber(node.titleSize, 16);
+  fields.bodySize.value = normalizedNumber(node.bodySize, 13);
+  fields.textAlign.value = node.textAlign || "left";
+  fields.revealStep.value = getRevealStep(node);
+  fields.opacity.value = normalizedNumber(node.opacity, 100);
+  fields.shadow.value = node.shadow || "soft";
+  fields.locked.checked = !!node.locked;
+  fields.type.value = node.type;
+  imageControls.hidden = node.type !== "image";
+  fields.image.value = "";
+}
+
+function getPrimaryNode() {
+  return state.nodes.find(node => node.id === state.selected[state.selected.length - 1]);
+}
+
+function updatePrimary(patch) {
+  const node = getPrimaryNode();
+  if (!node) return;
+  Object.assign(node, patch);
+  render();
+  commitHistory();
+}
+
+function updateSelectedLink(patch) {
+  const link = getSelectedLink();
+  if (!link) return;
+  Object.assign(link, patch);
+  render();
+  commitHistory();
+}
+
+function addNode(type) {
+  const labels = {
+    process: ["Bloque", "Texto de apoyo"],
+    concept: ["Concepto", "Idea relacionada"],
+    decision: ["Decisión", "Sí o no"],
+    note: ["Nota", "Recordatorio"],
+    image: ["Imagen", "Referencia visual"],
+    phone: ["Pantalla", "Wireframe"],
+    card: ["Tarjeta", "Contenido"],
+    timeline: ["Hito", "Fecha o fase"]
+  };
+  const [title, body] = labels[type];
+  const node = createNode(type, title, body, 200 + state.nodes.length * 20, 200 + state.nodes.length * 20, type === "phone" ? 160 : 150, type === "phone" ? 250 : 76, "#ffffff", "#111827");
+  if (type === "note") Object.assign(node, { fill: "#fff3a3", stroke: "#c8940e", width: 155, height: 98, radius: 4 });
+  if (type === "image") Object.assign(node, { fill: "#eef4ff", stroke: "#2563eb", width: 190, height: 126, textAlign: "center" });
+  if (type === "timeline") Object.assign(node, { fill: "#ffffff", stroke: "#2563eb", width: 170, height: 56, radius: 0 });
+  state.nodes.push(node);
+  state.selected = [node.id];
+  render();
+  commitHistory();
+}
+
+function duplicateNode() {
+  const node = getPrimaryNode();
+  if (!node) return;
+  const copy = { ...node, id: "n" + state.nextId++, x: snapValue(node.x + 40), y: snapValue(node.y + 40), title: node.title + " copia" };
+  state.nodes.push(copy);
+  state.selected = [copy.id];
+  render();
+  commitHistory();
+}
+
+function deleteNode() {
+  if (state.selectedLink) {
+    deleteSelectedLink();
+    return;
+  }
+  if (!state.selected.length) return;
+  const selected = new Set(state.selected);
+  state.nodes = state.nodes.filter(node => !selected.has(node.id));
+  state.links = state.links.filter(link => !selected.has(link.from) && !selected.has(link.to));
+  state.selected = [];
+  render();
+  commitHistory();
+}
+
+function connectSelected() {
+  if (state.selected.length < 2) return;
+  const recent = state.selected.slice(-2);
+  const fromRecent = recent[0];
+  const toRecent = recent[1];
+  if (fromRecent === toRecent) return;
+  const exists = state.links.some(link => link.from === fromRecent && link.to === toRecent);
+  if (!exists) state.links.push(createLink(fromRecent, toRecent));
+  renderLinks();
+  if (!exists) commitHistory();
+}
+
+function deleteSelectedLink() {
+  if (!state.selectedLink) return;
+  state.links = state.links.filter(link => link.id !== state.selectedLink);
+  state.selectedLink = null;
+  render();
+  commitHistory();
+}
+
+function copyNode() {
+  const node = getPrimaryNode();
+  if (!node) return;
+  clipboardNode = JSON.parse(JSON.stringify(node));
+}
+
+function pasteNode() {
+  if (!clipboardNode) return;
+  const copy = {
+    ...JSON.parse(JSON.stringify(clipboardNode)),
+    id: "n" + state.nextId++,
+    x: snapValue(clipboardNode.x + 40),
+    y: snapValue(clipboardNode.y + 40),
+    title: clipboardNode.title + " copia",
+    locked: false
+  };
+  state.nodes.push(copy);
+  state.selected = [copy.id];
+  render();
+  commitHistory();
+}
+
+function duplicateSelection() {
+  const selected = getSelectedNodes();
+  if (!selected.length) return duplicateNode();
+  const copies = selected.map(node => ({
+    ...JSON.parse(JSON.stringify(node)),
+    id: "n" + state.nextId++,
+    x: snapValue(node.x + 40),
+    y: snapValue(node.y + 40),
+    title: node.title + " copia",
+    locked: false
+  }));
+  state.nodes.push(...copies);
+  state.selected = copies.map(node => node.id);
+  render();
+  commitHistory();
+}
+
+function moveLayer(direction) {
+  const node = getPrimaryNode();
+  if (!node) return;
+  const index = state.nodes.findIndex(item => item.id === node.id);
+  const nextIndex = direction === "forward" ? Math.min(state.nodes.length - 1, index + 1) : Math.max(0, index - 1);
+  if (index === nextIndex) return;
+  const [item] = state.nodes.splice(index, 1);
+  state.nodes.splice(nextIndex, 0, item);
+  render();
+  commitHistory();
+}
+
+function getSelectedNodes() {
+  const selected = new Set(state.selected);
+  return state.nodes.filter(node => selected.has(node.id) && !node.locked);
+}
+
+function selectAllNodes() {
+  state.selected = state.nodes.map(node => node.id);
+  state.selectedLink = null;
+  render();
+}
+
+function setAllLocked(locked) {
+  state.nodes.forEach(node => {
+    node.locked = locked;
+  });
+  render();
+  commitHistory();
+}
+
+function alignSelected(edge) {
+  const nodes = getSelectedNodes();
+  if (nodes.length < 2) return;
+  const minX = Math.min(...nodes.map(node => node.x));
+  const maxX = Math.max(...nodes.map(node => node.x + node.width));
+  const minY = Math.min(...nodes.map(node => node.y));
+  const maxY = Math.max(...nodes.map(node => node.y + node.height));
+  nodes.forEach(node => {
+    if (edge === "left") node.x = snapValue(minX);
+    if (edge === "center") node.x = snapValue(Math.round((minX + maxX - node.width) / 2));
+    if (edge === "right") node.x = snapValue(maxX - node.width);
+    if (edge === "top") node.y = snapValue(minY);
+    if (edge === "bottom") node.y = snapValue(maxY - node.height);
+  });
+  render();
+  commitHistory();
+}
+
+function distributeSelected(axis) {
+  const nodes = getSelectedNodes().sort((a, b) => axis === "x" ? a.x - b.x : a.y - b.y);
+  if (nodes.length < 3) return;
+  const first = axis === "x" ? nodes[0].x : nodes[0].y;
+  const lastNode = nodes[nodes.length - 1];
+  const last = axis === "x" ? lastNode.x : lastNode.y;
+  const step = (last - first) / (nodes.length - 1);
+  nodes.forEach((node, index) => {
+    if (axis === "x") node.x = snapValue(Math.round(first + step * index));
+    else node.y = snapValue(Math.round(first + step * index));
+  });
+  render();
+  commitHistory();
+}
+
+function runSearch(direction = 1) {
+  const term = document.getElementById("searchInput").value.trim().toLowerCase();
+  if (!term) return;
+  const nodeMatches = state.nodes
+    .filter(node => `${node.title} ${node.body}`.toLowerCase().includes(term))
+    .map(node => ({ type: "node", id: node.id }));
+  const linkMatches = state.links
+    .filter(link => String(link.label || "").toLowerCase().includes(term))
+    .map(link => ({ type: "link", id: link.id }));
+  searchMatches = [...nodeMatches, ...linkMatches];
+  if (!searchMatches.length) return;
+  searchIndex = (searchIndex + direction + searchMatches.length) % searchMatches.length;
+  const match = searchMatches[searchIndex];
+  if (match.type === "node") {
+    state.selected = [match.id];
+    state.selectedLink = null;
+  } else {
+    state.selected = [];
+    state.selectedLink = match.id;
+  }
+  render();
+  focusSelection();
+}
+
+function focusSelection() {
+  const node = getPrimaryNode();
+  const link = getSelectedLink();
+  let x = 0;
+  let y = 0;
+  if (node) {
+    x = node.x + node.width / 2;
+    y = node.y + node.height / 2;
+  } else if (link) {
+    const from = state.nodes.find(node => node.id === link.from);
+    const to = state.nodes.find(node => node.id === link.to);
+    if (!from || !to) return;
+    x = (from.x + from.width / 2 + to.x + to.width / 2) / 2;
+    y = (from.y + from.height / 2 + to.y + to.height / 2) / 2;
+  } else {
+    return;
+  }
+  shell.scrollTo({
+    left: Math.max(0, x * state.zoom - shell.clientWidth / 2),
+    top: Math.max(0, y * state.zoom - shell.clientHeight / 2),
+    behavior: "smooth"
+  });
+}
+
+function getMaxStep() {
+  const nodeMax = state.nodes.length ? Math.max(...state.nodes.map(node => getRevealStep(node))) : 1;
+  const linkMax = state.links.length ? Math.max(...state.links.map(link => getRevealStep(link))) : 1;
+  return Math.max(1, nodeMax, linkMax);
+}
+
+function startPresentation() {
+  state.presenting = true;
+  state.currentStep = Math.min(Math.max(1, state.currentStep || 1), getMaxStep());
+  fitToContent();
+  render();
+}
+
+function exitPresentation() {
+  state.presenting = false;
+  render();
+}
+
+function stepPresentation(direction) {
+  state.currentStep = Math.max(1, Math.min(getMaxStep(), state.currentStep + direction));
+  render();
+}
+
+function syncPresentationControls() {
+  const active = !!state.presenting;
+  document.getElementById("presentBtn").hidden = active;
+  document.getElementById("prevStepBtn").hidden = !active;
+  document.getElementById("nextStepBtn").hidden = !active;
+  document.getElementById("exitPresentBtn").hidden = !active;
+  document.getElementById("stepLabel").hidden = !active;
+  if (active) document.getElementById("stepLabel").textContent = `Paso ${state.currentStep}/${getMaxStep()}`;
+}
+
+function showAllSteps() {
+  state.presenting = false;
+  state.currentStep = getMaxStep();
+  render();
+}
+
+function autoRevealSteps() {
+  if (!state.nodes.length) return;
+  const startId = getPrimaryNode()?.id || state.nodes[0].id;
+  const distances = new Map([[startId, 1]]);
+  const queue = [startId];
+  while (queue.length) {
+    const current = queue.shift();
+    const step = distances.get(current);
+    state.links.forEach(link => {
+      const next = link.from === current ? link.to : link.to === current ? link.from : null;
+      if (next && !distances.has(next)) {
+        distances.set(next, step + 1);
+        queue.push(next);
+      }
+    });
+  }
+  state.nodes.forEach(node => {
+    node.revealStep = distances.get(node.id) || getMaxStep() + 1;
+  });
+  state.links.forEach(link => {
+    link.revealStep = Math.max(getRevealStep(link.from), getRevealStep(link.to));
+  });
+  state.currentStep = 1;
+  render();
+  commitHistory();
+}
+
+function undo() {
+  if (historyIndex <= 0) return;
+  historyIndex--;
+  restoreHistory();
+}
+
+function redo() {
+  if (historyIndex >= history.length - 1) return;
+  historyIndex++;
+  restoreHistory();
+}
+
+function commitHistory() {
+  const snapshot = JSON.stringify(state);
+  if (history[historyIndex] === snapshot) return;
+  history = history.slice(0, historyIndex + 1);
+  history.push(snapshot);
+  if (history.length > 80) history.shift();
+  historyIndex = history.length - 1;
+  syncHistoryButtons();
+}
+
+function restoreHistory() {
+  state = JSON.parse(history[historyIndex]);
+  document.getElementById("projectName").value = state.projectName || "Nuevo diseño";
+  syncCanvasControls();
+  render();
+  syncHistoryButtons();
+}
+
+function syncHistoryButtons() {
+  document.getElementById("undoBtn").disabled = historyIndex <= 0;
+  document.getElementById("redoBtn").disabled = historyIndex >= history.length - 1;
+}
+
+function saveProject() {
+  state.projectName = document.getElementById("projectName").value || "Nuevo diseño";
+  localStorage.setItem("design-studio-project", JSON.stringify(state));
+}
+
+function loadProject() {
+  const saved = localStorage.getItem("design-studio-project");
+  if (!saved) return;
+  importState(JSON.parse(saved));
+}
+
+function importJsonFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    try {
+      importState(JSON.parse(reader.result));
+    } catch (error) {
+      alert("No pude importar ese JSON. Revisá que sea un archivo exportado desde esta app.");
+    }
+  });
+  reader.readAsText(file);
+}
+
+function importState(nextState) {
+  if (!nextState || !Array.isArray(nextState.nodes) || !Array.isArray(nextState.links)) {
+    throw new Error("Proyecto inválido");
+  }
+  const ids = new Set();
+  nextState.nodes.forEach(node => {
+    if (!node.id || ids.has(node.id)) throw new Error("Nodos inválidos");
+    ids.add(node.id);
+  });
+  const importedLinks = nextState.links
+    .filter(link => ids.has(link.from) && ids.has(link.to))
+    .map((link, index) => normalizeImportedLink(link, index + 1));
+  state = {
+    mode: modes.some(mode => mode.id === nextState.mode) ? nextState.mode : "concept",
+    projectName: nextState.projectName || "Proyecto importado",
+    nodes: nextState.nodes.map(node => ({
+      id: String(node.id),
+      type: fields.type.querySelector(`option[value="${node.type}"]`) ? node.type : "process",
+      title: String(node.title || "Elemento"),
+      body: String(node.body || ""),
+      x: Number.isFinite(Number(node.x)) ? Number(node.x) : 120,
+      y: Number.isFinite(Number(node.y)) ? Number(node.y) : 120,
+      width: Number.isFinite(Number(node.width)) ? Number(node.width) : 150,
+      height: Number.isFinite(Number(node.height)) ? Number(node.height) : 76,
+      fill: /^#[0-9a-f]{6}$/i.test(node.fill) ? node.fill : "#ffffff",
+      stroke: /^#[0-9a-f]{6}$/i.test(node.stroke) ? node.stroke : "#111827",
+      textColor: /^#[0-9a-f]{6}$/i.test(node.textColor) ? node.textColor : "#202124",
+      bodyColor: /^#[0-9a-f]{6}$/i.test(node.bodyColor) ? node.bodyColor : "#4c5562",
+      borderWidth: Number.isFinite(Number(node.borderWidth)) ? Number(node.borderWidth) : 2,
+      radius: Number.isFinite(Number(node.radius)) ? Number(node.radius) : defaultRadius(node.type),
+      fontFamily: typeof node.fontFamily === "string" ? node.fontFamily : "Inter, ui-sans-serif, system-ui, sans-serif",
+      titleSize: Number.isFinite(Number(node.titleSize)) ? Number(node.titleSize) : 16,
+      bodySize: Number.isFinite(Number(node.bodySize)) ? Number(node.bodySize) : 13,
+      textAlign: ["left", "center", "right"].includes(node.textAlign) ? node.textAlign : "left",
+      revealStep: Number.isFinite(Number(node.revealStep)) ? Number(node.revealStep) : 1,
+      opacity: Number.isFinite(Number(node.opacity)) ? Number(node.opacity) : 100,
+      shadow: ["none", "soft", "strong"].includes(node.shadow) ? node.shadow : "soft",
+      locked: !!node.locked,
+      imageSrc: typeof node.imageSrc === "string" ? node.imageSrc : ""
+    })),
+    links: importedLinks,
+    selected: [],
+    selectedLink: null,
+    presenting: false,
+    currentStep: Number.isFinite(Number(nextState.currentStep)) ? Number(nextState.currentStep) : 1,
+    zoom: Number.isFinite(Number(nextState.zoom)) ? Number(nextState.zoom) : 1,
+    nextId: Math.max(1, ...nextState.nodes.map(node => Number(String(node.id).replace(/\D/g, "")) || 0)) + 1,
+    nextLinkId: Math.max(1, ...importedLinks.map(link => Number(String(link.id || "").replace(/\D/g, "")) || 0)) + 1,
+    connectionStyle: ["bezier", "straight", "orthogonal"].includes(nextState.connectionStyle) ? nextState.connectionStyle : "bezier",
+    connectionColor: /^#[0-9a-f]{6}$/i.test(nextState.connectionColor) ? nextState.connectionColor : "#3d4652",
+    connectionWidth: Number.isFinite(Number(nextState.connectionWidth)) ? Number(nextState.connectionWidth) : 2.5,
+    snapToGrid: typeof nextState.snapToGrid === "boolean" ? nextState.snapToGrid : true,
+    gridSize: Number.isFinite(Number(nextState.gridSize)) ? Number(nextState.gridSize) : 20,
+    showGrid: typeof nextState.showGrid === "boolean" ? nextState.showGrid : true
+  };
+  document.getElementById("projectName").value = state.projectName;
+  syncCanvasControls();
+  render();
+  commitHistory();
+}
+
+function normalizeImportedLink(link, fallbackIndex = 1) {
+  return {
+    id: link.id ? String(link.id) : "l" + fallbackIndex,
+    from: String(link.from),
+    to: String(link.to),
+    style: ["bezier", "straight", "orthogonal"].includes(link.style) ? link.style : (state.connectionStyle || "bezier"),
+    color: /^#[0-9a-f]{6}$/i.test(link.color) ? link.color : (state.connectionColor || "#3d4652"),
+    width: Number.isFinite(Number(link.width)) ? Number(link.width) : normalizedNumber(state.connectionWidth, 2.5),
+    curve: Number.isFinite(Number(link.curve)) ? Number(link.curve) : 120,
+    offset: Number.isFinite(Number(link.offset)) ? Number(link.offset) : 0,
+    label: typeof link.label === "string" ? link.label : "",
+    revealStep: Number.isFinite(Number(link.revealStep)) ? Number(link.revealStep) : 1,
+    dash: ["solid", "dash", "dot"].includes(link.dash) ? link.dash : "solid",
+    arrow: ["end", "none"].includes(link.arrow) ? link.arrow : "end"
+  };
+}
+
+function exportJson() {
+  download(`${safeName(state.projectName)}.json`, JSON.stringify(state, null, 2), "application/json");
+}
+
+function exportSvg() {
+  const bounds = getBounds();
+  const svg = buildSvg(bounds);
+  download(`${safeName(state.projectName)}.svg`, svg, "image/svg+xml");
+}
+
+function buildSvg(bounds) {
+  const clonedNodes = state.nodes.map(node => {
+    const rx = normalizedNumber(node.radius, defaultRadius(node.type));
+    const borderWidth = normalizedNumber(node.borderWidth, 2);
+    const fontFamily = escapeXml(svgFontFamily(node.fontFamily));
+    const titleSize = normalizedNumber(node.titleSize, 16);
+    const bodySize = normalizedNumber(node.bodySize, 13);
+    const anchor = node.textAlign === "center" ? "middle" : node.textAlign === "right" ? "end" : "start";
+    const textX = node.textAlign === "center" ? node.x + node.width / 2 : node.textAlign === "right" ? node.x + node.width - 12 : node.x + 12;
+    const opacity = normalizedNumber(node.opacity, 100) / 100;
+    const textColor = node.textColor || "#202124";
+    const bodyColor = node.bodyColor || "#4c5562";
+    const shadow = node.shadow === "strong" ? `<filter id="shadow-${node.id}" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#111827" flood-opacity=".26"/></filter>` : "";
+    const filter = node.shadow === "strong" ? ` filter="url(#shadow-${node.id})"` : "";
+    if (node.type === "image" && node.imageSrc) {
+      return `<g>
+        ${shadow}
+        <image href="${escapeXml(node.imageSrc)}" x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" preserveAspectRatio="xMidYMid slice"/>
+        <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="${rx}" fill="none" stroke="${node.stroke}" stroke-width="${borderWidth}" opacity="${opacity}"/>
+      </g>`;
+    }
+    return `<g>
+      ${shadow}
+      <rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="${rx}" fill="${node.fill}" stroke="${node.stroke}" stroke-width="${borderWidth}" opacity="${opacity}"${filter}/>
+      <text x="${textX}" y="${node.y + 25}" font-family="${fontFamily}" font-size="${titleSize}" text-anchor="${anchor}" font-weight="700" fill="${textColor}">${escapeXml(node.title)}</text>
+      <text x="${textX}" y="${node.y + 48}" font-family="${fontFamily}" font-size="${bodySize}" text-anchor="${anchor}" fill="${bodyColor}">${escapeXml(node.body)}</text>
+    </g>`;
+  }).join("");
+  const clonedLinks = state.links.map(link => {
+    normalizeLink(link);
+    const from = state.nodes.find(node => node.id === link.from);
+    const to = state.nodes.find(node => node.id === link.to);
+    if (!from || !to) return "";
+    const x1 = from.x + from.width / 2;
+    const y1 = from.y + from.height / 2;
+    const x2 = to.x + to.width / 2;
+    const y2 = to.y + to.height / 2;
+    const dash = getDashArray(link);
+    const arrow = link.arrow === "none" ? "" : ` marker-end="url(#arrow)"`;
+    const labelPoint = getConnectorLabelPoint(x1, y1, x2, y2, link);
+    const label = link.label ? `<g><rect x="${labelPoint.x - 42}" y="${labelPoint.y - 13}" width="84" height="26" rx="13" fill="#ffffff" stroke="#d7dbe0"/><text x="${labelPoint.x}" y="${labelPoint.y + 4}" font-family="Arial" font-size="12" text-anchor="middle" fill="#384252">${escapeXml(link.label)}</text></g>` : "";
+    return `<path d="${getConnectorPath(x1, y1, x2, y2, link)}" stroke="${link.color || state.connectionColor || "#3d4652"}" stroke-width="${normalizedNumber(link.width, state.connectionWidth || 2.5)}" stroke-dasharray="${dash}" fill="none" stroke-linecap="round" stroke-linejoin="round"${arrow}/>${label}`;
+  }).join("");
+  
+  const bgStyle = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${bounds.width}" height="${bounds.height}" viewBox="${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}"><rect x="${bounds.x}" y="${bounds.y}" width="${bounds.width}" height="${bounds.height}" fill="${bgStyle}"/>${clonedLinks}${clonedNodes}</svg>`;
+  return svg;
+}
+
+function exportPng() {
+  const bounds = getBounds();
+  const svg = buildSvg(bounds);
+  const image = new Image();
+  const blob = new Blob([svg], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(blob);
+  image.onload = () => {
+    const scale = 2;
+    const canvasEl = document.createElement("canvas");
+    canvasEl.width = Math.max(1, Math.round(bounds.width * scale));
+    canvasEl.height = Math.max(1, Math.round(bounds.height * scale));
+    const ctx = canvasEl.getContext("2d");
+    ctx.scale(scale, scale);
+    ctx.drawImage(image, 0, 0);
+    URL.revokeObjectURL(url);
+    canvasEl.toBlob(blobPng => {
+      const pngUrl = URL.createObjectURL(blobPng);
+      const link = document.createElement("a");
+      link.href = pngUrl;
+      link.download = `${safeName(state.projectName)}.png`;
+      link.click();
+      URL.revokeObjectURL(pngUrl);
+    }, "image/png");
+  };
+  image.src = url;
+}
+
+function getBounds() {
+  if (!state.nodes.length) return { x: 0, y: 0, width: 1200, height: 800 };
+  const pad = 80;
+  const minX = Math.min(...state.nodes.map(node => node.x)) - pad;
+  const minY = Math.min(...state.nodes.map(node => node.y)) - pad;
+  const maxX = Math.max(...state.nodes.map(node => node.x + node.width)) + pad;
+  const maxY = Math.max(...state.nodes.map(node => node.y + node.height)) + pad;
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+function fitToContent() {
+  if (!state.nodes.length) return;
+  const bounds = getBounds();
+  const zoomX = shell.clientWidth / bounds.width;
+  const zoomY = shell.clientHeight / bounds.height;
+  state.zoom = Math.max(.35, Math.min(1.8, Math.min(zoomX, zoomY)));
+  render();
+  shell.scrollTo({
+    left: Math.max(0, bounds.x * state.zoom),
+    top: Math.max(0, bounds.y * state.zoom),
+    behavior: "smooth"
+  });
+}
+
+function download(name, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
+}
+
+function escapeXml(text) {
+  return escapeHtml(text);
+}
+
+function escapeAttribute(text) {
+  return escapeHtml(text).replace(/`/g, "&#096;");
+}
+
+function safeName(text) {
+  return String(text || "diseno").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "diseno";
+}
+
+function normalizeColor(value) {
+  if (value.startsWith("#")) return value;
+  return rgbToHex(value) || "#ffffff";
+}
+
+function normalizedNumber(value, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function snapValue(value) {
+  if (!state.snapToGrid) return value;
+  const size = Math.max(4, normalizedNumber(state.gridSize, 20));
+  return Math.round(value / size) * size;
+}
+
+function getShadow(value) {
+  if (value === "none") return "none";
+  if (value === "strong") return "0 18px 34px rgba(17, 24, 39, .24)";
+  return "0 8px 22px rgba(20, 30, 45, .10)";
+}
+
+function svgFontFamily(value) {
+  return String(value || "Arial").split(",")[0].replace(/['"]/g, "").trim() || "Arial";
+}
+
+function syncCanvasControls() {
+  document.getElementById("connectionStyleInput").value = state.connectionStyle || "bezier";
+  document.getElementById("connectionColorInput").value = state.connectionColor || "#3d4652";
+  document.getElementById("connectionWidthInput").value = normalizedNumber(state.connectionWidth, 2.5);
+  
+  if (snapInputInspector) snapInputInspector.checked = !!state.snapToGrid;
+  if (snapInputHud) snapInputHud.checked = !!state.snapToGrid;
+  if (showGridInput) showGridInput.checked = !!state.showGrid;
+  if (gridSizeInput) gridSizeInput.value = normalizedNumber(state.gridSize, 20);
+}
+
+function rgbToHex(value) {
+  const match = value.match(/\d+/g);
+  if (!match || match.length < 3) return "";
+  return "#" + match.slice(0, 3).map(num => Number(num).toString(16).padStart(2, "0")).join("");
+}
+
+// Markdown Markmap Parser & Auto-Layout
+function importMarkdown(text) {
+  const lines = text.split("\n");
+  const items = [];
+  let currentHeadingLevel = 0;
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    // Headings `#`
+    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    if (headingMatch) {
+      const depth = headingMatch[1].length;
+      const nodeText = headingMatch[2].trim();
+      currentHeadingLevel = depth;
+      items.push({
+        text: nodeText,
+        depth: depth * 2,
+        type: 'heading',
+        id: 'h-' + index
+      });
+      return;
+    }
+
+    // Lists `-`, `*`, `+`
+    const listMatch = line.match(/^(\s*)([-*+]|\d+\.)\s+(.*)$/);
+    if (listMatch) {
+      const indent = listMatch[1].length;
+      const nodeText = listMatch[3].trim();
+      items.push({
+        text: nodeText,
+        depth: (currentHeadingLevel * 2) + Math.floor(indent / 2) + 2,
+        type: 'list',
+        id: 'l-' + index
+      });
+      return;
+    }
+
+    // Plain text
+    if (items.length > 0) {
+      const lastItem = items[items.length - 1];
+      lastItem.body = (lastItem.body ? lastItem.body + "\n" : "") + trimmed;
+    } else {
+      items.push({
+        text: trimmed,
+        depth: 0,
+        type: 'plain',
+        id: 'p-' + index
+      });
+    }
+  });
+
+  if (items.length === 0) return;
+
+  const parsedNodes = [];
+  const parsedLinks = [];
+  const stack = [];
+
+  items.forEach((item, idx) => {
+    const titleParts = item.text.split("|");
+    const title = titleParts[0].trim();
+    const body = (titleParts[1] || item.body || "").trim();
+
+    const type = item.depth <= 2 ? "concept" : "process";
+    const nodeId = "n" + state.nextId++;
+    const width = type === "concept" ? 170 : 150;
+    const height = type === "concept" ? 72 : 64;
+
+    const node = {
+      id: nodeId,
+      type: type,
+      title: title,
+      body: body,
+      x: 0,
+      y: 0,
+      width: width,
+      height: height,
+      fill: type === "concept" ? "#e7f0ff" : "#ffffff",
+      stroke: type === "concept" ? "#2563eb" : "#111827",
+      borderWidth: 2,
+      radius: defaultRadius(type),
+      fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+      titleSize: 15,
+      bodySize: 12,
+      textColor: "#0f172a",
+      bodyColor: "#64748b",
+      textAlign: type === "concept" ? "center" : "left",
+      revealStep: 1,
+      opacity: 100,
+      shadow: "soft",
+      locked: false,
+      imageSrc: "",
+      _depth: item.depth,
+      _children: []
+    };
+
+    while (stack.length > 0 && stack[stack.length - 1]._depth >= item.depth) {
+      stack.pop();
+    }
+
+    if (stack.length > 0) {
+      const parent = stack[stack.length - 1];
+      parent._children.push(node);
+      parsedLinks.push(createLink(parent.id, nodeId));
+    }
+
+    parsedNodes.push(node);
+    stack.push(node);
+  });
+
+  // Layout Roots
+  const roots = parsedNodes.filter(node => !parsedLinks.some(link => link.to === node.id));
+
+  let startY = 150;
+  const verticalGap = 36;
+  const horizontalGap = 250;
+
+  function getSubtreeHeight(n) {
+    if (n._children.length === 0) return n.height + verticalGap;
+    let total = 0;
+    n._children.forEach(child => {
+      total += getSubtreeHeight(child);
+    });
+    return Math.max(n.height + verticalGap, total);
+  }
+
+  function assignPos(n, x, yTop) {
+    const sh = getSubtreeHeight(n);
+    n.x = snapValue(x);
+    n.y = snapValue(yTop + (sh - n.height) / 2);
+
+    let currentY = yTop;
+    n._children.forEach(child => {
+      const childH = getSubtreeHeight(child);
+      assignPos(child, x + horizontalGap, currentY);
+      currentY += childH;
+    });
+  }
+
+  roots.forEach(root => {
+    const sh = getSubtreeHeight(root);
+    assignPos(root, 100, startY);
+    startY += sh + 60;
+  });
+
+  parsedNodes.forEach(node => {
+    delete node._depth;
+    delete node._children;
+  });
+
+  // Assign to state
+  state.nodes = parsedNodes;
+  state.links = parsedLinks;
+  state.selected = [];
+  state.selectedLink = null;
+  
+  render();
+  commitHistory();
+}
+
+function exportStateToMarkdown() {
+  if (state.nodes.length === 0) return "";
+
+  const childrenMap = new Map();
+  const childIds = new Set();
+
+  state.nodes.forEach(node => {
+    childrenMap.set(node.id, []);
+  });
+
+  state.links.forEach(link => {
+    if (childrenMap.has(link.from) && childrenMap.has(link.to)) {
+      childrenMap.get(link.from).push(link.to);
+      childIds.add(link.to);
+    }
+  });
+
+  let roots = state.nodes.filter(node => !childIds.has(node.id));
+  if (roots.length === 0 && state.nodes.length > 0) {
+    roots = [state.nodes[0]];
+  }
+
+  let md = "";
+  const visited = new Set();
+
+  function serializeNode(nodeId, depth) {
+    if (visited.has(nodeId)) return;
+    visited.add(nodeId);
+
+    const node = state.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    const indent = "  ".repeat(Math.max(0, depth - 2));
+    const nodeText = node.body ? `${node.title} | ${node.body}` : node.title;
+
+    if (depth === 0) {
+      md += `# ${nodeText}\n`;
+    } else if (depth === 1) {
+      md += `## ${nodeText}\n`;
+    } else {
+      md += `${indent}- ${nodeText}\n`;
+    }
+
+    const children = childrenMap.get(nodeId) || [];
+    children.forEach(childId => {
+      serializeNode(childId, depth + 1);
+    });
+  }
+
+  roots.forEach(root => {
+    serializeNode(root.id, 0);
+  });
+
+  state.nodes.forEach(node => {
+    if (!visited.has(node.id)) {
+      serializeNode(node.id, 0);
+    }
+  });
+
+  return md.trim();
+}
+
+// Canvas Drag-to-Pan Logic
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+let scrollStartX = 0;
+let scrollStartY = 0;
+
+shell.addEventListener("pointerdown", event => {
+  const target = event.target;
+  if (target.id === "canvasShell" || target.id === "canvas" || target.classList.contains("connector-layer")) {
+    isPanning = true;
+    panStartX = event.clientX;
+    panStartY = event.clientY;
+    scrollStartX = shell.scrollLeft;
+    scrollStartY = shell.scrollTop;
+    shell.setPointerCapture(event.pointerId);
+  }
+});
+
+shell.addEventListener("pointermove", event => {
+  if (!isPanning) return;
+  const dx = event.clientX - panStartX;
+  const dy = event.clientY - panStartY;
+  shell.scrollLeft = scrollStartX - dx;
+  shell.scrollTop = scrollStartY - dy;
+});
+
+shell.addEventListener("pointerup", event => {
+  if (isPanning) {
+    isPanning = false;
+    shell.releasePointerCapture(event.pointerId);
+  }
+});
+
+// Event Listeners for Elements / Buttons
+document.querySelectorAll("[data-add]").forEach(button => {
+  button.addEventListener("click", () => addNode(button.dataset.add));
+});
+
+Object.entries(fields).forEach(([key, input]) => {
+  if (key === "image" || key === "locked") return;
+  input.addEventListener("input", () => {
+    const patch = {};
+    patch[key === "type" ? "type" : key] = ["width", "height", "borderWidth", "radius", "titleSize", "bodySize", "opacity", "revealStep"].includes(key) ? Number(input.value) : input.value;
+    if (key === "type" && !getPrimaryNode().radius) patch.radius = defaultRadius(input.value);
+    updatePrimary(patch);
+  });
+});
+
+fields.locked.addEventListener("change", event => updatePrimary({ locked: event.target.checked }));
+
+Object.entries(linkFields).forEach(([key, input]) => {
+  input.addEventListener("input", () => {
+    const patch = {};
+    patch[key] = ["width", "curve", "offset", "revealStep"].includes(key) ? Number(input.value) : input.value;
+    updateSelectedLink(patch);
+  });
+});
+
+fields.image.addEventListener("change", event => {
+  const file = event.target.files[0];
+  const node = getPrimaryNode();
+  if (!file || !node) return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    updatePrimary({
+      type: "image",
+      imageSrc: reader.result,
+      title: node.title || file.name,
+      body: node.body || "Imagen cargada"
+    });
+  });
+  reader.readAsDataURL(file);
+});
+
+document.getElementById("duplicateBtn").addEventListener("click", duplicateSelection);
+document.getElementById("deleteBtn").addEventListener("click", deleteNode);
+document.getElementById("deleteLinkBtn").addEventListener("click", deleteSelectedLink);
+document.getElementById("removeImageBtn").addEventListener("click", () => updatePrimary({ imageSrc: "" }));
+document.getElementById("copyBtn").addEventListener("click", copyNode);
+document.getElementById("pasteBtn").addEventListener("click", pasteNode);
+document.getElementById("bringForwardBtn").addEventListener("click", () => moveLayer("forward"));
+document.getElementById("sendBackwardBtn").addEventListener("click", () => moveLayer("backward"));
+document.getElementById("selectAllBtn").addEventListener("click", selectAllNodes);
+document.getElementById("alignLeftBtn").addEventListener("click", () => alignSelected("left"));
+document.getElementById("alignCenterBtn").addEventListener("click", () => alignSelected("center"));
+document.getElementById("alignRightBtn").addEventListener("click", () => alignSelected("right"));
+document.getElementById("alignTopBtn").addEventListener("click", () => alignSelected("top"));
+document.getElementById("alignBottomBtn").addEventListener("click", () => alignSelected("bottom"));
+document.getElementById("distributeHBtn").addEventListener("click", () => distributeSelected("x"));
+document.getElementById("distributeVBtn").addEventListener("click", () => distributeSelected("y"));
+document.getElementById("lockAllBtn").addEventListener("click", () => setAllLocked(true));
+document.getElementById("unlockAllBtn").addEventListener("click", () => setAllLocked(false));
+document.getElementById("undoBtn").addEventListener("click", undo);
+document.getElementById("redoBtn").addEventListener("click", redo);
+document.getElementById("connectBtn").addEventListener("click", connectSelected);
+document.getElementById("helpBtn").addEventListener("click", openHelp);
+document.getElementById("closeHelpBtn").addEventListener("click", closeHelp);
+helpOverlay.addEventListener("click", event => {
+  if (event.target === helpOverlay) closeHelp();
+});
+helpSearch.addEventListener("input", event => renderHelp(event.target.value));
+
+document.getElementById("saveBtn").addEventListener("click", saveProject);
+document.getElementById("loadBtn").addEventListener("click", loadProject);
+document.getElementById("importJsonBtn").addEventListener("click", () => {
+  document.getElementById("importJsonInput").click();
+});
+document.getElementById("importJsonInput").addEventListener("change", event => {
+  importJsonFile(event.target.files[0]);
+  event.target.value = "";
+});
+document.getElementById("exportJsonBtn").addEventListener("click", exportJson);
+document.getElementById("exportSvgBtn").addEventListener("click", exportSvg);
+document.getElementById("exportPngBtn").addEventListener("click", exportPng);
+document.getElementById("clearBtn").addEventListener("click", () => {
+  state.nodes = [];
+  state.links = [];
+  state.selected = [];
+  state.selectedLink = null;
+  render();
+  commitHistory();
+});
+document.getElementById("zoomInBtn").addEventListener("click", () => {
+  state.zoom = Math.min(1.8, state.zoom + .1);
+  render();
+});
+document.getElementById("zoomOutBtn").addEventListener("click", () => {
+  state.zoom = Math.max(.35, state.zoom - .1);
+  render();
+});
+document.getElementById("centerBtn").addEventListener("click", () => {
+  shell.scrollTo({ left: 0, top: 0, behavior: "smooth" });
+});
+document.getElementById("fitBtn").addEventListener("click", fitToContent);
+document.getElementById("presentBtn").addEventListener("click", startPresentation);
+document.getElementById("exitPresentBtn").addEventListener("click", exitPresentation);
+document.getElementById("nextStepBtn").addEventListener("click", () => stepPresentation(1));
+document.getElementById("prevStepBtn").addEventListener("click", () => stepPresentation(-1));
+document.getElementById("autoStepsBtn").addEventListener("click", autoRevealSteps);
+document.getElementById("showAllStepsBtn").addEventListener("click", showAllSteps);
+document.getElementById("findNextBtn").addEventListener("click", () => runSearch(1));
+document.getElementById("findPrevBtn").addEventListener("click", () => runSearch(-1));
+document.getElementById("searchInput").addEventListener("keydown", event => {
+  if (event.key === "Enter") runSearch(event.shiftKey ? -1 : 1);
+});
+document.getElementById("projectName").addEventListener("input", event => {
+  state.projectName = event.target.value;
+});
+document.getElementById("backgroundInput").addEventListener("input", event => {
+  document.documentElement.style.setProperty("--bg", event.target.value);
+});
+document.getElementById("connectionStyleInput").addEventListener("input", event => {
+  state.connectionStyle = event.target.value;
+  renderLinks();
+  commitHistory();
+});
+document.getElementById("connectionColorInput").addEventListener("input", event => {
+  state.connectionColor = event.target.value;
+  renderLinks();
+  commitHistory();
+});
+document.getElementById("connectionWidthInput").addEventListener("input", event => {
+  state.connectionWidth = Number(event.target.value);
+  renderLinks();
+  commitHistory();
+});
+
+// Grid & Snap changes listeners
+if (snapInputInspector) {
+  snapInputInspector.addEventListener("change", event => {
+    state.snapToGrid = event.target.checked;
+    if (snapInputHud) snapInputHud.checked = state.snapToGrid;
+    commitHistory();
+  });
+}
+
+if (snapInputHud) {
+  snapInputHud.addEventListener("change", event => {
+    state.snapToGrid = event.target.checked;
+    if (snapInputInspector) snapInputInspector.checked = state.snapToGrid;
+    commitHistory();
+  });
+}
+
+if (showGridInput) {
+  showGridInput.addEventListener("change", event => {
+    state.showGrid = event.target.checked;
+    updateVisualGrid();
+    commitHistory();
+  });
+}
+
+gridSizeInput.addEventListener("input", event => {
+  state.gridSize = Math.max(4, Number(event.target.value));
+  updateVisualGrid();
+  commitHistory();
+});
+
+// Theme Selector
+let currentTheme = localStorage.getItem("design-studio-theme") || "light";
+document.documentElement.setAttribute("data-theme", currentTheme);
+themeToggleBtn.textContent = currentTheme === "dark" ? "☀️" : "🌙";
+
+themeToggleBtn.addEventListener("click", () => {
+  currentTheme = currentTheme === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", currentTheme);
+  themeToggleBtn.textContent = currentTheme === "dark" ? "☀️" : "🌙";
+  localStorage.setItem("design-studio-theme", currentTheme);
+  render();
+});
+
+// Markdown / Markmap Drawer Event Listeners
+markdownToggleBtn.addEventListener("click", () => {
+  markdownDrawer.classList.toggle("open");
+  if (markdownDrawer.classList.contains("open")) {
+    markdownTextarea.value = exportStateToMarkdown();
+  }
+});
+
+closeMarkdownBtn.addEventListener("click", () => {
+  markdownDrawer.classList.remove("open");
+});
+
+importMarkdownBtn.addEventListener("click", () => {
+  if (confirm("¿Seguro que querés reemplazar el diseño actual con el Markdown importado?")) {
+    importMarkdown(markdownTextarea.value);
+    markdownDrawer.classList.remove("open");
+  }
+});
+
+exportMarkdownBtn.addEventListener("click", () => {
+  markdownTextarea.value = exportStateToMarkdown();
+});
+
+window.addEventListener("keydown", event => {
+  if ((event.key === "?" || event.key === "F1") && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
+    event.preventDefault();
+    openHelp();
+    return;
+  }
+  if (event.key === "Escape" && helpOverlay.classList.contains("open")) {
+    closeHelp();
+    return;
+  }
+  if (event.key === "Escape" && state.presenting) {
+    exitPresentation();
+    return;
+  }
+  if (state.presenting && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
+    if (event.key === "ArrowRight" || event.key === " ") {
+      event.preventDefault();
+      stepPresentation(1);
+      return;
+    }
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      stepPresentation(-1);
+      return;
+    }
+  }
+  if ((event.ctrlKey || event.metaKey) && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
+    const key = event.key.toLowerCase();
+    if (key === "z") {
+      event.preventDefault();
+      undo();
+      return;
+    }
+    if (key === "y") {
+      event.preventDefault();
+      redo();
+      return;
+    }
+    if (key === "c") {
+      event.preventDefault();
+      copyNode();
+      return;
+    }
+    if (key === "v") {
+      event.preventDefault();
+      pasteNode();
+      return;
+    }
+    if (key === "d") {
+      event.preventDefault();
+      duplicateSelection();
+      return;
+    }
+    if (key === "a") {
+      event.preventDefault();
+      selectAllNodes();
+      return;
+    }
+  }
+  if (event.key === "Delete" || event.key === "Backspace") {
+    if (!["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) deleteNode();
+  }
+});
+
+// Initialization
+renderTemplates();
+renderHelp();
+syncCanvasControls();
+loadTemplate("concept");
