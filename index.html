@@ -29,6 +29,8 @@
       --accent-gantt: #2563eb;
       --accent-erd: #0284c7;
       --accent-states: #d946ef;
+      --accent-grammar: #8b5cf6;
+      --accent-brain: #f43f5e;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -131,6 +133,8 @@
     a.card.gantt::before { background: var(--accent-gantt); }
     a.card.erd::before { background: var(--accent-erd); }
     a.card.states::before { background: var(--accent-states); }
+    a.card.grammar::before { background: var(--accent-grammar); }
+    a.card.brain::before { background: var(--accent-brain); }
 
     a.card:hover {
       transform: translateY(-6px);
@@ -169,6 +173,12 @@
     a.card.states:hover {
       box-shadow: 0 15px 35px rgba(217, 70, 239, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
     }
+    a.card.grammar:hover {
+      box-shadow: 0 15px 35px rgba(139, 92, 246, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    a.card.brain:hover {
+      box-shadow: 0 15px 35px rgba(244, 63, 94, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
 
     .card-top {
       display: flex;
@@ -200,6 +210,8 @@
     a.card.gantt strong { color: #eff6ff; }
     a.card.erd strong { color: #f0f9ff; }
     a.card.states strong { color: #fdf4ff; }
+    a.card.grammar strong { color: #f5f3ff; }
+    a.card.brain strong { color: #ffe4e6; }
 
     a.card.markmap:hover strong { color: var(--accent-markmap); }
     a.card.studio:hover strong { color: var(--accent-studio); }
@@ -211,6 +223,8 @@
     a.card.gantt:hover strong { color: var(--accent-gantt); }
     a.card.erd:hover strong { color: var(--accent-erd); }
     a.card.states:hover strong { color: var(--accent-states); }
+    a.card.grammar:hover strong { color: var(--accent-grammar); }
+    a.card.brain:hover strong { color: var(--accent-brain); }
 
     span.desc {
       color: var(--text-muted);
@@ -241,6 +255,8 @@
     a.card.gantt .go { color: var(--accent-gantt); }
     a.card.erd .go { color: var(--accent-erd); }
     a.card.states .go { color: var(--accent-states); }
+    a.card.grammar .go { color: var(--accent-grammar); }
+    a.card.brain .go { color: var(--accent-brain); }
 
     .arrow {
       transform: translateX(0);
@@ -274,7 +290,7 @@
   <main>
     <header>
       <h1>Suite de herramientas visuales</h1>
-      <p>Diez espacios interactivos para estudiar con tarjetas interactivas, trazar rutas de proyectos, modelar bases de datos, simular autómatas de estado, crear mapas conceptuales, estructurar líneas de tiempo, impartir presentaciones y más.</p>
+      <p>Doce espacios interactivos para estudiar con tarjetas interactivas, trazar rutas de proyectos, modelar bases de datos, simular lesiones cerebrales, analizar árboles sintácticos de gramática, crear mapas conceptuales, estructurar líneas de tiempo, impartir presentaciones y más.</p>
     </header>
     
     <section class="grid" aria-label="Aplicaciones disponibles">
@@ -398,11 +414,35 @@
           <span class="go">Simular autómata <span class="arrow">→</span></span>
         </div>
       </a>
+
+      <!-- CARD 11: GRAMMAR DIAGRAMMER -->
+      <a href="./grammar/" class="card grammar">
+        <div class="card-top">
+          <div class="card-icon">🌳</div>
+          <strong>Diagramador Gramatical</strong>
+          <span class="desc">Analiza la sintaxis lingüística dibujando árboles sintácticos simétricos a partir de listas anidadas. Exporta esquemas en notación parentética.</span>
+        </div>
+        <div class="card-bottom">
+          <span class="go">Diagramar gramática <span class="arrow">→</span></span>
+        </div>
+      </a>
+
+      <!-- CARD 12: NEUROPSYCHOLOGY EXPLORER -->
+      <a href="./brain/" class="card brain">
+        <div class="card-top">
+          <div class="card-icon">🧠</div>
+          <strong>Explorador Neuropsicológico</strong>
+          <span class="desc">Visualiza la anatomía cerebral de forma interactiva en SVG. Simula lesiones corticales, genera reportes de déficits integrados y revisa casos históricos reales.</span>
+        </div>
+        <div class="card-bottom">
+          <span class="go">Explorar cerebro <span class="arrow">→</span></span>
+        </div>
+      </a>
       
     </section>
 
     <footer>
-      SUITE DIDÁCTICA • 100% CLIENT-SIDE & STATIC
+      SUITE DIDÁCTICA • 12 APPS • 100% CLIENT-SIDE & STATIC
     </footer>
   </main>
 </body>

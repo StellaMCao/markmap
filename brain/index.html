@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explorador Cerebral y Neuropsicología - Suite Educativa</title>
+  <!-- Google Fonts: Outfit, Inter & Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <a href="../" class="back-btn">
+        <span>←</span> Volver a la Suite
+      </a>
+      <h1>Explorador de Neuropsicología y Anatomía Cerebral</h1>
+    </div>
+    <div class="header-actions">
+      <!-- Future extension slot -->
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- Left Canvas Area: Interactive SVG Brain -->
+    <main class="canvas-container">
+      <!-- Mode Banner -->
+      <div id="mode-banner" class="mode-banner">
+        <div class="mode-indicator"></div>
+        <span id="mode-text">Modo: Inspeccionar Estructuras</span>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="canvas-toolbar">
+        <input type="checkbox" id="toggle-lesion-mode">
+        <label for="toggle-lesion-mode" id="lesion-mode-label">
+          ⚠️ Simular Lesión
+        </label>
+        <button id="clear-lesions-btn" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #fca5a5;">
+          Restablecer
+        </button>
+      </div>
+
+      <!-- Brain SVG -->
+      <svg viewBox="0 0 600 500" class="brain-svg" id="brain-svg">
+        <defs>
+          <!-- Glowing filter for damaged/active regions -->
+          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+
+        <!-- Outer group for brain structures -->
+        <g id="brain-group">
+          <!-- 1. Tronco Encefálico -->
+          <path id="region-tronco" class="brain-region" 
+                d="M 310,290 C 310,320 315,350 315,420 C 315,435 285,435 285,420 C 285,350 295,320 295,290 Z" />
+          
+          <!-- 2. Cerebelo -->
+          <path id="region-cerebelo" class="brain-region" 
+                d="M 475,310 C 490,330 480,365 440,380 C 400,390 375,360 375,335 C 375,315 415,295 475,310 Z" />
+
+          <!-- 3. Lóbulo Occipital -->
+          <path id="region-occipital" class="brain-region" 
+                d="M 495,225 C 515,260 505,295 475,310 C 445,325 415,295 425,245 C 445,210 495,215 495,225 Z" />
+
+          <!-- 4. Lóbulo Temporal -->
+          <path id="region-temporal" class="brain-region" 
+                d="M 170,265 C 200,245 220,220 275,200 C 310,180 330,170 350,180 C 390,200 445,210 425,245 C 405,280 350,290 310,290 C 270,290 220,295 170,265 Z" />
+
+          <!-- 5. Lóbulo Frontal -->
+          <path id="region-frontal" class="brain-region" 
+                d="M 170,265 C 130,240 100,180 120,130 C 140,80 200,60 270,70 C 310,75 330,90 350,110 C 330,150 310,180 275,200 C 240,220 220,245 200,265 Z" />
+
+          <!-- 6. Lóbulo Parietal -->
+          <path id="region-parietal" class="brain-region" 
+                d="M 350,110 C 390,75 440,80 470,120 C 500,160 505,190 495,225 C 445,210 390,200 350,180 C 330,170 330,140 350,110 Z" />
+
+          <!-- Internal structures / Limbic System boundary cutout -->
+          <g id="limbic-system-group" style="cursor: pointer;">
+            <!-- Dashed outline indicating depth -->
+            <path id="limbic-boundary" d="M 240,240 C 240,180 360,180 360,240 C 360,300 240,300 240,240" 
+                  fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.5" stroke-dasharray="4,4" />
+            
+            <!-- 7. Hipocampo -->
+            <path id="region-hipocampo" class="brain-region" 
+                  d="M 330,245 C 320,215 285,215 275,240 C 265,265 295,280 315,265 C 325,255 330,250 330,245 Z" />
+            
+            <!-- 8. Amígdala -->
+            <circle id="region-amigdala" class="brain-region" cx="275" cy="245" r="12" />
+          </g>
+        </g>
+
+        <!-- Dynamic Label Overlays on Hover -->
+        <g id="hover-labels" pointer-events="none"></g>
+      </svg>
+    </main>
+
+    <!-- Right Sidebar Controls and Details -->
+    <aside class="sidebar">
+      <!-- Tab Controls -->
+      <nav class="tabs-header">
+        <button id="tab-btn-details" class="tab-btn active">Ficha Médica</button>
+        <button id="tab-btn-editor" class="tab-btn">Editar Anatomía</button>
+      </nav>
+
+      <!-- Tab Content Area -->
+      <div class="tab-content">
+        <!-- Tab 1: Ficha Médica y Reporte -->
+        <div id="tab-details" class="tab-pane active">
+          <!-- Structure Detail Card -->
+          <div class="structure-card" id="detail-card">
+            <div class="structure-header">
+              <span id="structure-name" class="structure-title">Lóbulo Frontal</span>
+              <span id="structure-badge" class="badge badge-frontal">Cortex</span>
+            </div>
+            
+            <div class="detail-item">
+              <span class="detail-label">Función Principal</span>
+              <span id="structure-funcion" class="detail-value">
+                Planificación, toma de decisiones, control motor, personalidad y producción del lenguaje.
+              </span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Neurotransmisores Clave</span>
+              <span id="structure-neuro" class="detail-value">Dopamina, Acetilcolina.</span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Caso Clínico Histórico</span>
+              <span id="structure-caso" class="detail-value">
+                <strong>Phineas Gage (1848)</strong>: barra metálica en lóbulo frontal, drásticos cambios de personalidad.
+              </span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Efecto de Lesión</span>
+              <span id="structure-lesion" class="detail-value">
+                Síndrome des-ejecutivo, apatía, afasia de Broca (habla lenta).
+              </span>
+            </div>
+          </div>
+
+          <!-- Diagnostic Report Simulator -->
+          <div class="report-sheet" id="diagnostic-report">
+            <div class="report-header">
+              <span class="report-headline">Reporte Clínico Diagnóstico</span>
+              <div class="report-status">
+                <span id="report-indicator" class="mode-indicator" style="background:#10b981;"></span>
+                <span id="report-status-text" style="font-weight: 600;">Estado: Sano</span>
+              </div>
+            </div>
+
+            <div class="report-section">
+              <span class="report-section-title">Estructuras Comprometidas</span>
+              <span id="report-structures" class="report-text">Ninguna (Cerebro intacto).</span>
+            </div>
+
+            <div class="report-section">
+              <span class="report-section-title">Déficits Cognitivos & Conductuales</span>
+              <ul id="report-deficits" class="deficit-list">
+                <li>Sin déficits neurológicos. Conducta y funciones superiores normales.</li>
+              </ul>
+            </div>
+
+            <div class="report-section">
+              <span class="report-section-title">Análisis de Integración Clínica</span>
+              <span id="report-integration" class="report-text">
+                El paciente se encuentra asintomático. No requiere intervenciones de rehabilitación neuropsicológica.
+              </span>
+            </div>
+
+            <button id="print-report-btn" class="btn-print">
+              🖨️ Guardar Reporte en PDF / Imprimir
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Markdown Editor -->
+        <div id="tab-editor" class="tab-pane editor-pane">
+          <textarea id="markdown-input" autocomplete="off" spellcheck="false"></textarea>
+          <div class="editor-actions">
+            <button id="apply-markdown-btn" class="btn-primary" style="flex: 1;">
+              Aplicar Cambios
+            </button>
+            <button id="download-markdown-btn" class="btn-secondary">
+              Descargar MD
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

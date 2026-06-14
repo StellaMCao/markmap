@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diagramador de Gramática y Árboles Sintácticos - Suite Educativa</title>
+  <!-- Google Fonts: Outfit (headings), Inter (body) & Fira Code (monospace) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  
+  <header>
+    <div class="header-left">
+      <a href="../" class="back-btn">
+        <span>←</span> Volver a la Suite
+      </a>
+      <h1>Diagramador de Gramática y Árboles Sintácticos</h1>
+    </div>
+    <div class="header-actions">
+      <!-- Future extension slot, like user theme override or login if dynamic -->
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- Sidebar Controls -->
+    <aside class="sidebar">
+      <!-- Section 1: Pre-cargados -->
+      <div class="form-group">
+        <span class="section-title">📝 Oraciones de Ejemplo</span>
+        <select id="preset-select">
+          <option value="simple">Oración Simple (Sujeto + Predicado)</option>
+          <option value="complex-obj">Oración con Objeto Directo e Indirecto</option>
+          <option value="subordinate">Oración Subordinada Adjetiva</option>
+          <option value="compound">Oración Compuesta Coordinada</option>
+          <option value="morphosyntactic">Análisis Morfosintáctico Detallado</option>
+        </select>
+      </div>
+
+      <!-- Section 2: Editor -->
+      <div class="form-group">
+        <span class="section-title">✍️ Estructura del Árbol (Markdown)</span>
+        <label for="markdown-input">Crea tu árbol con listas anidadas:</label>
+        <textarea id="markdown-input" autocomplete="off" spellcheck="false"></textarea>
+      </div>
+
+      <!-- Section 3: Visualización -->
+      <div class="form-group">
+        <span class="section-title">⚙️ Opciones de Visualización</span>
+        <div class="control-grid">
+          <div class="form-group">
+            <label for="layout-select">Alineación de Hojas</label>
+            <select id="layout-select">
+              <option value="bottom">Alineado abajo</option>
+              <option value="compact">Compacto</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="line-select">Estilo de Líneas</label>
+            <select id="line-select">
+              <option value="straight">Rectas</option>
+              <option value="bezier">Curvas</option>
+            </select>
+          </div>
+        </div>
+        <div class="control-grid" style="margin-top: 8px;">
+          <div class="form-group" style="grid-column: span 2;">
+            <label for="color-select">Paleta de Colores</label>
+            <select id="color-select">
+              <option value="colored">Categorías Sintácticas</option>
+              <option value="monochrome">Monocromático Sleek</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Penn Treebank Notation -->
+      <div class="output-drawer">
+        <div class="output-header">
+          <label style="font-weight: 600; color: var(--text-main);">Parenthetical / Penn Treebank</label>
+          <button id="copy-brackets-btn" class="btn-secondary" style="padding: 4px 10px; font-size: 11px;">Copiar</button>
+        </div>
+        <div id="brackets-output" class="output-code"></div>
+      </div>
+
+      <!-- Section 5: Ayuda rápida -->
+      <div class="help-card">
+        <span style="font-weight: 600; color: var(--text-main); display: block; margin-bottom: 6px;">💡 Guía de Sintaxis</span>
+        Usa listas tabuladas (con 2 o 4 espacios):
+        <ul>
+          <li>Estructura interna: <code>- SN | Sujeto</code></li>
+          <li>Palabra terminal: <code>- Det | El</code></li>
+          <li>Nodos simples: <code>- gato</code></li>
+        </ul>
+        Las palabras de las hojas se ordenan automáticamente de izquierda a derecha.
+      </div>
+    </aside>
+
+    <!-- Canvas Area -->
+    <main class="canvas-container">
+      <!-- Toolbar -->
+      <div class="canvas-toolbar">
+        <button id="zoom-in-btn" title="Acercar">＋</button>
+        <button id="zoom-out-btn" title="Alejar">－</button>
+        <button id="zoom-reset-btn" title="Ajustar Pantalla">⛶</button>
+        <button id="export-svg-btn" title="Exportar SVG">SVG</button>
+        <button id="export-png-btn" title="Exportar PNG">PNG</button>
+      </div>
+
+      <!-- Main SVG Canvas Viewport -->
+      <svg id="tree-svg" class="canvas-view">
+        <!-- Definitions for filters, markers etc. -->
+        <defs>
+          <!-- Arrow marker (if needed, though standard trees don't use arrows) -->
+        </defs>
+        <!-- Drawing groups -->
+        <g id="zoom-group">
+          <g id="edges-group"></g>
+          <g id="nodes-group"></g>
+        </g>
+      </svg>
+
+      <!-- Sentence Word Highlights Bar -->
+      <div class="sentence-preview-bar">
+        <div class="sentence-preview-title">Oración completa:</div>
+        <div id="sentence-preview" class="sentence-preview-text">
+          <!-- Dynamically populated word tokens -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
