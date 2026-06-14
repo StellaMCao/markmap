@@ -826,6 +826,31 @@
             <!-- Rendered buttons go here -->
           </div>
 
+          <!-- Report Section -->
+          <div class="report-card" id="report-section" style="display: none; margin-top: 24px; padding: 24px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--accent); border-radius: 16px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+            <h3 style="font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-file-invoice" style="color: var(--accent);"></i> Reporte de resolución del dilema
+            </h3>
+            <div id="report-preview-summary" style="font-size: 13px; line-height: 1.5; color: #d1d5db; margin-bottom: 16px;"></div>
+            
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">Reflexión personal del estudiante:</label>
+              <textarea id="report-reflection" style="width: 100%; height: 72px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--panel-border); border-radius: 8px; color: #fff; padding: 10px; font-family: inherit; font-size: 13px; line-height: 1.4; resize: none; outline: none; transition: border-color 0.2s;" placeholder="Escribe aquí tu análisis o reflexión ética sobre las decisiones que tomaste..."></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn btn-primary" onclick="copyReportClipboard()" style="padding: 6px 12px; font-size: 12px;">
+                <i class="fa-solid fa-copy"></i> Copiar reporte
+              </button>
+              <button class="btn" onclick="downloadReportTxt()" style="padding: 6px 12px; font-size: 12px;">
+                <i class="fa-solid fa-file-lines"></i> Descargar TXT
+              </button>
+              <button class="btn" onclick="printReport()" style="padding: 6px 12px; font-size: 12px;">
+                <i class="fa-solid fa-print"></i> Imprimir / PDF
+              </button>
+            </div>
+          </div>
+
         </div>
 
         <!-- Breadcrumbs Footer inside Player tab -->
@@ -1658,6 +1683,8 @@ Aletheia optimiza su comportamiento de manera brillante, ofreciendo constantes i
       if (!node) {
         playerHtml.innerHTML = `<div style="color: var(--text-muted); font-style: italic;">No se ha definido ningún nodo. Escribe una cabecera de anclaje (ej. # #inicio) para iniciar tu dilema.</div>`;
         playerOptions.innerHTML = '';
+        const reportSection = document.getElementById('report-section');
+        if (reportSection) reportSection.style.display = 'none';
         return;
       }
       
@@ -1666,7 +1693,13 @@ Aletheia optimiza su comportamiento de manera brillante, ofreciendo constantes i
       
       // Render Options/Buttons
       playerOptions.innerHTML = '';
-      if (node.options && node.options.length > 0) {
+      const reportSection = document.getElementById('report-section');
+      
+      const isTerminal = !node.options || node.options.length === 0 || 
+                         (node.options.length === 1 && (node.options[0].target === 'inicio' || node.options[0].target === 'index'));
+      
+      if (!isTerminal) {
+        if (reportSection) reportSection.style.display = 'none';
         node.options.forEach(opt => {
           const btn = document.createElement('button');
           btn.className = 'option-button';
@@ -1680,18 +1713,39 @@ Aletheia optimiza su comportamiento de manera brillante, ofreciendo constantes i
           playerOptions.appendChild(btn);
         });
       } else {
-        // No options mean terminal node
-        const btn = document.createElement('button');
-        btn.className = 'option-button';
-        btn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
-        btn.innerHTML = `
-          <span>🔄 Volver a empezar (Fin del recorrido)</span>
-          <span class="option-icon" style="color: #ef4444;"><i class="fa-solid fa-rotate-left"></i></span>
-        `;
-        btn.onclick = () => {
-          resetSimulation();
-        };
-        playerOptions.appendChild(btn);
+        if (node.options && node.options.length > 0) {
+          node.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-button';
+            btn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+            btn.innerHTML = `
+              <span>${opt.text}</span>
+              <span class="option-icon" style="color: #ef4444;"><i class="fa-solid fa-rotate-left"></i></span>
+            `;
+            btn.onclick = () => {
+              resetSimulation();
+            };
+            playerOptions.appendChild(btn);
+          });
+        } else {
+          const btn = document.createElement('button');
+          btn.className = 'option-button';
+          btn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+          btn.innerHTML = `
+            <span>🔄 Volver a empezar (Fin del recorrido)</span>
+            <span class="option-icon" style="color: #ef4444;"><i class="fa-solid fa-rotate-left"></i></span>
+          `;
+          btn.onclick = () => {
+            resetSimulation();
+          };
+          playerOptions.appendChild(btn);
+        }
+        
+        // Show report section
+        if (reportSection) {
+          reportSection.style.display = 'block';
+          fillReportPreview();
+        }
       }
     }
 
@@ -1776,8 +1830,142 @@ Aletheia optimiza su comportamiento de manera brillante, ofreciendo constantes i
     function resetSimulation() {
       activeNodeId = 'inicio';
       simulationHistory = ['inicio'];
+      const reportSection = document.getElementById('report-section');
+      if (reportSection) reportSection.style.display = 'none';
+      const reflectionTextarea = document.getElementById('report-reflection');
+      if (reflectionTextarea) reflectionTextarea.value = '';
       renderActiveNode();
       renderBreadcrumbs();
+    }
+
+    function fillReportPreview() {
+      const summaryDiv = document.getElementById('report-preview-summary');
+      if (!summaryDiv) return;
+      
+      let html = `<p style="margin-bottom: 12px;"><strong>Resolución completada.</strong> Aquí tienes un resumen de tus elecciones:</p>`;
+      html += `<ol style="margin-left: 20px; margin-bottom: 16px; color: var(--text-muted);">`;
+      
+      for (let i = 0; i < simulationHistory.length - 1; i++) {
+        const currentId = simulationHistory[i];
+        const nextId = simulationHistory[i+1];
+        const currentNode = nodes[currentId];
+        if (currentNode) {
+          const chosenOption = currentNode.options ? currentNode.options.find(o => o.target === nextId) : null;
+          const optionText = chosenOption ? chosenOption.text : 'Siguiente paso';
+          html += `<li style="margin-bottom: 6px;">En <em>${currentNode.title}</em>, decidiste: <strong>"${optionText}"</strong></li>`;
+        }
+      }
+      
+      html += `</ol>`;
+      html += `<p><strong>Desenlace final:</strong> <span style="color: var(--accent); font-weight: 600;">"${nodes[activeNodeId].title}"</span></p>`;
+      
+      summaryDiv.innerHTML = html;
+    }
+
+    function generateReportData() {
+      const finalNode = nodes[activeNodeId];
+      if (!finalNode) return null;
+      
+      let reportText = `==================================================\n`;
+      reportText += `REPORTE DE SIMULACIÓN DE DILEMA ÉTICO / MORAL\n`;
+      reportText += `==================================================\n\n`;
+      reportText += `Fecha/Hora: ${new Date().toLocaleString()}\n`;
+      
+      const startNode = nodes['inicio'];
+      const dilemmaTitle = startNode ? (startNode.content.match(/^##?\s+(.+)$/m)?.[1] || startNode.title) : 'Dilema Personalizado';
+      reportText += `Dilema: ${dilemmaTitle}\n`;
+      reportText += `Resultado final: ${finalNode.title}\n\n`;
+      
+      reportText += `--------------------------------------------------\n`;
+      reportText += `RECORRIDO DE DECISIONES:\n`;
+      reportText += `--------------------------------------------------\n`;
+      
+      for (let i = 0; i < simulationHistory.length - 1; i++) {
+        const currentId = simulationHistory[i];
+        const nextId = simulationHistory[i+1];
+        const currentNode = nodes[currentId];
+        
+        if (currentNode) {
+          const chosenOption = currentNode.options ? currentNode.options.find(o => o.target === nextId) : null;
+          const optionText = chosenOption ? chosenOption.text : 'Siguiente paso';
+          reportText += `Paso ${i+1}: En "${currentNode.title}" elegiste:\n   └─> "${optionText}"\n\n`;
+        }
+      }
+      
+      const finalDesc = finalNode.content.replace(/##+\s*[^\n]+/g, '').trim();
+      reportText += `--------------------------------------------------\n`;
+      reportText += `DESENLACE ALCANZADO:\n`;
+      reportText += `--------------------------------------------------\n`;
+      reportText += `"${finalNode.title}"\n\n${finalDesc}\n\n`;
+      
+      const reflectionVal = document.getElementById('report-reflection').value.trim();
+      if (reflectionVal) {
+        reportText += `--------------------------------------------------\n`;
+        reportText += `REFLEXIÓN DEL ESTUDIANTE:\n`;
+        reportText += `--------------------------------------------------\n`;
+        reportText += `${reflectionVal}\n\n`;
+      }
+      
+      reportText += `==================================================\n`;
+      reportText += `Generado automáticamente con Dilemas y Decisiones REPL\n`;
+      reportText += `==================================================\n`;
+      
+      return reportText;
+    }
+
+    function copyReportClipboard() {
+      const text = generateReportData();
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Reporte copiado al portapapeles.');
+      }).catch(() => {
+        showToast('Error al copiar el reporte.', 'error');
+      });
+    }
+
+    function downloadReportTxt() {
+      const text = generateReportData();
+      if (!text) return;
+      const startNode = nodes['inicio'];
+      const dilemmaTitle = startNode ? (startNode.content.match(/^##?\s+(.+)$/m)?.[1] || startNode.title) : 'dilema';
+      const filename = `reporte_${dilemmaTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_')}.txt`;
+      
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Reporte descargado como TXT.');
+    }
+
+    function printReport() {
+      const text = generateReportData();
+      if (!text) return;
+      
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>Reporte de Dilema Ético</title>
+          <style>
+            body { font-family: 'Courier New', Courier, monospace; padding: 40px; color: #333; line-height: 1.5; }
+            pre { white-space: pre-wrap; font-size: 14px; }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <pre>${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+          <script>
+            window.onload = function() { window.print(); window.close(); }
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
     }
 
     // Render tree map (flowchart) using SVG and HTML layout
@@ -2393,6 +2581,32 @@ Aletheia optimiza su comportamiento de manera brillante, ofreciendo constantes i
         <div class="dilemma-content" id="dilemma-html"></div>
       </div>
       <div class="options-container" id="dilemma-options" style="margin-top: 24px;"></div>
+
+      <!-- Report Section -->
+      <div class="report-card" id="report-section" style="display: none; margin-top: 24px; padding: 24px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--accent); border-radius: 16px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+        <h3 style="font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-file-invoice" style="color: var(--accent);"></i> Reporte de resolución del dilema
+        </h3>
+        <div id="report-preview-summary" style="font-size: 13px; line-height: 1.5; color: #d1d5db; margin-bottom: 16px;"></div>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 6px;">Reflexión personal del estudiante:</label>
+          <textarea id="report-reflection" style="width: 100%; height: 72px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--panel-border); border-radius: 8px; color: #fff; padding: 10px; font-family: inherit; font-size: 13px; line-height: 1.4; resize: none; outline: none;" placeholder="Escribe aquí tu análisis o reflexión ética sobre las decisiones que tomaste..."></textarea>
+        </div>
+        
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-primary" onclick="copyReportClipboard()" style="padding: 6px 12px; font-size: 12px;">
+            <i class="fa-solid fa-copy"></i> Copiar reporte
+          </button>
+          <button class="btn" onclick="downloadReportTxt()" style="padding: 6px 12px; font-size: 12px;">
+            <i class="fa-solid fa-file-lines"></i> Descargar TXT
+          </button>
+          <button class="btn" onclick="printReport()" style="padding: 6px 12px; font-size: 12px;">
+            <i class="fa-solid fa-print"></i> Imprimir / PDF
+          </button>
+        </div>
+      </div>
+
       <div class="path-container" style="margin-top: 32px;">
         <div class="path-header">
           <span>Decisiones tomadas</span>
@@ -2487,8 +2701,13 @@ Aletheia optimiza su comportamiento de manera brillante, ofreciendo constantes i
       
       const optContainer = document.getElementById('dilemma-options');
       optContainer.innerHTML = '';
+      const reportSection = document.getElementById('report-section');
       
-      if (node.options && node.options.length > 0) {
+      const isTerminal = !node.options || node.options.length === 0 || 
+                         (node.options.length === 1 && (node.options[0].target === 'inicio' || node.options[0].target === 'index'));
+      
+      if (!isTerminal) {
+        if (reportSection) reportSection.style.display = 'none';
         node.options.forEach(opt => {
           const btn = document.createElement('button');
           btn.className = 'option-button';
@@ -2500,14 +2719,33 @@ Aletheia optimiza su comportamiento de manera brillante, ofreciendo constantes i
           optContainer.appendChild(btn);
         });
       } else {
-        const btn = document.createElement('button');
-        btn.className = 'option-button';
-        btn.innerHTML = \`
-          <span>🔄 Volver a empezar (Fin de la simulación)</span>
-          <span class="option-icon"><i class="fa-solid fa-rotate-left"></i></span>
-        \`;
-        btn.onclick = () => resetSimulation();
-        optContainer.appendChild(btn);
+        if (node.options && node.options.length > 0) {
+          node.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-button';
+            btn.innerHTML = \`
+              <span>\${opt.text}</span>
+              <span class="option-icon"><i class="fa-solid fa-rotate-left"></i></span>
+            \`;
+            btn.onclick = () => resetSimulation();
+            optContainer.appendChild(btn);
+          });
+        } else {
+          const btn = document.createElement('button');
+          btn.className = 'option-button';
+          btn.innerHTML = \`
+            <span>🔄 Volver a empezar (Fin de la simulación)</span>
+            <span class="option-icon"><i class="fa-solid fa-rotate-left"></i></span>
+          \`;
+          btn.onclick = () => resetSimulation();
+          optContainer.appendChild(btn);
+        }
+        
+        // Show report section
+        if (reportSection) {
+          reportSection.style.display = 'block';
+          fillReportPreview();
+        }
       }
     }
 
@@ -2552,8 +2790,141 @@ Aletheia optimiza su comportamiento de manera brillante, ofreciendo constantes i
     function resetSimulation() {
       activeNodeId = 'inicio';
       simulationHistory = ['inicio'];
+      const reportSection = document.getElementById('report-section');
+      if (reportSection) reportSection.style.display = 'none';
+      const reflectionTextarea = document.getElementById('report-reflection');
+      if (reflectionTextarea) reflectionTextarea.value = '';
       renderActiveNode();
       renderBreadcrumbs();
+    }
+
+    function fillReportPreview() {
+      const summaryDiv = document.getElementById('report-preview-summary');
+      if (!summaryDiv) return;
+      
+      let html = \`<p style="margin-bottom: 12px;"><strong>Resolución completada.</strong> Aquí tienes un resumen de tus elecciones:</p>\`;
+      html += \`<ol style="margin-left: 20px; margin-bottom: 16px; color: var(--text-muted);">\`;
+      
+      for (let i = 0; i < simulationHistory.length - 1; i++) {
+        const currentId = simulationHistory[i];
+        const nextId = simulationHistory[i+1];
+        const currentNode = nodes[currentId];
+        if (currentNode) {
+          const chosenOption = currentNode.options ? currentNode.options.find(o => o.target === nextId) : null;
+          const optionText = chosenOption ? chosenOption.text : 'Siguiente paso';
+          html += \`<li style="margin-bottom: 6px;">En <em>\${currentNode.title}</em>, decidiste: <strong>"\${optionText}"</strong></li>\`;
+        }
+      }
+      
+      html += \`</ol>\`;
+      html += \`<p><strong>Desenlace final:</strong> <span style="color: var(--accent); font-weight: 600;">"\${nodes[activeNodeId].title}"</span></p>\`;
+      
+      summaryDiv.innerHTML = html;
+    }
+
+    function generateReportData() {
+      const finalNode = nodes[activeNodeId];
+      if (!finalNode) return null;
+      
+      let reportText = \`==================================================\\n\`;
+      reportText += \`REPORTE DE SIMULACIÓN DE DILEMA ÉTICO / MORAL\\n\`;
+      reportText += \`==================================================\\n\\n\`;
+      reportText += \`Fecha/Hora: \${new Date().toLocaleString()}\\n\`;
+      
+      const startNode = nodes['inicio'];
+      const dilemmaTitle = startNode ? (startNode.content.match(/^##?\\s+(.+)$/m)?.[1] || startNode.title) : 'Dilema Personalizado';
+      reportText += \`Dilema: \${dilemmaTitle}\\n\`;
+      reportText += \`Resultado final: \${finalNode.title}\\n\\n\`;
+      
+      reportText += \`--------------------------------------------------\\n\`;
+      reportText += \`RECORRIDO DE DECISIONES:\\n\`;
+      reportText += \`--------------------------------------------------\\n\`;
+      
+      for (let i = 0; i < simulationHistory.length - 1; i++) {
+        const currentId = simulationHistory[i];
+        const nextId = simulationHistory[i+1];
+        const currentNode = nodes[currentId];
+        
+        if (currentNode) {
+          const chosenOption = currentNode.options ? currentNode.options.find(o => o.target === nextId) : null;
+          const optionText = chosenOption ? chosenOption.text : 'Siguiente paso';
+          reportText += \`Paso \${i+1}: En "\${currentNode.title}" elegiste:\\n   └─> "\${optionText}"\\n\\n\`;
+        }
+      }
+      
+      const finalDesc = finalNode.content.replace(/##+\\s*[^\\n]+/g, '').trim();
+      reportText += \`--------------------------------------------------\\n\`;
+      reportText += \`DESENLACE ALCANZADO:\\n\`;
+      reportText += \`--------------------------------------------------\\n\`;
+      reportText += \`"\${finalNode.title}"\\n\\n\${finalDesc}\\n\\n\`;
+      
+      const reflectionVal = document.getElementById('report-reflection').value.trim();
+      if (reflectionVal) {
+        reportText += \`--------------------------------------------------\\n\`;
+        reportText += \`REFLEXIÓN DEL ESTUDIANTE:\\n\`;
+        reportText += \`--------------------------------------------------\\n\`;
+        reportText += \`\${reflectionVal}\\n\\n\`;
+      }
+      
+      reportText += \`==================================================\\n\`;
+      reportText += \`Generado automáticamente con Dilemas y Decisiones REPL\\n\`;
+      reportText += \`==================================================\\n\`;
+      
+      return reportText;
+    }
+
+    function copyReportClipboard() {
+      const text = generateReportData();
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Reporte copiado al portapapeles.');
+      }).catch(() => {
+        alert('Error al copiar el reporte.');
+      });
+    }
+
+    function downloadReportTxt() {
+      const text = generateReportData();
+      if (!text) return;
+      const startNode = nodes['inicio'];
+      const dilemmaTitle = startNode ? (startNode.content.match(/^##?\\s+(.+)$/m)?.[1] || startNode.title) : 'dilema';
+      const filename = \`reporte_\${dilemmaTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_')}.txt\`;
+      
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function printReport() {
+      const text = generateReportData();
+      if (!text) return;
+      
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(\`
+        <html>
+        <head>
+          <title>Reporte de Dilema Ético</title>
+          <style>
+            body { font-family: 'Courier New', Courier, monospace; padding: 40px; color: #333; line-height: 1.5; }
+            pre { white-space: pre-wrap; font-size: 14px; }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <pre>\${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+          <script>
+            window.onload = function() { window.print(); window.close(); }
+          <\/script>
+        </body>
+        </html>
+      \`);
+      printWindow.document.close();
     }
 
     function toggleView(view) {
