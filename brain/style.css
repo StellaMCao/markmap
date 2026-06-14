@@ -202,41 +202,42 @@ h1 {
 .brain-region {
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  stroke: rgba(255, 255, 255, 0.15);
+  stroke: rgba(255, 255, 255, 0.08);
   stroke-width: 1.5px;
   stroke-linejoin: round;
-  fill-opacity: 0; /* Make it transparent so background image is fully visible */
+  fill-opacity: 0.82;
 }
 
 .brain-region:hover {
-  fill-opacity: 0.35; /* Semi-transparent color overlay */
-  stroke: #fff;
-  stroke-width: 2.5px;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+  fill-opacity: 0.98;
+  stroke: rgba(255, 255, 255, 0.6);
+  stroke-width: 2.2px;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.15));
 }
 
-#region-frontal { fill: hsl(var(--color-frontal), 75%, 45%); }
-#region-parietal { fill: hsl(var(--color-parietal), 70%, 45%); }
-#region-temporal { fill: hsl(var(--color-temporal), 65%, 42%); }
-#region-occipital { fill: hsl(var(--color-occipital), 70%, 45%); }
-#region-cerebelo { fill: hsl(var(--color-cerebelo), 65%, 45%); }
-#region-tronco { fill: hsl(var(--color-tronco), 70%, 42%); }
-#region-hipocampo { fill: hsl(var(--color-limbic), 70%, 45%); }
-#region-amigdala { fill: #ef4444; }
+#region-frontal { fill: url(#frontal-grad); }
+#region-parietal { fill: url(#parietal-grad); }
+#region-temporal { fill: url(#temporal-grad); }
+#region-occipital { fill: url(#occipital-grad); }
+#region-cerebelo { fill: url(#cerebelo-grad); }
+#region-tronco { fill: url(#tronco-grad); }
+#region-hipocampo { fill: url(#hipocampo-grad); }
+#region-amigdala { fill: #f43f5e; }
 
 /* Active (selected) Region */
 .brain-region.selected-region {
-  stroke: #fff;
-  stroke-width: 2.5px;
-  fill-opacity: 0.35; /* Keep it highlighted */
+  stroke: rgba(255, 255, 255, 0.7);
+  stroke-width: 2.2px;
+  fill-opacity: 0.98;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.15));
 }
 
 /* Damaged Region (Lesion Mode) */
 .brain-region.damaged {
-  fill: #000000 !important; /* Darken the image region to look visually damaged */
+  fill: #1f2937 !important; /* Elegant gray/dark slate */
   stroke: #ef4444;
   stroke-width: 3px;
-  fill-opacity: 0.65 !important;
+  fill-opacity: 0.95 !important;
   animation: pulse-lesion 2s infinite alternate;
 }
 
