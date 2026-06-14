@@ -641,10 +641,34 @@ function getPrimaryNode() {
   return state.nodes.find(node => node.id === state.selected[state.selected.length - 1]);
 }
 
+function autoSizeNode(node) {
+  let estWidth = node.width || 200;
+  if (node.title.length > 20 || (node.body && node.body.length > 30)) {
+    if (estWidth < 240) estWidth = 240;
+  }
+  
+  const titleCharsPerLine = Math.max(12, Math.floor((estWidth - 28) / 8.5));
+  const bodyCharsPerLine = Math.max(15, Math.floor((estWidth - 28) / 7.0));
+  
+  const titleLines = Math.ceil(node.title.length / titleCharsPerLine);
+  const bodyLines = node.body ? Math.ceil(node.body.length / bodyCharsPerLine) : 0;
+  
+  let estHeight = 28 + (titleLines * 18);
+  if (node.body) {
+    estHeight += 8 + (bodyLines * 15);
+  }
+  
+  node.width = snapValue(estWidth);
+  node.height = snapValue(Math.max(node.type === "concept" ? 80 : 70, estHeight));
+}
+
 function updatePrimary(patch) {
   const node = getPrimaryNode();
   if (!node) return;
   Object.assign(node, patch);
+  if ("title" in patch || "body" in patch) {
+    autoSizeNode(node);
+  }
   render();
   commitHistory();
 }
@@ -1824,6 +1848,56 @@ window.addEventListener("keydown", event => {
   }
   if (event.key === "Delete" || event.key === "Backspace") {
     if (!["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) deleteNode();
+  }
+});
+
+// Draggable Presentation Bar (Canvas Footer)
+const footerEl = document.querySelector(".canvas-footer");
+let isDraggingFooter = false;
+let footerStartX = 0;
+let footerStartY = 0;
+let footerLeft = 0;
+let footerTop = 0;
+
+footerEl.addEventListener("pointerdown", event => {
+  if (event.target.tagName === "BUTTON" || event.target.tagName === "SPAN") return;
+  
+  isDraggingFooter = true;
+  footerStartX = event.clientX;
+  footerStartY = event.clientY;
+  
+  const rect = footerEl.getBoundingClientRect();
+  const shellRect = shell.getBoundingClientRect();
+  
+  footerLeft = rect.left - shellRect.left;
+  footerTop = rect.top - shellRect.top;
+  
+  footerEl.style.left = footerLeft + "px";
+  footerEl.style.top = footerTop + "px";
+  footerEl.style.bottom = "auto";
+  footerEl.style.right = "auto";
+  footerEl.style.margin = "0";
+  
+  footerEl.setPointerCapture(event.pointerId);
+  event.stopPropagation();
+});
+
+footerEl.addEventListener("pointermove", event => {
+  if (!isDraggingFooter) return;
+  const dx = event.clientX - footerStartX;
+  const dy = event.clientY - footerStartY;
+  
+  const nextLeft = Math.max(0, Math.min(shell.clientWidth - footerEl.offsetWidth, footerLeft + dx));
+  const nextTop = Math.max(0, Math.min(shell.clientHeight - footerEl.offsetHeight, footerTop + dy));
+  
+  footerEl.style.left = nextLeft + "px";
+  footerEl.style.top = nextTop + "px";
+});
+
+footerEl.addEventListener("pointerup", event => {
+  if (isDraggingFooter) {
+    isDraggingFooter = false;
+    footerEl.releasePointerCapture(event.pointerId);
   }
 });
 
