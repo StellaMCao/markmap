@@ -462,31 +462,36 @@ function drawConnections() {
 
       // Calculate connection sides based on horizontal positioning
       let startX, startY, endX, endY;
-      let parentSide = 'right';
-      let childSide = 'left';
+      let isVertical = false;
+      const gap = 12; // gap in pixels to prevent markers from overlapping the cards
 
-      if (parentRect.left + parentRect.width < childRect.left) {
+      if (parentRect.left + parentRect.width + 20 < childRect.left) {
         // Parent is on the Left of Child
-        startX = parentRect.left + parentRect.width;
+        startX = parentRect.left + parentRect.width + gap;
         startY = parentRect.top + parentRect.height / 2;
-        endX = childRect.left;
+        endX = childRect.left - gap;
         endY = childRect.top + childRect.height / 2;
-        parentSide = 'right';
-        childSide = 'left';
-      } else if (childRect.left + childRect.width < parentRect.left) {
+      } else if (childRect.left + childRect.width + 20 < parentRect.left) {
         // Parent is on the Right of Child
-        startX = parentRect.left;
+        startX = parentRect.left - gap;
         startY = parentRect.top + parentRect.height / 2;
-        endX = childRect.left + childRect.width;
+        endX = childRect.left + childRect.width + gap;
         endY = childRect.top + childRect.height / 2;
-        parentSide = 'left';
-        childSide = 'right';
       } else {
-        // Overlapping horizontally, connect via closest top/bottom or just default right-left
+        // Overlapping horizontally (Top-to-Bottom connection)
+        isVertical = true;
         startX = parentRect.left + parentRect.width / 2;
-        startY = parentRect.top + parentRect.height;
         endX = childRect.left + childRect.width / 2;
-        endY = childRect.top;
+
+        if (parentRect.top + parentRect.height < childRect.top) {
+          // Parent is ABOVE Child
+          startY = parentRect.top + parentRect.height + gap;
+          endY = childRect.top - gap;
+        } else {
+          // Parent is BELOW Child
+          startY = parentRect.top - gap;
+          endY = childRect.top + childRect.height + gap;
+        }
       }
 
       // Draw connection path (orthogonal line)
@@ -495,13 +500,24 @@ function drawConnections() {
 
       // Intermediate offsets for clean routing
       let pathD = '';
-      if (Math.abs(startY - endY) < 10) {
-        // Near-straight line
-        pathD = `M ${startX} ${startY} L ${endX} ${endY}`;
+      if (isVertical) {
+        if (Math.abs(startX - endX) < 10) {
+          // Near-straight vertical line
+          pathD = `M ${startX} ${startY} L ${endX} ${endY}`;
+        } else {
+          // Vertical Z-bend (vertical-first, horizontal-middle, vertical-last)
+          const midY = startY + (endY - startY) / 2;
+          pathD = `M ${startX} ${startY} L ${startX} ${midY} L ${endX} ${midY} L ${endX} ${endY}`;
+        }
       } else {
-        // Z-bend line
-        const midX = startX + (endX - startX) / 2;
-        pathD = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+        if (Math.abs(startY - endY) < 10) {
+          // Near-straight horizontal line
+          pathD = `M ${startX} ${startY} L ${endX} ${endY}`;
+        } else {
+          // Horizontal Z-bend (horizontal-first, vertical-middle, horizontal-last)
+          const midX = startX + (endX - startX) / 2;
+          pathD = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+        }
       }
 
       path.setAttribute('d', pathD);
