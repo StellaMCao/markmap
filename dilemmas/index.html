@@ -2454,17 +2454,17 @@ Este es el nivel mÃ¡s alto del razonamiento moral prosocial, donde la orientaciÃ
         
         colNodes.forEach((id, rowIndex) => {
           const node = nodes[id];
-          const nodeTitle = node ? node.title : `Pendiente (#${id})`;
+          const nodeTitle = node ? node.title : \`Pendiente (#\${id})\`;
           const x = col * colWidth + 20;
           const y = rowIndex * rowHeight + 20;
           
           nodePositions[id] = { x: x + 90, y: y + 30 };
           
           const card = document.createElement('div');
-          card.className = `map-node-card \${activeNodeId === id ? 'active' : ''} \${!node ? 'pending' : ''}`;
+          card.className = \`map-node-card \${activeNodeId === id ? 'active' : ''} \${!node ? 'pending' : ''}\`;
           card.style.position = 'absolute';
-          card.style.left = `\${x}px`;
-          card.style.top = `\${y}px`;
+          card.style.left = \`\${x}px\`;
+          card.style.top = \`\${y}px\`;
           card.style.width = '180px';
           card.style.height = '60px';
           card.style.zIndex = '2';
