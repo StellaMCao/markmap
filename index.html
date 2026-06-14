@@ -25,6 +25,10 @@
       --accent-slides: #10b981;
       --accent-dilemmas: #8b5cf6;
       --accent-mindmap: #3b82f6;
+      --accent-flashcards: #e11d48;
+      --accent-gantt: #2563eb;
+      --accent-erd: #0284c7;
+      --accent-states: #d946ef;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -123,6 +127,10 @@
     a.card.slides::before { background: var(--accent-slides); }
     a.card.dilemmas::before { background: var(--accent-dilemmas); }
     a.card.mindmap::before { background: var(--accent-mindmap); }
+    a.card.flashcards::before { background: var(--accent-flashcards); }
+    a.card.gantt::before { background: var(--accent-gantt); }
+    a.card.erd::before { background: var(--accent-erd); }
+    a.card.states::before { background: var(--accent-states); }
 
     a.card:hover {
       transform: translateY(-6px);
@@ -148,6 +156,18 @@
     }
     a.card.mindmap:hover {
       box-shadow: 0 15px 35px rgba(59, 130, 246, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    a.card.flashcards:hover {
+      box-shadow: 0 15px 35px rgba(225, 29, 72, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    a.card.gantt:hover {
+      box-shadow: 0 15px 35px rgba(37, 99, 235, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    a.card.erd:hover {
+      box-shadow: 0 15px 35px rgba(2, 132, 199, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    a.card.states:hover {
+      box-shadow: 0 15px 35px rgba(217, 70, 239, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
     }
 
     .card-top {
@@ -176,6 +196,10 @@
     a.card.slides strong { color: #ecfdf5; }
     a.card.dilemmas strong { color: #f5f3ff; }
     a.card.mindmap strong { color: #eff6ff; }
+    a.card.flashcards strong { color: #ffe4e6; }
+    a.card.gantt strong { color: #eff6ff; }
+    a.card.erd strong { color: #f0f9ff; }
+    a.card.states strong { color: #fdf4ff; }
 
     a.card.markmap:hover strong { color: var(--accent-markmap); }
     a.card.studio:hover strong { color: var(--accent-studio); }
@@ -183,6 +207,10 @@
     a.card.slides:hover strong { color: var(--accent-slides); }
     a.card.dilemmas:hover strong { color: var(--accent-dilemmas); }
     a.card.mindmap:hover strong { color: var(--accent-mindmap); }
+    a.card.flashcards:hover strong { color: var(--accent-flashcards); }
+    a.card.gantt:hover strong { color: var(--accent-gantt); }
+    a.card.erd:hover strong { color: var(--accent-erd); }
+    a.card.states:hover strong { color: var(--accent-states); }
 
     span.desc {
       color: var(--text-muted);
@@ -209,6 +237,10 @@
     a.card.slides .go { color: var(--accent-slides); }
     a.card.dilemmas .go { color: var(--accent-dilemmas); }
     a.card.mindmap .go { color: var(--accent-mindmap); }
+    a.card.flashcards .go { color: var(--accent-flashcards); }
+    a.card.gantt .go { color: var(--accent-gantt); }
+    a.card.erd .go { color: var(--accent-erd); }
+    a.card.states .go { color: var(--accent-states); }
 
     .arrow {
       transform: translateX(0);
@@ -242,7 +274,7 @@
   <main>
     <header>
       <h1>Suite de herramientas visuales</h1>
-      <p>Seis espacios interactivos para crear mapas conceptuales, diagramar flujos, estructurar líneas de tiempo, impartir presentaciones dinámicas, simular dilemas éticos y trazar mapas mentales con físicas animadas.</p>
+      <p>Diez espacios interactivos para estudiar con tarjetas interactivas, trazar rutas de proyectos, modelar bases de datos, simular autómatas de estado, crear mapas conceptuales, estructurar líneas de tiempo, impartir presentaciones y más.</p>
     </header>
     
     <section class="grid" aria-label="Aplicaciones disponibles">
@@ -316,6 +348,54 @@
         </div>
         <div class="card-bottom">
           <span class="go">Crear mapa mental <span class="arrow">→</span></span>
+        </div>
+      </a>
+
+      <!-- CARD 7: FLASHCARDS -->
+      <a href="./flashcards/" class="card flashcards">
+        <div class="card-top">
+          <div class="card-icon">🎴</div>
+          <strong>Flashcards & Quiz</strong>
+          <span class="desc">Estudia conceptos con tarjetas interactivas 3D y pon a prueba tu memoria con cuestionarios de opción múltiple generados dinámicamente con temporizador.</span>
+        </div>
+        <div class="card-bottom">
+          <span class="go">Estudiar mazo <span class="arrow">→</span></span>
+        </div>
+      </a>
+
+      <!-- CARD 8: GANTT -->
+      <a href="./gantt/" class="card gantt">
+        <div class="card-top">
+          <div class="card-icon">📅</div>
+          <strong>Gantt & Roadmap</strong>
+          <span class="desc">Estructura cronogramas de proyectos en Markdown. Edita tareas directamente en el calendario interactivo con soporte de dependencias y redimensionamiento.</span>
+        </div>
+        <div class="card-bottom">
+          <span class="go">Diagramar proyecto <span class="arrow">→</span></span>
+        </div>
+      </a>
+
+      <!-- CARD 9: ERD STUDIO -->
+      <a href="./erd/" class="card erd">
+        <div class="card-top">
+          <div class="card-icon">🗄️</div>
+          <strong>ERD Database Studio</strong>
+          <span class="desc">Diseña esquemas de bases de datos relacionales en Markdown. Visualiza diagramas con relaciones pata de gallo y genera código SQL DDL exportable.</span>
+        </div>
+        <div class="card-bottom">
+          <span class="go">Modelar base de datos <span class="arrow">→</span></span>
+        </div>
+      </a>
+
+      <!-- CARD 10: STATE MACHINE -->
+      <a href="./states/" class="card states">
+        <div class="card-top">
+          <div class="card-icon">🔄</div>
+          <strong>State Machine Simulator</strong>
+          <span class="desc">Trazá máquinas de estado y autómatas en Markdown. Simula flujos de ejecución interactivos con disparadores de eventos y flujo visual de partículas.</span>
+        </div>
+        <div class="card-bottom">
+          <span class="go">Simular autómata <span class="arrow">→</span></span>
         </div>
       </a>
       

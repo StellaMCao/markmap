@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador de Máquinas de Estados y Autómatas</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <span>State Machine Simulator</span>
+      </div>
+
+      <div class="toolbar">
+        <button id="saveBtn" title="Guardar máquina localmente">Guardar</button>
+        <button id="loadBtn" title="Cargar máquina guardada">Cargar</button>
+        <button id="clearBtn" class="danger" title="Limpiar todo">Limpiar</button>
+        <button id="themeToggleBtn" class="icon-btn" title="Cambiar tema">🌙</button>
+        <button id="helpBtn" class="icon-btn" title="Ayuda">?</button>
+        <a href="../index.html" style="text-decoration: none;"><button id="exitBtn" class="danger" title="Volver al Portal">Salir</button></a>
+      </div>
+    </header>
+
+    <!-- Sidebar (Editor) -->
+    <aside class="sidebar">
+      <section class="section">
+        <h2>Editor de Transiciones</h2>
+        <div class="editor-container">
+          <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">
+            Definí las transiciones en el formato:<br>
+            <code>- Origen -> Destino : EventoTrigger</code>
+          </p>
+          <textarea id="markdownTextarea" placeholder="# Semáforo&#10;- Verde -> Amarillo : tiempo_limite&#10;- Amarillo -> Rojo : precaucion&#10;- Rojo -> Verde : tiempo_limite"></textarea>
+        </div>
+      </section>
+
+      <!-- Dynamic Event Triggers Panel -->
+      <section class="section" id="triggersSection">
+        <h2>Disparadores de Eventos</h2>
+        <p style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">Hacé clic en un evento para disparar la transición de estado correspondiente:</p>
+        <div class="trigger-grid" id="triggerGrid">
+          <!-- Dynamically generated trigger buttons -->
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Ejemplos rápidos</h2>
+        <div class="template-list" id="templateList">
+          <button class="template" data-example="traffic">
+            <span>Semáforo de Tránsito</span>
+            <strong>Cargar</strong>
+          </button>
+          <button class="template" data-example="lock">
+            <span>Cerradura Digital</span>
+            <strong>Cargar</strong>
+          </button>
+          <button class="template" data-example="music">
+            <span>Reproductor de Música</span>
+            <strong>Cargar</strong>
+          </button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Welcome State -->
+      <div id="welcomeState" class="welcome-card" style="z-index: 20;">
+        <div class="welcome-icon">🔄</div>
+        <h2>Simulá Autómatas Visuales</h2>
+        <p style="color: var(--muted); font-size: 14px;">Definí estados y transiciones en Markdown o cargá un ejemplo para interactuar con simulación de partículas.</p>
+        <button id="loadInitialExampleBtn" class="primary">Cargar Semáforo de Tránsito</button>
+      </div>
+
+      <!-- Canvas Shell -->
+      <div id="canvasShell" class="canvas-shell" hidden>
+        <!-- Simulation HUD -->
+        <div class="sim-hud">
+          <span>Estado Activo: </span>
+          <span id="activeStateLabel" class="hud-active-label">Ninguno</span>
+          <br>
+          <span style="font-size: 10px; color: var(--muted); font-weight: 500;">💡 Doble clic en cualquier nodo para definirlo como activo.</span>
+        </div>
+
+        <div class="canvas" id="canvas">
+          
+          <!-- Connections Layer -->
+          <svg class="connector-layer" id="connectorLayer">
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="28" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+                <path d="M0,0 L0,8 L8,4 z" fill="var(--muted)"></path>
+              </marker>
+              <marker id="arrow-active" markerWidth="8" markerHeight="8" refX="28" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+                <path d="M0,0 L0,8 L8,4 z" fill="var(--violet)"></path>
+              </marker>
+            </defs>
+          </svg>
+
+          <!-- Draggable State Nodes get injected here -->
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Help Overlay -->
+  <div class="help-overlay" id="helpOverlay" role="dialog" aria-modal="true">
+    <div class="help-dialog">
+      <div class="help-head">
+        <h2>Ayuda de State Machine Simulator</h2>
+        <button id="closeHelpBtn" class="icon-btn" title="Cerrar ayuda">×</button>
+      </div>
+      <div class="help-body">
+        <p>Esta aplicación te permite diseñar, visualizar y simular el flujo lógico de autómatas de estados finitos utilizando Markdown jerárquico.</p>
+        
+        <h3>Formato del Editor</h3>
+        <ul>
+          <li><strong>Línea de Transición:</strong> Escribila usando una flecha <code>-></code> y dos puntos <code>:</code> para el trigger:
+            <br><code>- EstadoOrigen -> EstadoDestino : NombreEvento</code>
+          </li>
+          <li><strong>Estado Inicial:</strong> El primer estado que se defina en el archivo se marcará automáticamente como el estado de inicio.</li>
+          <li><strong>Estado Final / Aceptación:</strong> Si el nombre del estado termina con un asterisco (ej. <code>Bloqueado*</code>), se dibujará con doble anillo indicando que es un estado final.</li>
+        </ul>
+        
+        <h3>Ejemplo:</h3>
+        <pre style="background: var(--bg); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; margin-bottom: 12px; overflow-x: auto; color: var(--ink);">
+- Cerrado -> Abierto : presionar_boton
+- Abierto -> Cerrado : tiempo_limite
+- Abierto -> Alarma* : vandalismo
+        </pre>
+
+        <h3>Simulación Interactiva</h3>
+        <ul>
+          <li><strong>Doble Clic:</strong> Define un estado como activo de forma manual en cualquier momento.</li>
+          <li><strong>Panel de Disparadores:</strong> Hacé clic en los botones del panel lateral izquierdo para simular inputs. Si el estado activo tiene una transición vinculada a ese trigger, cambiará de estado.</li>
+          <li><strong>Animación de Partículas:</strong> Al cambiar de estado por un trigger, verás una pequeña partícula brillante viajando por la flecha de transición hacia el nuevo nodo activo.</li>
+          <li><strong>Lienzo Draggable:</strong> Podés acomodar los nodos circulares arrastrándolos con el cursor. Sus posiciones se guardarán en este navegador.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

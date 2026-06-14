@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estudio de Base de Datos ERD - Pro</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">E</div>
+        <span>ERD Database Studio</span>
+      </div>
+
+      <div class="toolbar">
+        <button id="exportSqlBtn" class="primary" title="Generar código SQL DDL">⚡ Exportar SQL</button>
+        <button id="saveBtn" title="Guardar esquema localmente">Guardar</button>
+        <button id="loadBtn" title="Cargar esquema guardado">Cargar</button>
+        <button id="clearBtn" class="danger" title="Limpiar todo">Limpiar</button>
+        <button id="themeToggleBtn" class="icon-btn" title="Cambiar tema">🌙</button>
+        <button id="helpBtn" class="icon-btn" title="Ayuda">?</button>
+        <a href="../index.html" style="text-decoration: none;"><button id="exitBtn" class="danger" title="Volver al Portal">Salir</button></a>
+      </div>
+    </header>
+
+    <!-- Sidebar (Editor) -->
+    <aside class="sidebar">
+      <section class="section">
+        <h2>Editor de Esquema</h2>
+        <div class="editor-container">
+          <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">
+            Definí tus tablas y columnas con tipos y llaves:<br>
+            <code>## NombreTabla</code><br>
+            <code>- columna tipo [PK] [FK -> OtraTabla.id]</code>
+          </p>
+          <textarea id="markdownTextarea" placeholder="## usuarios&#10;- id int PK&#10;- nombre varchar(100)&#10;- rol_id int FK -> roles.id&#10;&#10;## roles&#10;- id int PK&#10;- nombre varchar(50)"></textarea>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Ejemplos rápidos</h2>
+        <div class="template-list" id="templateList">
+          <button class="template" data-example="ecommerce">
+            <span>Tienda E-commerce</span>
+            <strong>Cargar</strong>
+          </button>
+          <button class="template" data-example="tasks">
+            <span>Gestor de Tareas</span>
+            <strong>Cargar</strong>
+          </button>
+          <button class="template" data-example="social">
+            <span>Red Social</span>
+            <strong>Cargar</strong>
+          </button>
+        </div>
+      </section>
+
+      <section class="section">
+        <p class="hint" style="font-size: 12px; line-height: 1.4; padding: 10px; background: var(--bg); border: 1px dashed var(--line); border-radius: var(--radius-sm);">
+          💡 Podés arrastrar el encabezado de las tablas en el lienzo para ordenar el diagrama como prefieras.
+        </p>
+      </section>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Welcome State -->
+      <div id="welcomeState" class="welcome-card" style="z-index: 20;">
+        <div class="welcome-icon">🗄️</div>
+        <h2>Diseñá tu Base de Datos</h2>
+        <p style="color: var(--muted); font-size: 14px;">Ingresá tus tablas y relaciones en la barra lateral o cargá uno de los ejemplos predefinidos para visualizar el diagrama entidad-relación.</p>
+        <button id="loadInitialExampleBtn" class="primary">Cargar Tienda E-commerce</button>
+      </div>
+
+      <!-- Canvas Shell -->
+      <div id="canvasShell" class="canvas-shell" hidden>
+        <div class="canvas" id="canvas">
+          
+          <!-- Connections Layer -->
+          <svg class="connector-layer" id="connectorLayer">
+            <defs>
+              <!-- Crow's Foot: MANY side (fork + perpendicular line) -->
+              <marker id="crowsfoot-many" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,2 L10,6 L0,10 M10,0 L10,12" fill="none" stroke="var(--muted)" stroke-width="2"></path>
+              </marker>
+              <!-- Crow's Foot: ONE side (two parallel perpendicular lines) -->
+              <marker id="crowsfoot-one" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+                <path d="M3,0 L3,12 M8,0 L8,12" fill="none" stroke="var(--muted)" stroke-width="2"></path>
+              </marker>
+            </defs>
+          </svg>
+
+          <!-- Draggable Table Cards get injected here -->
+
+        </div>
+      </div>
+
+      <!-- SQL DDL Code Panel (Drawer) -->
+      <div class="sql-drawer" id="sqlDrawer">
+        <div class="sql-drawer-header">
+          <h3>Código SQL DDL Generado</h3>
+          <button id="closeSqlBtn" class="icon-btn" title="Cerrar">×</button>
+        </div>
+        <div class="sql-drawer-body">
+          <p style="font-size: 13px; color: var(--muted);">Copia este script para crear las tablas y llaves foráneas en tu base de datos relacional (PostgreSQL, MySQL o SQL Server).</p>
+          <textarea class="sql-code" id="sqlCodeArea" readonly></textarea>
+          <button id="copySqlBtn" class="primary" style="width: 100%;">📋 Copiar al Portapapeles</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Help Overlay -->
+  <div class="help-overlay" id="helpOverlay" role="dialog" aria-modal="true">
+    <div class="help-dialog">
+      <div class="help-head">
+        <h2>Ayuda de ERD Database Studio</h2>
+        <button id="closeHelpBtn" class="icon-btn" title="Cerrar ayuda">×</button>
+      </div>
+      <div class="help-body">
+        <p>Esta aplicación te permite diseñar esquemas relacionales escribiendo Markdown y exportar el código SQL DDL correspondiente.</p>
+        
+        <h3>Formato del Editor</h3>
+        <ul>
+          <li><strong>Tablas:</strong> Declaralas escribiendo <code>## NombreTabla</code>.</li>
+          <li><strong>Columnas:</strong> Listalas abajo con un guion <code>- nombre_columna tipo_dato [atributos]</code>.</li>
+          <li><strong>Llaves Primarias (PK):</strong> Agregá <code>PK</code> al final de la columna.</li>
+          <li><strong>Llaves Foráneas (FK):</strong> Agregá <code>FK -> NombreTablaPadre.columna_padre</code> al final.</li>
+        </ul>
+        
+        <h3>Ejemplo:</h3>
+        <pre style="background: var(--bg); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; margin-bottom: 12px; overflow-x: auto; color: var(--ink);">
+## clientes
+- id int PK
+- nombre varchar(100)
+- email varchar(150)
+
+## pedidos
+- id int PK
+- cliente_id int FK -> clientes.id
+- total decimal(10,2)
+        </pre>
+
+        <h3>Conectores "Pata de Gallo" (Crow's Foot)</h3>
+        <p>El sistema detecta automáticamente las llaves foráneas y dibuja líneas conectoras inteligentes. El extremo que apunta a la llave primaria tiene el símbolo de <strong>Uno (||)</strong>, mientras que el extremo de la llave foránea tiene la <strong>Pata de Gallo (Many >|)</strong> indicando una relación de Uno a Muchos.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
