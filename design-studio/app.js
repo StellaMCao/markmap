@@ -1703,6 +1703,29 @@ closeMarkdownBtn.addEventListener("click", () => {
   markdownDrawer.classList.remove("open");
 });
 
+const loadMarkdownExampleBtn = document.getElementById("loadMarkdownExampleBtn");
+const defaultMarkdownExample = `# Desarrollo de Software | Ciclo de vida de un proyecto
+## 1. Planificación | Definición de objetivos y alcance
+- Reunión con clientes | Levantar requerimientos iniciales
+- Estimación de tiempos | Crear diagrama de Gantt y hitos
+- Análisis de riesgos | Identificar posibles cuellos de botella
+## 2. Diseño | Arquitectura y experiencia de usuario
+- UI/UX Wireframes | Crear prototipos interactivos en Figma
+- Modelo de datos | Diseñar esquema de base de datos relacional
+- Arquitectura técnica | Definir servicios y APIs necesarias
+## 3. Desarrollo | Codificación y buenas prácticas
+- Frontend | Implementar componentes visuales responsivos
+- Backend | Crear endpoints de API y lógica de negocio
+- CI/CD Setup | Configurar pipelines de despliegue automático
+## 4. Pruebas y Lanzamiento | Aseguramiento de calidad
+- Unit Testing | Escribir tests unitarios para funciones críticas
+- QA Manual | Probar flujos en entorno de staging
+- Producción | Desplegar app y monitorear logs`;
+
+loadMarkdownExampleBtn.addEventListener("click", () => {
+  markdownTextarea.value = defaultMarkdownExample;
+});
+
 importMarkdownBtn.addEventListener("click", () => {
   if (confirm("¿Seguro que querés reemplazar el diseño actual con el Markdown importado?")) {
     importMarkdown(markdownTextarea.value);
