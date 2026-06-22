@@ -20,6 +20,7 @@
       --primary-hover: #4f46e5;
       
       --accent-markmap: #06b6d4;
+      --accent-markmap2: #2dd4bf;
       --accent-studio: #ec4899;
       --accent-timeline: #f59e0b;
       --accent-slides: #10b981;
@@ -124,6 +125,7 @@
 
     /* Brand accents for each card */
     a.card.markmap::before { background: var(--accent-markmap); }
+    a.card.markmap2::before { background: var(--accent-markmap2); }
     a.card.studio::before { background: var(--accent-studio); }
     a.card.timeline::before { background: var(--accent-timeline); }
     a.card.slides::before { background: var(--accent-slides); }
@@ -145,6 +147,9 @@
 
     a.card.markmap:hover {
       box-shadow: 0 15px 35px rgba(6, 182, 212, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    a.card.markmap2:hover {
+      box-shadow: 0 15px 35px rgba(45, 212, 191, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
     }
     a.card.studio:hover {
       box-shadow: 0 15px 35px rgba(236, 72, 153, 0.15), 0 5px 15px rgba(0, 0, 0, 0.3);
@@ -201,6 +206,7 @@
     }
 
     a.card.markmap strong { color: #e0f2fe; }
+    a.card.markmap2 strong { color: #f0fdfa; }
     a.card.studio strong { color: #fdf2f8; }
     a.card.timeline strong { color: #fffbeb; }
     a.card.slides strong { color: #ecfdf5; }
@@ -214,6 +220,7 @@
     a.card.brain strong { color: #ffe4e6; }
 
     a.card.markmap:hover strong { color: var(--accent-markmap); }
+    a.card.markmap2:hover strong { color: var(--accent-markmap2); }
     a.card.studio:hover strong { color: var(--accent-studio); }
     a.card.timeline:hover strong { color: var(--accent-timeline); }
     a.card.slides:hover strong { color: var(--accent-slides); }
@@ -246,6 +253,7 @@
     }
 
     a.card.markmap .go { color: var(--accent-markmap); }
+    a.card.markmap2 .go { color: var(--accent-markmap2); }
     a.card.studio .go { color: var(--accent-studio); }
     a.card.timeline .go { color: var(--accent-timeline); }
     a.card.slides .go { color: var(--accent-slides); }
@@ -304,6 +312,18 @@
         </div>
         <div class="card-bottom">
           <span class="go">Abrir Markmap <span class="arrow">→</span></span>
+        </div>
+      </a>
+
+      <!-- CARD 1.5: MARKMAP 2.0 (Pro) -->
+      <a href="./markmap2/" class="card markmap2">
+        <div class="card-top">
+          <div class="card-icon">🗺️✨</div>
+          <strong>Markmap 2.0 (Pro)</strong>
+          <span class="desc">Versión premium de Markmap con un potente panel de personalización visual en tiempo real, control por niveles de tipografías, colores, formas y grosores, presets y exportaciones avanzadas.</span>
+        </div>
+        <div class="card-bottom">
+          <span class="go">Diseñar con Markmap 2 <span class="arrow">→</span></span>
         </div>
       </a>
       
