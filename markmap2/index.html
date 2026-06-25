@@ -307,8 +307,10 @@
             showLocalUpload: true,
             onLocalUpload: function() { fileInputRef.current?.click(); },
             onConfirm: function(values) {
-              const url = values.url;
-              const alt = values.alt;
+              alert("Image onConfirm start. values: " + JSON.stringify(values));
+              try {
+                const url = values.url;
+                const alt = values.alt;
               const width = values.width;
               const aspect = values.aspect;
               if (!url.trim()) return;
@@ -318,7 +320,18 @@
               const embed = id
                 ? '<iframe class="media-drive-img" src="' + window.directDriveUrl(url, 'preview') + '" allow="autoplay" title="' + alt + '" style="width:' + w + 'px;height:' + h + 'px"></iframe>'
                 : '<span class="media-image" style="display:inline-block;width:' + w + 'px"><img src="' + url.trim() + '" alt="' + alt + '" loading="lazy"></span>';
-              editorRef.current?.insertAtCursor('\n- ' + (alt || 'Imagen') + '\n  <div class="media-node media-img-node">' + embed + '</div>\n');
+                alert("Inserting image HTML: " + embed);
+                if (!editorRef.current) {
+                  alert("ERROR: editorRef.current is NULL!");
+                } else if (typeof editorRef.current.insertAtCursor !== 'function') {
+                  alert("ERROR: editorRef.current.insertAtCursor is not a function! Existing keys: " + Object.keys(editorRef.current).join(", "));
+                } else {
+                  editorRef.current.insertAtCursor('\n- ' + (alt || 'Imagen') + '\n  <div class="media-node media-img-node">' + embed + '</div>\n');
+                  alert("Image inserted successfully!");
+                }
+              } catch (err) {
+                alert("Exception in image onConfirm: " + err.message + "\n" + err.stack);
+              }
             }
           });
         };
@@ -335,8 +348,10 @@
             showLocalUpload: true,
             onLocalUpload: function() { fileInputRef.current?.click(); },
             onConfirm: function(values) {
-              const url = values.url;
-              const label = values.label;
+              alert("Audio onConfirm start. values: " + JSON.stringify(values));
+              try {
+                const url = values.url;
+                const label = values.label;
               const width = values.width;
               if (!url.trim()) return;
               const w = Math.max(180, Math.min(600, Number(width)));
@@ -344,7 +359,18 @@
               const embed = id
                 ? '<iframe class="media-drive-audio" src="' + window.directDriveUrl(url, 'preview') + '" allow="autoplay" title="' + label + '" style="width:' + w + 'px"></iframe>'
                 : '<audio controls preload="metadata" src="' + window.directDriveUrl(url) + '" style="width:' + w + 'px"></audio>';
-              editorRef.current?.insertAtCursor('\n- ' + (label || 'Audio') + '\n  <div class="media-node media-audio-node">' + embed + '</div>\n');
+                alert("Inserting audio HTML: " + embed);
+                if (!editorRef.current) {
+                  alert("ERROR: editorRef.current is NULL!");
+                } else if (typeof editorRef.current.insertAtCursor !== 'function') {
+                  alert("ERROR: editorRef.current.insertAtCursor is not a function! Existing keys: " + Object.keys(editorRef.current).join(", "));
+                } else {
+                  editorRef.current.insertAtCursor('\n- ' + (label || 'Audio') + '\n  <div class="media-node media-audio-node">' + embed + '</div>\n');
+                  alert("Audio inserted successfully!");
+                }
+              } catch (err) {
+                alert("Exception in audio onConfirm: " + err.message + "\n" + err.stack);
+              }
             }
           });
         };
