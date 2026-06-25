@@ -589,24 +589,116 @@ function directDriveUrl(url, type = 'download') {
   return `https://drive.google.com/uc?export=download&id=${id}`;
 }
 
+// ── Media Insert Modal ────────────────────────────────────────────────────────
+function createMediaModal({ title, fields, onConfirm }) {
+  // Remove any existing modal
+  document.getElementById('media-modal')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'media-modal';
+  overlay.className = 'media-modal-overlay';
+
+  const modal = document.createElement('div');
+  modal.className = 'media-modal-box';
+
+  let html = `<div class="media-modal-header"><span>${title}</span><button class="toolbar-btn media-modal-close" id="media-modal-close-btn"><i data-lucide="x"></i></button></div><div class="media-modal-body">`;
+
+  fields.forEach((field) => {
+    if (field.type === 'text' || field.type === 'url') {
+      html += `<div class="form-group"><label for="mmf-${field.key}">${field.label}</label><input id="mmf-${field.key}" class="input-search" type="${field.type}" value="${field.default || ''}" placeholder="${field.placeholder || ''}"></div>`;
+    } else if (field.type === 'slider') {
+      html += `<div class="form-group"><label for="mmf-${field.key}">${field.label}: <strong id="mmf-${field.key}-val">${field.default}</strong>px</label><input id="mmf-${field.key}" class="media-slider" type="range" min="${field.min}" max="${field.max}" step="${field.step || 10}" value="${field.default}"></div>`;
+    } else if (field.type === 'select') {
+      const opts = field.options.map(o => `<option value="${o.value}"${o.value === field.default ? ' selected' : ''}>${o.label}</option>`).join('');
+      html += `<div class="form-group"><label for="mmf-${field.key}">${field.label}</label><select id="mmf-${field.key}" class="input-select">${opts}</select></div>`;
+    }
+  });
+
+  html += `</div><div class="media-modal-footer"><button class="btn btn-secondary" id="media-modal-cancel-btn">Cancelar</button><button class="btn btn-primary" id="media-modal-ok-btn">Insertar</button></div>`;
+
+  modal.innerHTML = html;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  tryCreateIcons();
+
+  // Wire slider live preview
+  fields.filter(f => f.type === 'slider').forEach((field) => {
+    const slider = document.getElementById(`mmf-${field.key}`);
+    const valEl = document.getElementById(`mmf-${field.key}-val`);
+    if (slider && valEl) slider.addEventListener('input', () => { valEl.textContent = slider.value; });
+  });
+
+  // Collect values helper
+  function getValues() {
+    const result = {};
+    fields.forEach((field) => {
+      const el = document.getElementById(`mmf-${field.key}`);
+      result[field.key] = el ? el.value : field.default;
+    });
+    return result;
+  }
+
+  const closeModal = () => overlay.remove();
+
+  document.getElementById('media-modal-cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('media-modal-close-btn').addEventListener('click', closeModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+  document.getElementById('media-modal-ok-btn').addEventListener('click', () => {
+    onConfirm(getValues());
+    closeModal();
+  });
+
+  // Focus first input
+  setTimeout(() => document.querySelector('#media-modal .input-search, #media-modal .input-select')?.focus(), 50);
+}
+
 function insertImage() {
-  const rawUrl = prompt('Pegá una URL pública de imagen o un enlace compartido de Drive:');
-  if (!rawUrl) return;
-  const alt = prompt('Texto alternativo:', 'Imagen') || 'Imagen';
-  const width = Math.max(80, Math.min(900, Math.round(Number(prompt('Ancho de imagen en px:', '240')) || 240)));
-  const src = directDriveUrl(rawUrl, 'image');
-  insertAtCursor(`\n- ${alt}\n  <span class="media-image" style="display:inline-block;width:${width}px"> <img src="${src}" alt="${alt}"> </span>\n`);
+  createMediaModal({
+    title: '🖼️ Insertar Imagen',
+    fields: [
+      { key: 'url', type: 'url', label: 'URL de imagen o enlace de Drive', placeholder: 'https://... o https://drive.google.com/...' },
+      { key: 'alt', type: 'text', label: 'Texto alternativo', default: 'Imagen', placeholder: 'Descripción de la imagen' },
+      { key: 'width', type: 'slider', label: 'Ancho', min: 80, max: 800, step: 20, default: 280 },
+      { key: 'aspect', type: 'select', label: 'Proporción (solo Drive)', default: '0.72',
+        options: [
+          { value: '0.56', label: '16:9 (panorámica)' },
+          { value: '0.72', label: '4:3 (estándar)' },
+          { value: '1',    label: '1:1 (cuadrada)' },
+          { value: '1.33', label: '3:4 (vertical)' }
+        ]
+      }
+    ],
+    onConfirm({ url, alt, width, aspect }) {
+      if (!url.trim()) return;
+      const w = Math.max(80, Math.min(800, Number(width)));
+      const h = Math.round(w * Number(aspect));
+      const id = driveFileId(url.trim());
+      const embed = id
+        ? `<iframe class="media-drive-img" src="${directDriveUrl(url, 'preview')}" allow="autoplay" title="${alt}" style="width:${w}px;height:${h}px"></iframe>`
+        : `<span class="media-image" style="display:inline-block;width:${w}px"><img src="${url.trim()}" alt="${alt}" loading="lazy"></span>`;
+      insertAtCursor(`\n- ${alt || 'Imagen'}\n  <div class="media-node media-img-node">${embed}</div>\n`);
+    }
+  });
 }
 
 function insertAudio() {
-  const rawUrl = prompt('Pegá una URL pública de audio o un enlace compartido de Drive:');
-  if (!rawUrl) return;
-  const label = prompt('Título del audio:', 'Audio') || 'Audio';
-  const id = driveFileId(rawUrl);
-  const embed = id
-    ? `<iframe src="${directDriveUrl(rawUrl, 'preview')}" allow="autoplay"></iframe>`
-    : `<audio controls preload="metadata" src="${directDriveUrl(rawUrl)}"></audio>`;
-  insertAtCursor(`\n- ${label}\n  <div class="media-node">${embed}</div>\n`);
+  createMediaModal({
+    title: '🎵 Insertar Audio',
+    fields: [
+      { key: 'url', type: 'url', label: 'URL de audio o enlace de Drive', placeholder: 'https://... o https://drive.google.com/...' },
+      { key: 'label', type: 'text', label: 'Título del audio', default: 'Audio', placeholder: 'Nombre del audio' },
+      { key: 'width', type: 'slider', label: 'Ancho del reproductor', min: 180, max: 600, step: 20, default: 300 }
+    ],
+    onConfirm({ url, label, width }) {
+      if (!url.trim()) return;
+      const w = Math.max(180, Math.min(600, Number(width)));
+      const id = driveFileId(url.trim());
+      const embed = id
+        ? `<iframe class="media-drive-audio" src="${directDriveUrl(url, 'preview')}" allow="autoplay" title="${label}" style="width:${w}px"></iframe>`
+        : `<audio controls preload="metadata" src="${directDriveUrl(url)}" style="width:${w}px"></audio>`;
+      insertAtCursor(`\n- ${label || 'Audio'}\n  <div class="media-node media-audio-node">${embed}</div>\n`);
+    }
+  });
 }
 
 function setWidthRule() {
@@ -876,7 +968,7 @@ function exportedHtml(markdown, settings) {
 <title>Markmap</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <style>
-:root{--map-font:${fonts[settings.font] || fonts.system};--map-font-size:${settings.textSize || 1}em;--map-text:${mapText};--table-border:${settings.theme === 'dark' ? '#334155' : '#d6dee8'};--table-head:${settings.theme === 'dark' ? '#223047' : '#eef2f6'};--circle-radius:${settings.circleRadius || 7}px}*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:${settings.theme === 'dark' ? '#111827' : '#fbfcfd'};color:${settings.theme === 'dark' ? '#edf2f7' : '#17202a'}}header{align-items:center;background:${settings.theme === 'dark' ? '#182235' : '#fff'};border-bottom:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:transparent;border:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};border-radius:6px;color:inherit;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer;r:var(--circle-radius,7px) !important;stroke-width:2.2px !important;transition:r .15s ease,stroke-width .15s ease,fill .15s ease}.markmap-node circle:hover{r:calc(var(--circle-radius,7px) * 1.35) !important;stroke-width:3px !important}.markmap-foreign div{color:var(--map-text);font-family:var(--map-font);font-size:var(--map-font-size)}.markmap-foreign a{color:color-mix(in srgb,var(--map-text) 72%,#008cff)}.markmap-foreign img{border-radius:6px;max-height:180px;max-width:min(100%,420px);object-fit:contain}.markmap-foreign .media-image img{height:auto;max-height:none;max-width:100%;width:100%}.markmap-foreign audio{display:block;height:40px;min-width:260px;width:260px}.markmap-foreign iframe{border:0;border-radius:8px;display:block;height:78px;width:300px}.markmap-foreign .media-node{display:inline-block;min-width:280px}.markmap-foreign table{border-collapse:collapse;display:block;font-size:.82em;margin-top:6px;max-width:380px;overflow:hidden}.markmap-foreign th,.markmap-foreign td{border:1px solid var(--table-border);padding:4px 7px;text-align:left;vertical-align:top;white-space:nowrap}.markmap-foreign th{background:var(--table-head);font-weight:700}.hint{color:${settings.theme === 'dark' ? '#aab6c7' : '#64748b'};font-size:12px}
+:root{--map-font:${fonts[settings.font] || fonts.system};--map-font-size:${settings.textSize || 1}em;--map-text:${mapText};--table-border:${settings.theme === 'dark' ? '#334155' : '#d6dee8'};--table-head:${settings.theme === 'dark' ? '#223047' : '#eef2f6'};--circle-radius:${settings.circleRadius || 7}px}*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:${settings.theme === 'dark' ? '#111827' : '#fbfcfd'};color:${settings.theme === 'dark' ? '#edf2f7' : '#17202a'}}header{align-items:center;background:${settings.theme === 'dark' ? '#182235' : '#fff'};border-bottom:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};display:flex;gap:8px;justify-content:space-between;min-height:48px;padding:8px 12px}h1{font-size:16px;margin:0}button{background:transparent;border:1px solid ${settings.theme === 'dark' ? '#334155' : '#d6dee8'};border-radius:6px;color:inherit;cursor:pointer;font:inherit;font-size:14px;min-height:32px;padding:0 10px}#mindmap{display:block;height:calc(100vh - 48px);width:100vw}.markmap-node circle{cursor:pointer;r:var(--circle-radius,7px) !important;stroke-width:2.2px !important;transition:r .15s ease,stroke-width .15s ease,fill .15s ease}.markmap-node circle:hover{r:calc(var(--circle-radius,7px) * 1.35) !important;stroke-width:3px !important}.markmap-foreign div{color:var(--map-text);font-family:var(--map-font);font-size:var(--map-font-size)}.markmap-foreign a{color:color-mix(in srgb,var(--map-text) 72%,#008cff)}.markmap-foreign img{border-radius:6px;max-height:180px;max-width:min(100%,420px);object-fit:contain}.markmap-foreign .media-image img{height:auto;max-height:none;max-width:100%;width:100%}.markmap-foreign audio{display:block;height:40px;min-width:260px;width:260px}.markmap-foreign .media-drive-audio{display:block;width:300px;height:82px;border:0;border-radius:10px;box-shadow:0 4px 6px -1px rgba(0,0,0,.08);overflow:hidden}.markmap-foreign .media-drive-img{display:block;border:0;border-radius:10px;box-shadow:0 4px 6px -1px rgba(0,0,0,.08);overflow:hidden;background:#f1f5f9}.markmap-foreign iframe:not(.media-drive-img):not(.media-drive-audio){border:0;border-radius:8px;display:block;height:78px;width:300px}.markmap-foreign .media-node{display:inline-block}.markmap-foreign .media-img-node,.markmap-foreign .media-audio-node{display:block;margin-top:4px}.markmap-foreign table{border-collapse:collapse;display:block;font-size:.82em;margin-top:6px;max-width:380px;overflow:hidden}.markmap-foreign th,.markmap-foreign td{border:1px solid var(--table-border);padding:4px 7px;text-align:left;vertical-align:top;white-space:nowrap}.markmap-foreign th{background:var(--table-head);font-weight:700}.hint{color:${settings.theme === 'dark' ? '#aab6c7' : '#64748b'};font-size:12px}
 </style>
 </head>
 <body>
