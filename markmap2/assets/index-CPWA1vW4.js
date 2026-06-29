@@ -493,7 +493,7 @@ line {
 ![${me.name}](${le.target.result})
 `;L.current?.insertAtCursor(xe)},H.readAsDataURL(me),X.target.value=""},Ee=X=>{const me=X.target.files?.[0];if(!me)return;const H=new FileReader;H.onload=le=>{const xe=`
 <audio controls src="${le.target.result}"></audio>
-`;L.current?.insertAtCursor(xe)},H.readAsDataURL(me),X.target.value=""},De=async()=>{const X=i,me=Y.current?.getSerializedTree()||{content:"Sin resultados",children:[],payload:{}},H=`<!DOCTYPE html>
+`;L.current?.insertAtCursor(xe)},H.readAsDataURL(me),X.target.value=""},De=async()=>{const X=i,rawMarkdown=e||"# Mapa Mental",safeMarkdown=JSON.stringify(rawMarkdown).replace(/</g,"\\u003c"),H=`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -505,39 +505,27 @@ body { background: ${X.backgroundColor}; ${X.backgroundImage?`background-image: 
 #mindmap { display: block; width: 100vw; height: 100vh; }
 .markmap-link { stroke-width: ${X.lineWidth}px !important; stroke-dasharray: ${X.lineStyle==="dashed"?"5,5":X.lineStyle==="dotted"?"2,3":"none"}; stroke-opacity: ${X.lineOpacity}; }
 .markmap { opacity: ${X.opacity}; }
-.markmap-foreign {
-    box-shadow: none !important;
-    box-sizing: border-box !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-}
-.markmap-foreign > div {
-    background: transparent !important;
-    padding: 0 !important;
-    overflow: visible !important;
-}
-line {
-    display: none !important;
-    stroke-width: 0 !important;
-    stroke: transparent !important;
-}
+.markmap-foreign { box-shadow: none !important; box-sizing: border-box !important; overflow: visible !important; padding: 0 !important; background: transparent !important; border: none !important; border-radius: 0 !important; }
+.markmap-foreign > div { background: transparent !important; padding: 0 !important; overflow: visible !important; }
 .mm-node-inner table { border-collapse: collapse; min-width: max-content; margin: 4px 0; }
 .mm-node-inner td, .mm-node-inner th { white-space: normal; padding: 4px 8px; }
 .mm-node-inner img { max-width: 100%; height: auto; display: block; margin: 4px auto; }
 .mm-node-inner code { background: rgba(128,128,128,.25); padding: 2px 4px; border-radius: 3px; font-family: monospace; }
+.media-drive-img { display: block; border: 0; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,.08); overflow: hidden; background: #f1f5f9; }
+.media-drive-audio { display: block; border: 0; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,.08); overflow: hidden; }
 </style>
 </head>
 <body>
 <svg id="mindmap"></svg>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-lib"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/markmap-view"><\/script>
 <script>
-const root = ${JSON.stringify(me)};
+const markdown = ${safeMarkdown};
+const { Transformer, Markmap } = window.markmap;
+const transformer = new Transformer();
+const { root } = transformer.transform(markdown);
 const levels = ${JSON.stringify(X.levels||[])};
-const { Markmap } = window.markmap;
 
 const colorFn = (...args) => {
   const node = args[0];
@@ -548,11 +536,11 @@ const colorFn = (...args) => {
 const maxSpacing = levels.reduce((max, lvl) =>
   Math.max(max, lvl.spacingVertical ?? 5), 5);
 
-const mm = Markmap.create('#mindmap', { 
-  spacingHorizontal: ${X.spacingHorizontal}, 
-  spacingVertical: maxSpacing, 
-  color: colorFn, 
-  maxWidth: ${X.maxWidth}, 
+const mm = Markmap.create('#mindmap', {
+  spacingHorizontal: ${X.spacingHorizontal},
+  spacingVertical: Math.max(maxSpacing, 5),
+  color: colorFn,
+  maxWidth: ${X.maxWidth},
   duration: ${X.duration},
   paddingX: 0
 }, root);
@@ -563,130 +551,7 @@ mm.toggleNode = async (node, recursive) => {
   mm.fit();
 };
 
-let observer = null;
-const adjustLayout = () => {
-  const svg = document.getElementById('mindmap');
-  if (!svg) return;
-  
-  if (observer) observer.disconnect();
-
-  const alignByLevel = ${X.alignByLevel??!1};
-
-  // ── Step 1: Center boxes and circles ──────────────────────────────
-  svg.querySelectorAll('.markmap-node').forEach(nodeGroup => {
-    const circle = nodeGroup.querySelector('circle');
-    const fo     = nodeGroup.querySelector('foreignObject');
-    if (!fo) return;
-    const h = parseFloat(fo.getAttribute('height') || 0);
-    if (h > 0) {
-      const targetY = String(-h / 2);
-      if (fo.getAttribute('y') !== targetY) {
-        fo.setAttribute('y', targetY);
-      }
-    }
-    if (circle) {
-      if (circle.getAttribute('cy') !== '0') circle.setAttribute('cy', '0');
-      if (nodeGroup.lastElementChild !== circle) nodeGroup.appendChild(circle);
-    }
-  });
-
-  // ── Step 2 (optional): Align nodes by depth level ─────────────────
-  if (alignByLevel) {
-    const nodeGroups = Array.from(svg.querySelectorAll('.markmap-node'));
-    const depthMaxX = new Map();
-    nodeGroups.forEach(nodeGroup => {
-      const data = nodeGroup.__data__;
-      if (!data) return;
-      const depth = data.state?.depth !== undefined ? data.state.depth - 1 : (data.depth ?? 0);
-      const rect = data.state?.rect;
-      if (!rect) return;
-      const currentMaxX = depthMaxX.get(depth) ?? rect.x;
-      depthMaxX.set(depth, Math.max(currentMaxX, rect.x));
-    });
-
-    nodeGroups.forEach(nodeGroup => {
-      const data = nodeGroup.__data__;
-      if (!data) return;
-      const depth = data.state?.depth !== undefined ? data.state.depth - 1 : (data.depth ?? 0);
-      const rect  = data.state?.rect;
-      if (!rect) return;
-      const targetX = depthMaxX.get(depth) ?? rect.x;
-      const deltaX  = targetX - rect.x;
-      if (Math.abs(deltaX) < 0.5) return;
-
-      const transform = nodeGroup.getAttribute('transform') || '';
-      const parts = transform.replace('translate(', '').replace(')', '').split(',');
-      if (parts.length < 2) return;
-      const ty = parseFloat(parts[1]);
-      nodeGroup.setAttribute('transform', 'translate(' + targetX + ',' + ty + ')');
-    });
-  }
-
-  // ── Step 3: Redraw link paths ──────────────────────────────────────
-  svg.querySelectorAll('.markmap-link').forEach(path => {
-    const data = path.__data__;
-    if (!data || !data.source || !data.target) return;
-
-    const sourceRect = data.source.state?.rect;
-    const targetRect = data.target.state?.rect;
-    if (!sourceRect || !targetRect) return;
-
-    const getEffectiveX = (nodeData) => {
-      if (!alignByLevel) return nodeData.state?.rect?.x ?? 0;
-      const nodeGroups = Array.from(svg.querySelectorAll('.markmap-node'));
-      const depthMaxX = new Map();
-      nodeGroups.forEach(ng => {
-        const d = ng.__data__;
-        if (!d) return;
-        const r = d.state?.rect;
-        if (!r) return;
-        const depth = d.state?.depth !== undefined ? d.state.depth - 1 : (d.depth ?? 0);
-        depthMaxX.set(depth, Math.max(depthMaxX.get(depth) ?? r.x, r.x));
-      });
-      const depth = nodeData.state?.depth !== undefined ? nodeData.state.depth - 1 : (nodeData.depth ?? 0);
-      return depthMaxX.get(depth) ?? (nodeData.state?.rect?.x ?? 0);
-    };
-
-    const y0 = sourceRect.y;
-    const y1 = targetRect.y;
-    const x0 = (alignByLevel ? getEffectiveX(data.source) : sourceRect.x) + sourceRect.width;
-    const x1 = alignByLevel ? getEffectiveX(data.target) : targetRect.x;
-    const w  = targetRect.width;
-
-    const newD = 'M ' + x0 + ',' + y0 + ' C ' + ((x0 + x1) / 2) + ',' + y0 + ' ' + ((x0 + x1) / 2) + ',' + y1 + ' ' + x1 + ',' + y1 + ' L ' + (x1 + w) + ',' + y1;
-    if (path.getAttribute('d') !== newD) path.setAttribute('d', newD);
-  });
-
-  if (observer) {
-    observer.observe(svg, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['transform', 'd', 'y', 'cy', 'height']
-    });
-  }
-};
-
-adjustLayout();
-let adjustTimeout = null;
-observer = new MutationObserver(() => {
-  adjustLayout();
-  if (adjustTimeout) clearTimeout(adjustTimeout);
-  adjustTimeout = setTimeout(() => {
-    adjustLayout();
-  }, 150);
-});
-observer.observe(document.getElementById('mindmap'), {
-  childList: true,
-  subtree: true,
-  attributes: true,
-  attributeFilter: ['transform', 'd', 'y', 'cy', 'height']
-});
-
-setTimeout(() => {
-  mm.fit();
-  adjustLayout();
-}, ${(X.duration??500)+150});
+setTimeout(() => { mm.fit(); }, ${(X.duration??500)+200});
 <\/script>
 </body>
-</html>`;if(window.electronAPI)await window.electronAPI.saveFile(H,"html");else{const le=new Blob([H],{type:"text/html"}),xe=URL.createObjectURL(le),Ne=document.createElement("a");Ne.href=xe,Ne.download="mapa-mental.html",Ne.click(),URL.revokeObjectURL(xe)}},ze=async()=>{const X=document.querySelector(".mindmap-pane");if(X)try{const me=await JM(X,{backgroundColor:i.backgroundColor});if(window.electronAPI){const H=me.replace(/^data:image\/png;base64,/,"");await window.electronAPI.saveImage(H)}else{const H=document.createElement("a");H.download="mindmap.png",H.href=me,H.click()}}catch(me){console.error(me),alert("Error exportando imagen")}};xt.useEffect(()=>{const X=me=>{(me.ctrlKey||me.metaKey)&&me.key==="s"&&(me.preventDefault(),P()),(me.ctrlKey||me.metaKey)&&me.key==="o"&&(me.preventDefault(),te())};return window.addEventListener("keydown",X),()=>window.removeEventListener("keydown",X)},[e,i]);const Ae=X=>{mf[X]&&r(me=>({...me,...mf[X]}))},Fe=X=>{jd[X]&&r(me=>({...me,...jd[X]}))};return fe.jsxs("div",{className:`app-main-wrapper ${C?"zen-mode":""}`,style:{display:"flex",flexDirection:"column",height:"100vh",width:"100vw"},children:[fe.jsx("input",{ref:B,type:"file",accept:".json",style:{display:"none"},onChange:oe}),fe.jsx("input",{ref:j,type:"file",accept:"image/*",style:{display:"none"},onChange:se}),fe.jsx("input",{ref:K,type:"file",accept:"audio/*",style:{display:"none"},onChange:Ee}),!C&&fe.jsx(QD,{onSave:()=>P(!1),onOpen:te,onExportHTML:De,onExportImage:ze,onExportPreset:ie,onImportPreset:()=>B.current?.click(),onInsertImage:()=>window.insertMarkmap2Image(L,j),onInsertAudio:()=>window.insertMarkmap2Audio(L,K),toggleSettings:()=>y(!p),autoSave:S,toggleAutoSave:()=>A(!S),onZenMode:()=>N(!0),templates:jd,onApplyTemplate:Fe}),C&&fe.jsx("div",{style:{position:"absolute",top:"10px",right:"10px",zIndex:1e3},children:fe.jsx("button",{onClick:()=>N(!1),style:{background:"rgba(0,0,0,0.5)",color:"white",border:"none",padding:"8px",borderRadius:"4px",cursor:"pointer"},children:"✕ Salir del modo Zen"})}),fe.jsxs("div",{className:"app-container",style:{flex:1,display:"flex",overflow:"hidden"},children:[!C&&fe.jsx("div",{className:"editor-pane",children:fe.jsx(tg,{ref:L,value:e,onChange:t})}),fe.jsx("div",{className:"mindmap-pane",id:"mindmap-pane",style:{flex:1,position:"relative",backgroundImage:i.backgroundImage?`url(${i.backgroundImage})`:void 0,backgroundSize:"cover",backgroundPosition:"center"},children:fe.jsx(ZD,{ref:Y,markdown:e,settings:i})}),!C&&fe.jsx(uM,{settings:i,onChange:r,themes:mf,onApplyTheme:Ae,maxDepth:a+1,visible:p})]})]})}vb.createRoot(document.getElementById("root")).render(fe.jsx(xt.StrictMode,{children:fe.jsx(nN,{})}));
+</html>`;if(window.electronAPI)await window.electronAPI.saveFile(H,"html");else{const le=new Blob([H],{type:"text/html"}),xe=URL.createObjectURL(le),Ne=document.createElement("a");Ne.href=xe,Ne.download="mapa-mental.html",Ne.click(),URL.revokeObjectURL(xe)}},ze=async()=>{const X=document.querySelector(".mindmap-pane");if(X)try{const me=await JM(X,{backgroundColor:i.backgroundColor,pixelRatio:3});if(window.electronAPI){const H=me.replace(/^data:image\/png;base64,/,"");await window.electronAPI.saveImage(H)}else{const H=document.createElement("a");H.download="mindmap.png",H.href=me,H.click()}}catch(me){console.error(me),alert("Error exportando imagen")}};xt.useEffect(()=>{const X=me=>{(me.ctrlKey||me.metaKey)&&me.key==="s"&&(me.preventDefault(),P()),(me.ctrlKey||me.metaKey)&&me.key==="o"&&(me.preventDefault(),te())};return window.addEventListener("keydown",X),()=>window.removeEventListener("keydown",X)},[e,i]);const Ae=X=>{mf[X]&&r(me=>({...me,...mf[X]}))},Fe=X=>{jd[X]&&r(me=>({...me,...jd[X]}))};return fe.jsxs("div",{className:`app-main-wrapper ${C?"zen-mode":""}`,style:{display:"flex",flexDirection:"column",height:"100vh",width:"100vw"},children:[fe.jsx("input",{ref:B,type:"file",accept:".json",style:{display:"none"},onChange:oe}),fe.jsx("input",{ref:j,type:"file",accept:"image/*",style:{display:"none"},onChange:se}),fe.jsx("input",{ref:K,type:"file",accept:"audio/*",style:{display:"none"},onChange:Ee}),!C&&fe.jsx(QD,{onSave:()=>P(!1),onOpen:te,onExportHTML:De,onExportImage:ze,onExportPreset:ie,onImportPreset:()=>B.current?.click(),onInsertImage:()=>window.insertMarkmap2Image(L,j),onInsertAudio:()=>window.insertMarkmap2Audio(L,K),toggleSettings:()=>y(!p),autoSave:S,toggleAutoSave:()=>A(!S),onZenMode:()=>N(!0),templates:jd,onApplyTemplate:Fe}),C&&fe.jsx("div",{style:{position:"absolute",top:"10px",right:"10px",zIndex:1e3},children:fe.jsx("button",{onClick:()=>N(!1),style:{background:"rgba(0,0,0,0.5)",color:"white",border:"none",padding:"8px",borderRadius:"4px",cursor:"pointer"},children:"✕ Salir del modo Zen"})}),fe.jsxs("div",{className:"app-container",style:{flex:1,display:"flex",overflow:"hidden"},children:[!C&&fe.jsx("div",{className:"editor-pane",children:fe.jsx(tg,{ref:L,value:e,onChange:t})}),fe.jsx("div",{className:"mindmap-pane",id:"mindmap-pane",style:{flex:1,position:"relative",backgroundImage:i.backgroundImage?`url(${i.backgroundImage})`:void 0,backgroundSize:"cover",backgroundPosition:"center"},children:fe.jsx(ZD,{ref:Y,markdown:e,settings:i})}),!C&&fe.jsx(uM,{settings:i,onChange:r,themes:mf,onApplyTheme:Ae,maxDepth:a+1,visible:p})]})]})}vb.createRoot(document.getElementById("root")).render(fe.jsx(xt.StrictMode,{children:fe.jsx(nN,{})}));
