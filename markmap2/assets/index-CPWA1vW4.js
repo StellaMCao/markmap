@@ -503,10 +503,11 @@ line {
 * { margin: 0; padding: 0; }
 body { background: ${X.backgroundColor}; ${X.backgroundImage?`background-image: url('${X.backgroundImage}'); background-size: cover;`:""} }
 #mindmap { display: block; width: 100vw; height: 100vh; }
-.markmap-link { stroke-width: ${X.lineWidth}px !important; stroke-dasharray: ${X.lineStyle==="dashed"?"5,5":X.lineStyle==="dotted"?"2,3":"none"}; stroke-opacity: ${X.lineOpacity}; }
+.markmap-link { fill: none !important; stroke-width: ${X.lineWidth}px !important; stroke-dasharray: ${X.lineStyle==="dashed"?"5,5":X.lineStyle==="dotted"?"2,3":"none"}; stroke-opacity: ${X.lineOpacity}; }
 .markmap { opacity: ${X.opacity}; }
 .markmap-foreign { box-shadow: none !important; box-sizing: border-box !important; overflow: visible !important; padding: 0 !important; background: transparent !important; border: none !important; border-radius: 0 !important; }
 .markmap-foreign > div { background: transparent !important; padding: 0 !important; overflow: visible !important; }
+line { display: none !important; stroke-width: 0 !important; stroke: transparent !important; }
 .mm-node-inner table { border-collapse: collapse; min-width: max-content; margin: 4px 0; }
 .mm-node-inner td, .mm-node-inner th { white-space: normal; padding: 4px 8px; }
 .mm-node-inner img { max-width: 100%; height: auto; display: block; margin: 4px auto; }
@@ -540,6 +541,7 @@ const mm = Markmap.create('#mindmap', {
   spacingHorizontal: ${X.spacingHorizontal},
   spacingVertical: Math.max(maxSpacing, 5),
   color: colorFn,
+  lineWidth: ${X.lineWidth},
   maxWidth: ${X.maxWidth},
   duration: ${X.duration},
   paddingX: 0
@@ -552,6 +554,6 @@ mm.toggleNode = async (node, recursive) => {
 };
 
 setTimeout(() => { mm.fit(); }, ${(X.duration??500)+200});
-<\/script>
+</script>
 </body>
 </html>`;if(window.electronAPI)await window.electronAPI.saveFile(H,"html");else{const le=new Blob([H],{type:"text/html"}),xe=URL.createObjectURL(le),Ne=document.createElement("a");Ne.href=xe,Ne.download="mapa-mental.html",Ne.click(),URL.revokeObjectURL(xe)}},ze=async()=>{const X=document.querySelector(".mindmap-pane");if(X)try{const me=await JM(X,{backgroundColor:i.backgroundColor,pixelRatio:3});if(window.electronAPI){const H=me.replace(/^data:image\/png;base64,/,"");await window.electronAPI.saveImage(H)}else{const H=document.createElement("a");H.download="mindmap.png",H.href=me,H.click()}}catch(me){console.error(me),alert("Error exportando imagen")}};xt.useEffect(()=>{const X=me=>{(me.ctrlKey||me.metaKey)&&me.key==="s"&&(me.preventDefault(),P()),(me.ctrlKey||me.metaKey)&&me.key==="o"&&(me.preventDefault(),te())};return window.addEventListener("keydown",X),()=>window.removeEventListener("keydown",X)},[e,i]);const Ae=X=>{mf[X]&&r(me=>({...me,...mf[X]}))},Fe=X=>{jd[X]&&r(me=>({...me,...jd[X]}))};return fe.jsxs("div",{className:`app-main-wrapper ${C?"zen-mode":""}`,style:{display:"flex",flexDirection:"column",height:"100vh",width:"100vw"},children:[fe.jsx("input",{ref:B,type:"file",accept:".json",style:{display:"none"},onChange:oe}),fe.jsx("input",{ref:j,type:"file",accept:"image/*",style:{display:"none"},onChange:se}),fe.jsx("input",{ref:K,type:"file",accept:"audio/*",style:{display:"none"},onChange:Ee}),!C&&fe.jsx(QD,{onSave:()=>P(!1),onOpen:te,onExportHTML:De,onExportImage:ze,onExportPreset:ie,onImportPreset:()=>B.current?.click(),onInsertImage:()=>window.insertMarkmap2Image(L,j),onInsertAudio:()=>window.insertMarkmap2Audio(L,K),toggleSettings:()=>y(!p),autoSave:S,toggleAutoSave:()=>A(!S),onZenMode:()=>N(!0),templates:jd,onApplyTemplate:Fe}),C&&fe.jsx("div",{style:{position:"absolute",top:"10px",right:"10px",zIndex:1e3},children:fe.jsx("button",{onClick:()=>N(!1),style:{background:"rgba(0,0,0,0.5)",color:"white",border:"none",padding:"8px",borderRadius:"4px",cursor:"pointer"},children:"✕ Salir del modo Zen"})}),fe.jsxs("div",{className:"app-container",style:{flex:1,display:"flex",overflow:"hidden"},children:[!C&&fe.jsx("div",{className:"editor-pane",children:fe.jsx(tg,{ref:L,value:e,onChange:t})}),fe.jsx("div",{className:"mindmap-pane",id:"mindmap-pane",style:{flex:1,position:"relative",backgroundImage:i.backgroundImage?`url(${i.backgroundImage})`:void 0,backgroundSize:"cover",backgroundPosition:"center"},children:fe.jsx(ZD,{ref:Y,markdown:e,settings:i})}),!C&&fe.jsx(uM,{settings:i,onChange:r,themes:mf,onApplyTheme:Ae,maxDepth:a+1,visible:p})]})]})}vb.createRoot(document.getElementById("root")).render(fe.jsx(xt.StrictMode,{children:fe.jsx(nN,{})}));
