@@ -499,6 +499,7 @@ line {
 <meta charset="UTF-8">
 <title>Mapa Mental Exportado</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/github.min.css">
 <style>
 * { margin: 0; padding: 0; }
 body { background: ${X.backgroundColor}; ${X.backgroundImage?`background-image: url('${X.backgroundImage}'); background-size: cover;`:""} }
@@ -518,13 +519,15 @@ line { display: none !important; stroke-width: 0 !important; stroke: transparent
 </head>
 <body>
 <svg id="mindmap"></svg>
-<script src="https://cdn.jsdelivr.net/npm/d3@7"><\/script>
-<script src="https://cdn.jsdelivr.net/npm/markmap-lib"><\/script>
-<script src="https://cdn.jsdelivr.net/npm/markmap-view"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/dist/highlight.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js"><\/script>
 <script>
 const markdown = ${safeMarkdown};
-const { Transformer, Markmap } = window.markmap;
-const transformer = new Transformer();
+const api = window.markmap;
+const transformer = new api.Transformer();
 const { root } = transformer.transform(markdown);
 const levels = ${JSON.stringify(X.levels||[])};
 
@@ -537,7 +540,7 @@ const colorFn = (...args) => {
 const maxSpacing = levels.reduce((max, lvl) =>
   Math.max(max, lvl.spacingVertical ?? 5), 5);
 
-const mm = Markmap.create('#mindmap', {
+const mm = api.Markmap.create('#mindmap', {
   spacingHorizontal: ${X.spacingHorizontal},
   spacingVertical: Math.max(maxSpacing, 5),
   color: colorFn,
