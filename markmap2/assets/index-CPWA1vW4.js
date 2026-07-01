@@ -508,13 +508,13 @@ body { background: ${X.backgroundColor}; ${X.backgroundImage?`background-image: 
 .markmap { opacity: ${X.opacity}; }
 .markmap-foreign { box-shadow: none !important; box-sizing: border-box !important; overflow: visible !important; padding: 0 !important; background: transparent !important; border: none !important; border-radius: 0 !important; }
 .markmap-foreign > div { background: transparent !important; padding: 0 !important; overflow: visible !important; }
-line { display: none !important; stroke-width: 0 !important; stroke: transparent !important; }
+line { display: none !important; }
 .mm-node-inner table { border-collapse: collapse; min-width: max-content; margin: 4px 0; }
 .mm-node-inner td, .mm-node-inner th { white-space: normal; padding: 4px 8px; }
 .mm-node-inner img { max-width: 100%; height: auto; display: block; margin: 4px auto; }
 .mm-node-inner code { background: rgba(128,128,128,.25); padding: 2px 4px; border-radius: 3px; font-family: monospace; }
-.media-drive-img { display: block; border: 0; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,.08); overflow: hidden; background: #f1f5f9; }
-.media-drive-audio { display: block; border: 0; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,.08); overflow: hidden; }
+.media-drive-img { display: block; border: 0; border-radius: 10px; overflow: hidden; background: #f1f5f9; }
+.media-drive-audio { display: block; border: 0; border-radius: 10px; overflow: hidden; }
 </style>
 </head>
 <body>
@@ -525,38 +525,46 @@ line { display: none !important; stroke-width: 0 !important; stroke: transparent
 <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js"><\/script>
 <script>
-const markdown = ${safeMarkdown};
-const api = window.markmap;
-const transformer = new api.Transformer();
-const { root } = transformer.transform(markdown);
-const levels = ${JSON.stringify(X.levels||[])};
+(async function() {
+  const markdown = ${safeMarkdown};
+  const levels = ${JSON.stringify(X.levels||[])};
+  const api = window.markmap;
+  const transformer = new api.Transformer();
+  const { root } = transformer.transform(markdown);
 
-const colorFn = (...args) => {
-  const node = args[0];
-  const lvl = levels[node.depth] || levels[levels.length - 1];
-  return lvl?.color || '#2E86C1';
-};
+  const colorFn = (node) => {
+    const lvl = levels[node.depth] || levels[levels.length - 1];
+    return lvl?.color || '#2E86C1';
+  };
 
-const maxSpacing = levels.reduce((max, lvl) =>
-  Math.max(max, lvl.spacingVertical ?? 5), 5);
+  const maxSpacing = levels.reduce((max, lvl) =>
+    Math.max(max, lvl.spacingVertical ?? 5), 5);
 
-const mm = api.Markmap.create('#mindmap', {
-  spacingHorizontal: ${X.spacingHorizontal},
-  spacingVertical: Math.max(maxSpacing, 5),
-  color: colorFn,
-  lineWidth: ${X.lineWidth},
-  maxWidth: ${X.maxWidth},
-  duration: ${X.duration},
-  paddingX: 0
-}, root);
+  const lineWidthFn = () => ${X.lineWidth};
 
-const origToggleNode = mm.toggleNode.bind(mm);
-mm.toggleNode = async (node, recursive) => {
-  await origToggleNode(node, recursive);
-  mm.fit();
-};
+  const svg = document.querySelector('#mindmap');
+  const mm = api.Markmap.create(svg, {
+    autoFit: false,
+    spacingHorizontal: ${X.spacingHorizontal},
+    spacingVertical: Math.max(maxSpacing, 5),
+    color: colorFn,
+    lineWidth: lineWidthFn,
+    maxWidth: ${X.maxWidth},
+    duration: ${X.duration},
+    paddingX: 0
+  });
 
-setTimeout(() => { mm.fit(); }, ${(X.duration??500)+200});
+  mm.setData(root);
+  await mm.fit();
+
+  if (typeof mm.toggleNode === 'function') {
+    const orig = mm.toggleNode.bind(mm);
+    mm.toggleNode = async (node, recursive) => {
+      await orig(node, recursive);
+      mm.fit();
+    };
+  }
+})();
 </script>
 </body>
-</html>`;if(window.electronAPI)await window.electronAPI.saveFile(H,"html");else{const le=new Blob([H],{type:"text/html"}),xe=URL.createObjectURL(le),Ne=document.createElement("a");Ne.href=xe,Ne.download="mapa-mental.html",Ne.click(),URL.revokeObjectURL(xe)}},ze=async()=>{const X=document.querySelector(".mindmap-pane");if(X)try{const me=await JM(X,{backgroundColor:i.backgroundColor,pixelRatio:3});if(window.electronAPI){const H=me.replace(/^data:image\/png;base64,/,"");await window.electronAPI.saveImage(H)}else{const H=document.createElement("a");H.download="mindmap.png",H.href=me,H.click()}}catch(me){console.error(me),alert("Error exportando imagen")}};xt.useEffect(()=>{const X=me=>{(me.ctrlKey||me.metaKey)&&me.key==="s"&&(me.preventDefault(),P()),(me.ctrlKey||me.metaKey)&&me.key==="o"&&(me.preventDefault(),te())};return window.addEventListener("keydown",X),()=>window.removeEventListener("keydown",X)},[e,i]);const Ae=X=>{mf[X]&&r(me=>({...me,...mf[X]}))},Fe=X=>{jd[X]&&r(me=>({...me,...jd[X]}))};return fe.jsxs("div",{className:`app-main-wrapper ${C?"zen-mode":""}`,style:{display:"flex",flexDirection:"column",height:"100vh",width:"100vw"},children:[fe.jsx("input",{ref:B,type:"file",accept:".json",style:{display:"none"},onChange:oe}),fe.jsx("input",{ref:j,type:"file",accept:"image/*",style:{display:"none"},onChange:se}),fe.jsx("input",{ref:K,type:"file",accept:"audio/*",style:{display:"none"},onChange:Ee}),!C&&fe.jsx(QD,{onSave:()=>P(!1),onOpen:te,onExportHTML:De,onExportImage:ze,onExportPreset:ie,onImportPreset:()=>B.current?.click(),onInsertImage:()=>window.insertMarkmap2Image(L,j),onInsertAudio:()=>window.insertMarkmap2Audio(L,K),toggleSettings:()=>y(!p),autoSave:S,toggleAutoSave:()=>A(!S),onZenMode:()=>N(!0),templates:jd,onApplyTemplate:Fe}),C&&fe.jsx("div",{style:{position:"absolute",top:"10px",right:"10px",zIndex:1e3},children:fe.jsx("button",{onClick:()=>N(!1),style:{background:"rgba(0,0,0,0.5)",color:"white",border:"none",padding:"8px",borderRadius:"4px",cursor:"pointer"},children:"✕ Salir del modo Zen"})}),fe.jsxs("div",{className:"app-container",style:{flex:1,display:"flex",overflow:"hidden"},children:[!C&&fe.jsx("div",{className:"editor-pane",children:fe.jsx(tg,{ref:L,value:e,onChange:t})}),fe.jsx("div",{className:"mindmap-pane",id:"mindmap-pane",style:{flex:1,position:"relative",backgroundImage:i.backgroundImage?`url(${i.backgroundImage})`:void 0,backgroundSize:"cover",backgroundPosition:"center"},children:fe.jsx(ZD,{ref:Y,markdown:e,settings:i})}),!C&&fe.jsx(uM,{settings:i,onChange:r,themes:mf,onApplyTheme:Ae,maxDepth:a+1,visible:p})]})]})}vb.createRoot(document.getElementById("root")).render(fe.jsx(xt.StrictMode,{children:fe.jsx(nN,{})}));
+</html>`;if(window.electronAPI)await window.electronAPI.saveFile(H,"html");else{const le=new Blob([H],{type:"text/html"}),xe=URL.createObjectURL(le),Ne=document.createElement("a");Ne.href=xe,Ne.download="mapa-mental.html",Ne.click(),URL.revokeObjectURL(xe)}},ze=async()=>{const X=document.querySelector(".mindmap-pane");if(X)try{const __tmp=document.createElement("style");__tmp.id="__png-tmp";__tmp.textContent="#mindmap-pane [style*=\"bottom: 20px\"]{display:none!important}#mindmap-pane [style*=\"bottom:20px\"]{display:none!important}";document.head.appendChild(__tmp);const me=await JM(X,{backgroundColor:i.backgroundColor,pixelRatio:3,filter:n=>!(n.style&&n.style.bottom==="20px"&&n.style.right==="20px")});document.head.removeChild(__tmp);if(window.electronAPI){const H=me.replace(/^data:image\/png;base64,/,"");await window.electronAPI.saveImage(H)}else{const H=document.createElement("a");H.download="mindmap.png",H.href=me,H.click()}}catch(me){console.error(me),alert("Error exportando imagen")}};xt.useEffect(()=>{const X=me=>{(me.ctrlKey||me.metaKey)&&me.key==="s"&&(me.preventDefault(),P()),(me.ctrlKey||me.metaKey)&&me.key==="o"&&(me.preventDefault(),te())};return window.addEventListener("keydown",X),()=>window.removeEventListener("keydown",X)},[e,i]);const Ae=X=>{mf[X]&&r(me=>({...me,...mf[X]}))},Fe=X=>{jd[X]&&r(me=>({...me,...jd[X]}))};return fe.jsxs("div",{className:`app-main-wrapper ${C?"zen-mode":""}`,style:{display:"flex",flexDirection:"column",height:"100vh",width:"100vw"},children:[fe.jsx("input",{ref:B,type:"file",accept:".json",style:{display:"none"},onChange:oe}),fe.jsx("input",{ref:j,type:"file",accept:"image/*",style:{display:"none"},onChange:se}),fe.jsx("input",{ref:K,type:"file",accept:"audio/*",style:{display:"none"},onChange:Ee}),!C&&fe.jsx(QD,{onSave:()=>P(!1),onOpen:te,onExportHTML:De,onExportImage:ze,onExportPreset:ie,onImportPreset:()=>B.current?.click(),onInsertImage:()=>window.insertMarkmap2Image(L,j),onInsertAudio:()=>window.insertMarkmap2Audio(L,K),toggleSettings:()=>y(!p),autoSave:S,toggleAutoSave:()=>A(!S),onZenMode:()=>N(!0),templates:jd,onApplyTemplate:Fe}),C&&fe.jsx("div",{style:{position:"absolute",top:"10px",right:"10px",zIndex:1e3},children:fe.jsx("button",{onClick:()=>N(!1),style:{background:"rgba(0,0,0,0.5)",color:"white",border:"none",padding:"8px",borderRadius:"4px",cursor:"pointer"},children:"✕ Salir del modo Zen"})}),fe.jsxs("div",{className:"app-container",style:{flex:1,display:"flex",overflow:"hidden"},children:[!C&&fe.jsx("div",{className:"editor-pane",children:fe.jsx(tg,{ref:L,value:e,onChange:t})}),fe.jsx("div",{className:"mindmap-pane",id:"mindmap-pane",style:{flex:1,position:"relative",backgroundImage:i.backgroundImage?`url(${i.backgroundImage})`:void 0,backgroundSize:"cover",backgroundPosition:"center"},children:fe.jsx(ZD,{ref:Y,markdown:e,settings:i})}),!C&&fe.jsx(uM,{settings:i,onChange:r,themes:mf,onApplyTheme:Ae,maxDepth:a+1,visible:p})]})]})}vb.createRoot(document.getElementById("root")).render(fe.jsx(xt.StrictMode,{children:fe.jsx(nN,{})}));
