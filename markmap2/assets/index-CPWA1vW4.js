@@ -493,7 +493,7 @@ line {
 ![${me.name}](${le.target.result})
 `;L.current?.insertAtCursor(xe)},H.readAsDataURL(me),X.target.value=""},Ee=X=>{const me=X.target.files?.[0];if(!me)return;const H=new FileReader;H.onload=le=>{const xe=`
 <audio controls src="${le.target.result}"></audio>
-`;L.current?.insertAtCursor(xe)},H.readAsDataURL(me),X.target.value=""},De=async()=>{const X=i,rawMarkdown=e||"# Mapa Mental",safeMarkdown=JSON.stringify(rawMarkdown).replace(/</g,"\\u003c"),H=`<!DOCTYPE html>
+`;L.current?.insertAtCursor(xe)},H.readAsDataURL(me),X.target.value=""},De=async()=>{const X=i,rawMarkdown=e||"# Mapa Mental",safeMarkdown=JSON.stringify(rawMarkdown).replace(/</g,"\\u003c"),safeLevels=JSON.stringify(X.levels||[]).replace(/</g,"\\u003c"),H=`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -506,15 +506,10 @@ body { background: ${X.backgroundColor}; ${X.backgroundImage?`background-image: 
 #mindmap { display: block; width: 100vw; height: 100vh; }
 .markmap-link { fill: none !important; stroke-width: ${X.lineWidth}px !important; stroke-dasharray: ${X.lineStyle==="dashed"?"5,5":X.lineStyle==="dotted"?"2,3":"none"}; stroke-opacity: ${X.lineOpacity}; }
 .markmap { opacity: ${X.opacity}; }
-.markmap-foreign { box-shadow: none !important; box-sizing: border-box !important; overflow: visible !important; padding: 0 !important; background: transparent !important; border: none !important; border-radius: 0 !important; }
-.markmap-foreign > div { background: transparent !important; padding: 0 !important; overflow: visible !important; }
+.markmap-foreign { box-shadow: none !important; padding: 0 !important; background: transparent !important; }
+.markmap-foreign > div { padding: 0 !important; background: transparent !important; }
 line { display: none !important; }
-.mm-node-inner table { border-collapse: collapse; min-width: max-content; margin: 4px 0; }
-.mm-node-inner td, .mm-node-inner th { white-space: normal; padding: 4px 8px; }
-.mm-node-inner img { max-width: 100%; height: auto; display: block; margin: 4px auto; }
-.mm-node-inner code { background: rgba(128,128,128,.25); padding: 2px 4px; border-radius: 3px; font-family: monospace; }
-.media-drive-img { display: block; border: 0; border-radius: 10px; overflow: hidden; background: #f1f5f9; }
-.media-drive-audio { display: block; border: 0; border-radius: 10px; overflow: hidden; }
+.mm-node-inner { display: inline-block; box-sizing: border-box; overflow: visible; white-space: normal; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
@@ -527,30 +522,71 @@ line { display: none !important; }
 <script>
 (async function() {
   const markdown = ${safeMarkdown};
-  const levels = ${JSON.stringify(X.levels||[])};
+  const levels = ${safeLevels};
+  const maxNodeWidth = ${X.maxWidth > 0 ? X.maxWidth : 400};
   const api = window.markmap;
   const transformer = new api.Transformer();
   const { root } = transformer.transform(markdown);
 
-  const colorFn = (node) => {
-    const lvl = levels[node.depth] || levels[levels.length - 1];
-    return lvl?.color || '#2E86C1';
+  // Walk the tree and apply level-based styled boxes to each node (same as React app)
+  function stylizeNode(node, depth) {
+    const lvl = levels[depth] || levels[levels.length - 1];
+    if (lvl) {
+      const shape = lvl.nodeShape || 'rounded';
+      const br = shape === 'pill' ? '999px' : shape === 'square' ? '2px' : shape === 'diamond' ? '0' : '6px';
+      const bg = lvl.color || 'transparent';
+      const tc = lvl.textColor || 'inherit';
+      const fs = (lvl.fontSize || 14) + 'px';
+      const fw = lvl.fontWeight || 'normal';
+      const fi = lvl.italic ? 'italic' : 'normal';
+      const ff = (lvl.fontFamily || 'Inter, sans-serif').replace(/'/g, '"');
+      const px = (lvl.paddingX || 8) + 'px';
+      const py = (lvl.paddingY || 4) + 'px';
+      const bc = lvl.borderColor && lvl.borderWidth ? lvl.borderColor : 'transparent';
+      const bw = (lvl.borderWidth || 0) + 'px';
+      const bs = lvl.borderStyle || 'solid';
+      const maxW = maxNodeWidth + 'px';
+      const txt = lvl.uppercase ? 'uppercase' : 'none';
+      const style = [
+        'background:' + bg,
+        'color:' + tc,
+        'border-radius:' + br,
+        'padding:' + py + ' ' + px,
+        'font-size:' + fs,
+        'font-weight:' + fw,
+        'font-style:' + fi,
+        'font-family:' + ff,
+        'border:' + bw + ' ' + bs + ' ' + bc,
+        'max-width:' + maxW,
+        'text-transform:' + txt
+      ].join(';');
+      node.content = '<div class="mm-node-inner" style="' + style + '">' + node.content + '</div>';
+    }
+    (node.children || []).forEach(function(child) { stylizeNode(child, depth + 1); });
+  }
+  if (levels.length > 0) stylizeNode(root, 0);
+
+  const colorFn = function(node) {
+    const d = (node.state && node.state.depth != null) ? node.state.depth : (node.depth || 0);
+    const lvl = levels[d] || levels[levels.length - 1];
+    return (lvl && lvl.color) || '#2E86C1';
   };
 
-  const maxSpacing = levels.reduce((max, lvl) =>
-    Math.max(max, lvl.spacingVertical ?? 5), 5);
+  const maxSpacing = levels.reduce(function(max, lvl) {
+    return Math.max(max, lvl.spacingVertical || 5);
+  }, 5);
 
-  const lineWidthFn = () => ${X.lineWidth};
+  const lineWidthFn = function() { return ${X.lineWidth || 2}; };
 
   const svg = document.querySelector('#mindmap');
   const mm = api.Markmap.create(svg, {
     autoFit: false,
-    spacingHorizontal: ${X.spacingHorizontal},
+    spacingHorizontal: ${X.spacingHorizontal || 80},
     spacingVertical: Math.max(maxSpacing, 5),
     color: colorFn,
     lineWidth: lineWidthFn,
-    maxWidth: ${X.maxWidth},
-    duration: ${X.duration},
+    maxWidth: maxNodeWidth,
+    duration: ${X.duration || 400},
     paddingX: 0
   });
 
@@ -559,7 +595,7 @@ line { display: none !important; }
 
   if (typeof mm.toggleNode === 'function') {
     const orig = mm.toggleNode.bind(mm);
-    mm.toggleNode = async (node, recursive) => {
+    mm.toggleNode = async function(node, recursive) {
       await orig(node, recursive);
       mm.fit();
     };
