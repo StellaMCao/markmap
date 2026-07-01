@@ -506,10 +506,10 @@ body { background: ${X.backgroundColor}; ${X.backgroundImage?`background-image: 
 #mindmap { display: block; width: 100vw; height: 100vh; }
 .markmap-link { fill: none !important; stroke-width: ${X.lineWidth}px !important; stroke-dasharray: ${X.lineStyle==="dashed"?"5,5":X.lineStyle==="dotted"?"2,3":"none"}; stroke-opacity: ${X.lineOpacity}; }
 .markmap { opacity: ${X.opacity}; }
-.markmap-foreign { box-shadow: none !important; padding: 0 !important; background: transparent !important; }
-.markmap-foreign > div { padding: 0 !important; background: transparent !important; }
+.markmap-foreign { padding: 0 !important; background: transparent !important; }
+.markmap-foreign > div { padding: 0 !important; background: transparent !important; display: flex; align-items: center; }
 line { display: none !important; }
-.mm-node-inner { display: inline-block; box-sizing: border-box; overflow: visible; white-space: normal; overflow-wrap: anywhere; }
+.mm-node-inner { display: inline-block; box-sizing: border-box; white-space: normal; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
@@ -521,86 +521,85 @@ line { display: none !important; }
 <script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.min.js"><\/script>
 <script>
 (async function() {
-  const markdown = ${safeMarkdown};
-  const levels = ${safeLevels};
-  const maxNodeWidth = ${X.maxWidth > 0 ? X.maxWidth : 400};
-  const api = window.markmap;
-  const transformer = new api.Transformer();
-  const { root } = transformer.transform(markdown);
+  var markdown = ${safeMarkdown};
+  var levels = ${safeLevels};
+  var maxNodeWidth = ${X.maxWidth > 0 ? X.maxWidth : 400};
+  var api = window.markmap;
+  var transformer = new api.Transformer();
+  var result = transformer.transform(markdown);
+  var root = result.root;
 
-  // Walk the tree and apply level-based styled boxes to each node (same as React app)
+  // levels are 0-indexed for depth 1+.
+  // Root (depth=0) gets NO box styling — same as the React app.
+  // depth=1 -> levels[0], depth=2 -> levels[1], etc.
+  function getLvl(depth) {
+    if (depth === 0) return null;
+    return levels[depth - 1] || levels[levels.length - 1] || null;
+  }
+
   function stylizeNode(node, depth) {
-    const lvl = levels[depth] || levels[levels.length - 1];
+    var lvl = getLvl(depth);
     if (lvl) {
-      const shape = lvl.nodeShape || 'rounded';
-      const br = shape === 'pill' ? '999px' : shape === 'square' ? '2px' : shape === 'diamond' ? '0' : '6px';
-      const bg = lvl.color || 'transparent';
-      const tc = lvl.textColor || 'inherit';
-      const fs = (lvl.fontSize || 14) + 'px';
-      const fw = lvl.fontWeight || 'normal';
-      const fi = lvl.italic ? 'italic' : 'normal';
-      const ff = (lvl.fontFamily || 'Inter, sans-serif').replace(/'/g, '"');
-      const px = (lvl.paddingX || 8) + 'px';
-      const py = (lvl.paddingY || 4) + 'px';
-      const bc = lvl.borderColor && lvl.borderWidth ? lvl.borderColor : 'transparent';
-      const bw = (lvl.borderWidth || 0) + 'px';
-      const bs = lvl.borderStyle || 'solid';
-      const maxW = maxNodeWidth + 'px';
-      const txt = lvl.uppercase ? 'uppercase' : 'none';
-      const style = [
-        'background:' + bg,
-        'color:' + tc,
+      var shape = lvl.nodeShape || 'rounded';
+      var br = shape === 'pill' ? '999px' : shape === 'square' ? '2px' : '6px';
+      var px = (lvl.paddingX || 8) + 'px';
+      var py = (lvl.paddingY || 4) + 'px';
+      var bc = (lvl.borderWidth > 0 && lvl.borderColor) ? lvl.borderColor : 'transparent';
+      var bw = (lvl.borderWidth || 0) + 'px';
+      var bs = lvl.borderStyle || 'solid';
+      var ff = (lvl.fontFamily || 'Inter, sans-serif').replace(/'/g, '"');
+      var txt = lvl.uppercase ? 'uppercase' : 'none';
+      var st = [
+        'background:' + (lvl.color || 'transparent'),
+        'color:' + (lvl.textColor || 'inherit'),
         'border-radius:' + br,
         'padding:' + py + ' ' + px,
-        'font-size:' + fs,
-        'font-weight:' + fw,
-        'font-style:' + fi,
+        'font-size:' + (lvl.fontSize || 14) + 'px',
+        'font-weight:' + (lvl.fontWeight || 'normal'),
+        'font-style:' + (lvl.italic ? 'italic' : 'normal'),
         'font-family:' + ff,
         'border:' + bw + ' ' + bs + ' ' + bc,
-        'max-width:' + maxW,
+        'max-width:' + maxNodeWidth + 'px',
         'text-transform:' + txt
       ].join(';');
-      node.content = '<div class="mm-node-inner" style="' + style + '">' + node.content + '</div>';
+      node.content = '<div class="mm-node-inner" style="' + st + '">' + node.content + '</div>';
     }
     (node.children || []).forEach(function(child) { stylizeNode(child, depth + 1); });
   }
   if (levels.length > 0) stylizeNode(root, 0);
 
-  const colorFn = function(node) {
-    const d = (node.state && node.state.depth != null) ? node.state.depth : (node.depth || 0);
-    const lvl = levels[d] || levels[levels.length - 1];
-    return (lvl && lvl.color) || '#2E86C1';
-  };
+  // colorFn uses the same depth-1 offset for branch stroke colors
+  function colorFn(node) {
+    var d = (node.state && node.state.depth != null) ? node.state.depth : (node.depth || 0);
+    var lvl = getLvl(d);
+    return (lvl && lvl.color) ? lvl.color : '#94a3b8';
+  }
 
-  const maxSpacing = levels.reduce(function(max, lvl) {
-    return Math.max(max, lvl.spacingVertical || 5);
-  }, 5);
+  var maxSpacing = levels.reduce(function(m, l) { return Math.max(m, l.spacingVertical || 5); }, 5);
+  function lineWidthFn() { return ${X.lineWidth || 2}; }
 
-  const lineWidthFn = function() { return ${X.lineWidth || 2}; };
-
-  const svg = document.querySelector('#mindmap');
-  const mm = api.Markmap.create(svg, {
+  var svg = document.querySelector('#mindmap');
+  var mm = api.Markmap.create(svg, {
     autoFit: false,
     spacingHorizontal: ${X.spacingHorizontal || 80},
     spacingVertical: Math.max(maxSpacing, 5),
     color: colorFn,
     lineWidth: lineWidthFn,
     maxWidth: maxNodeWidth,
-    duration: ${X.duration || 400},
-    paddingX: 0
+    duration: ${X.duration || 400}
   });
 
   mm.setData(root);
   await mm.fit();
 
   if (typeof mm.toggleNode === 'function') {
-    const orig = mm.toggleNode.bind(mm);
+    var origToggle = mm.toggleNode.bind(mm);
     mm.toggleNode = async function(node, recursive) {
-      await orig(node, recursive);
+      await origToggle(node, recursive);
       mm.fit();
     };
   }
 })();
 </script>
 </body>
-</html>`;if(window.electronAPI)await window.electronAPI.saveFile(H,"html");else{const le=new Blob([H],{type:"text/html"}),xe=URL.createObjectURL(le),Ne=document.createElement("a");Ne.href=xe,Ne.download="mapa-mental.html",Ne.click(),URL.revokeObjectURL(xe)}},ze=async()=>{const X=document.querySelector(".mindmap-pane");if(X)try{const __tmp=document.createElement("style");__tmp.id="__png-tmp";__tmp.textContent="#mindmap-pane [style*=\"bottom: 20px\"]{display:none!important}#mindmap-pane [style*=\"bottom:20px\"]{display:none!important}";document.head.appendChild(__tmp);const me=await JM(X,{backgroundColor:i.backgroundColor,pixelRatio:3,filter:n=>!(n.style&&n.style.bottom==="20px"&&n.style.right==="20px")});document.head.removeChild(__tmp);if(window.electronAPI){const H=me.replace(/^data:image\/png;base64,/,"");await window.electronAPI.saveImage(H)}else{const H=document.createElement("a");H.download="mindmap.png",H.href=me,H.click()}}catch(me){console.error(me),alert("Error exportando imagen")}};xt.useEffect(()=>{const X=me=>{(me.ctrlKey||me.metaKey)&&me.key==="s"&&(me.preventDefault(),P()),(me.ctrlKey||me.metaKey)&&me.key==="o"&&(me.preventDefault(),te())};return window.addEventListener("keydown",X),()=>window.removeEventListener("keydown",X)},[e,i]);const Ae=X=>{mf[X]&&r(me=>({...me,...mf[X]}))},Fe=X=>{jd[X]&&r(me=>({...me,...jd[X]}))};return fe.jsxs("div",{className:`app-main-wrapper ${C?"zen-mode":""}`,style:{display:"flex",flexDirection:"column",height:"100vh",width:"100vw"},children:[fe.jsx("input",{ref:B,type:"file",accept:".json",style:{display:"none"},onChange:oe}),fe.jsx("input",{ref:j,type:"file",accept:"image/*",style:{display:"none"},onChange:se}),fe.jsx("input",{ref:K,type:"file",accept:"audio/*",style:{display:"none"},onChange:Ee}),!C&&fe.jsx(QD,{onSave:()=>P(!1),onOpen:te,onExportHTML:De,onExportImage:ze,onExportPreset:ie,onImportPreset:()=>B.current?.click(),onInsertImage:()=>window.insertMarkmap2Image(L,j),onInsertAudio:()=>window.insertMarkmap2Audio(L,K),toggleSettings:()=>y(!p),autoSave:S,toggleAutoSave:()=>A(!S),onZenMode:()=>N(!0),templates:jd,onApplyTemplate:Fe}),C&&fe.jsx("div",{style:{position:"absolute",top:"10px",right:"10px",zIndex:1e3},children:fe.jsx("button",{onClick:()=>N(!1),style:{background:"rgba(0,0,0,0.5)",color:"white",border:"none",padding:"8px",borderRadius:"4px",cursor:"pointer"},children:"✕ Salir del modo Zen"})}),fe.jsxs("div",{className:"app-container",style:{flex:1,display:"flex",overflow:"hidden"},children:[!C&&fe.jsx("div",{className:"editor-pane",children:fe.jsx(tg,{ref:L,value:e,onChange:t})}),fe.jsx("div",{className:"mindmap-pane",id:"mindmap-pane",style:{flex:1,position:"relative",backgroundImage:i.backgroundImage?`url(${i.backgroundImage})`:void 0,backgroundSize:"cover",backgroundPosition:"center"},children:fe.jsx(ZD,{ref:Y,markdown:e,settings:i})}),!C&&fe.jsx(uM,{settings:i,onChange:r,themes:mf,onApplyTheme:Ae,maxDepth:a+1,visible:p})]})]})}vb.createRoot(document.getElementById("root")).render(fe.jsx(xt.StrictMode,{children:fe.jsx(nN,{})}));
+</html>`;if(window.electronAPI)await window.electronAPI.saveFile(H,"html");else{const le=new Blob([H],{type:"text/html"}),xe=URL.createObjectURL(le),Ne=document.createElement("a");Ne.href=xe,Ne.download="mapa-mental.html",Ne.click(),URL.revokeObjectURL(xe)}},ze=async()=>{const X=document.querySelector(".mindmap-pane");if(X)try{const __tmp=document.createElement("style");__tmp.id="__png-tmp";__tmp.textContent="#mindmap-pane [style*=\"bottom: 20px\"]{display:none!important}#mindmap-pane [style*=\"bottom:20px\"]{display:none!important}svg line{display:none!important;stroke:none!important}";document.head.appendChild(__tmp);const me=await JM(X,{backgroundColor:i.backgroundColor,pixelRatio:3,filter:n=>!(n.style&&n.style.bottom==="20px"&&n.style.right==="20px")});document.head.removeChild(__tmp);if(window.electronAPI){const H=me.replace(/^data:image\/png;base64,/,"");await window.electronAPI.saveImage(H)}else{const H=document.createElement("a");H.download="mindmap.png",H.href=me,H.click()}}catch(me){console.error(me),alert("Error exportando imagen")}};xt.useEffect(()=>{const X=me=>{(me.ctrlKey||me.metaKey)&&me.key==="s"&&(me.preventDefault(),P()),(me.ctrlKey||me.metaKey)&&me.key==="o"&&(me.preventDefault(),te())};return window.addEventListener("keydown",X),()=>window.removeEventListener("keydown",X)},[e,i]);const Ae=X=>{mf[X]&&r(me=>({...me,...mf[X]}))},Fe=X=>{jd[X]&&r(me=>({...me,...jd[X]}))};return fe.jsxs("div",{className:`app-main-wrapper ${C?"zen-mode":""}`,style:{display:"flex",flexDirection:"column",height:"100vh",width:"100vw"},children:[fe.jsx("input",{ref:B,type:"file",accept:".json",style:{display:"none"},onChange:oe}),fe.jsx("input",{ref:j,type:"file",accept:"image/*",style:{display:"none"},onChange:se}),fe.jsx("input",{ref:K,type:"file",accept:"audio/*",style:{display:"none"},onChange:Ee}),!C&&fe.jsx(QD,{onSave:()=>P(!1),onOpen:te,onExportHTML:De,onExportImage:ze,onExportPreset:ie,onImportPreset:()=>B.current?.click(),onInsertImage:()=>window.insertMarkmap2Image(L,j),onInsertAudio:()=>window.insertMarkmap2Audio(L,K),toggleSettings:()=>y(!p),autoSave:S,toggleAutoSave:()=>A(!S),onZenMode:()=>N(!0),templates:jd,onApplyTemplate:Fe}),C&&fe.jsx("div",{style:{position:"absolute",top:"10px",right:"10px",zIndex:1e3},children:fe.jsx("button",{onClick:()=>N(!1),style:{background:"rgba(0,0,0,0.5)",color:"white",border:"none",padding:"8px",borderRadius:"4px",cursor:"pointer"},children:"✕ Salir del modo Zen"})}),fe.jsxs("div",{className:"app-container",style:{flex:1,display:"flex",overflow:"hidden"},children:[!C&&fe.jsx("div",{className:"editor-pane",children:fe.jsx(tg,{ref:L,value:e,onChange:t})}),fe.jsx("div",{className:"mindmap-pane",id:"mindmap-pane",style:{flex:1,position:"relative",backgroundImage:i.backgroundImage?`url(${i.backgroundImage})`:void 0,backgroundSize:"cover",backgroundPosition:"center"},children:fe.jsx(ZD,{ref:Y,markdown:e,settings:i})}),!C&&fe.jsx(uM,{settings:i,onChange:r,themes:mf,onApplyTheme:Ae,maxDepth:a+1,visible:p})]})]})}vb.createRoot(document.getElementById("root")).render(fe.jsx(xt.StrictMode,{children:fe.jsx(nN,{})}));
