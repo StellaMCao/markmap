@@ -506,10 +506,10 @@ body { background: ${X.backgroundColor}; ${X.backgroundImage?`background-image: 
 #mindmap { display: block; width: 100vw; height: 100vh; }
 .markmap-link { fill: none !important; stroke-width: ${X.lineWidth}px !important; stroke-dasharray: ${X.lineStyle==="dashed"?"5,5":X.lineStyle==="dotted"?"2,3":"none"}; stroke-opacity: ${X.lineOpacity}; }
 .markmap { opacity: ${X.opacity}; }
-.markmap-foreign { padding: 0 !important; background: transparent !important; }
-.markmap-foreign > div { padding: 0 !important; background: transparent !important; display: flex; align-items: center; }
+.markmap-foreign { box-shadow: none !important; box-sizing: border-box !important; overflow: visible !important; padding: 0 !important; background: transparent !important; border: none !important; border-radius: 0 !important; }
+.markmap-foreign > div { background: transparent !important; padding: 0 !important; overflow: visible !important; }
 line { display: none !important; }
-.mm-node-inner { display: inline-block; box-sizing: border-box; white-space: normal; overflow-wrap: anywhere; }
+.mm-node-inner { display: inline-block; box-sizing: border-box; }
 </style>
 </head>
 <body>
@@ -523,55 +523,58 @@ line { display: none !important; }
 (async function() {
   var markdown = ${safeMarkdown};
   var levels = ${safeLevels};
-  var maxNodeWidth = ${X.maxWidth > 0 ? X.maxWidth : 400};
   var api = window.markmap;
   var transformer = new api.Transformer();
   var result = transformer.transform(markdown);
   var root = result.root;
 
-  // levels are 0-indexed for depth 1+.
-  // Root (depth=0) gets NO box styling — same as the React app.
-  // depth=1 -> levels[0], depth=2 -> levels[1], etc.
-  function getLvl(depth) {
-    if (depth === 0) return null;
-    return levels[depth - 1] || levels[levels.length - 1] || null;
-  }
-
+  // $8 equivalent node styling logic from React app
   function stylizeNode(node, depth) {
-    var lvl = getLvl(depth);
+    var lvl = levels[depth] || levels[levels.length - 1];
     if (lvl) {
       var shape = lvl.nodeShape || 'rounded';
-      var br = shape === 'pill' ? '999px' : shape === 'square' ? '2px' : '6px';
-      var px = (lvl.paddingX || 8) + 'px';
-      var py = (lvl.paddingY || 4) + 'px';
-      var bc = (lvl.borderWidth > 0 && lvl.borderColor) ? lvl.borderColor : 'transparent';
-      var bw = (lvl.borderWidth || 0) + 'px';
-      var bs = lvl.borderStyle || 'solid';
+      var br = shape === 'pill' ? '999px' : shape === 'square' ? '0px' : '8px';
+      var px = (lvl.paddingX ?? 10) + 'px';
+      var py = (lvl.paddingY ?? 5) + 'px';
+      var h = 'none', m = 'none';
+      if ((lvl.borderWidth || 0) > 0) {
+        h = (lvl.borderWidth) + 'px ' + (lvl.borderStyle || 'solid') + ' ' + (lvl.borderColor || '#888');
+      } else {
+        m = '2px solid ' + (lvl.color || '#888');
+      }
       var ff = (lvl.fontFamily || 'Inter, sans-serif').replace(/'/g, '"');
       var txt = lvl.uppercase ? 'uppercase' : 'none';
+      var bg = 'color-mix(in srgb, ' + (lvl.color || '#888') + ' 12%, ${X.backgroundColor || "#ffffff"})';
+      
+      var maxW = (lvl.maxWidth || 0) > 0 ? 'max-width: ' + lvl.maxWidth + 'px; white-space: normal; word-break: break-word;' : 'white-space: nowrap;';
+      var minW = (lvl.minWidth || 0) > 0 ? 'min-width: ' + lvl.minWidth + 'px; white-space: normal; word-break: break-word;' : '';
+
       var st = [
-        'background:' + (lvl.color || 'transparent'),
-        'color:' + (lvl.textColor || 'inherit'),
-        'border-radius:' + br,
-        'padding:' + py + ' ' + px,
-        'font-size:' + (lvl.fontSize || 14) + 'px',
-        'font-weight:' + (lvl.fontWeight || 'normal'),
-        'font-style:' + (lvl.italic ? 'italic' : 'normal'),
-        'font-family:' + ff,
-        'border:' + bw + ' ' + bs + ' ' + bc,
-        'max-width:' + maxNodeWidth + 'px',
-        'text-transform:' + txt
-      ].join(';');
+        'display: inline-block',
+        'border-radius: ' + br,
+        'border: ' + h,
+        'border-bottom: ' + m,
+        'background-color: ' + bg,
+        'padding: ' + py + ' ' + px,
+        'box-sizing: border-box',
+        'font-family: ' + ff,
+        'font-size: ' + (lvl.fontSize || 14) + 'px',
+        'font-weight: ' + (lvl.fontWeight || 'normal'),
+        'font-style: ' + (lvl.italic ? 'italic' : 'normal'),
+        'text-transform: ' + txt,
+        'color: ' + (lvl.textColor || '#333'),
+        maxW,
+        minW
+      ].filter(Boolean).join(';');
       node.content = '<div class="mm-node-inner" style="' + st + '">' + node.content + '</div>';
     }
     (node.children || []).forEach(function(child) { stylizeNode(child, depth + 1); });
   }
   if (levels.length > 0) stylizeNode(root, 0);
 
-  // colorFn uses the same depth-1 offset for branch stroke colors
   function colorFn(node) {
     var d = (node.state && node.state.depth != null) ? node.state.depth : (node.depth || 0);
-    var lvl = getLvl(d);
+    var lvl = levels[d] || levels[levels.length - 1];
     return (lvl && lvl.color) ? lvl.color : '#94a3b8';
   }
 
@@ -585,12 +588,20 @@ line { display: none !important; }
     spacingVertical: Math.max(maxSpacing, 5),
     color: colorFn,
     lineWidth: lineWidthFn,
-    maxWidth: maxNodeWidth,
+    maxWidth: ${X.maxWidth || 400},
     duration: ${X.duration || 400}
   });
 
   mm.setData(root);
   await mm.fit();
+
+  // Force re-layout after web fonts load to ensure perfect alignment
+  if (document.fonts && typeof document.fonts.ready === 'object') {
+    document.fonts.ready.then(function() {
+      mm.setData(root);
+      mm.fit();
+    });
+  }
 
   if (typeof mm.toggleNode === 'function') {
     var origToggle = mm.toggleNode.bind(mm);
