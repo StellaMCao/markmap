@@ -589,17 +589,92 @@ line { display: none !important; }
     color: colorFn,
     lineWidth: lineWidthFn,
     maxWidth: ${X.maxWidth || 400},
-    duration: ${X.duration || 400}
+    duration: 0 // Start with 0 duration for centering
   });
 
   mm.setData(root);
   await mm.fit();
+  mm.options.duration = ${X.duration || 400};
+
+  // Node alignment functions that run on MutationObserver to center foreignObjects and lines vertically
+  function alignNodes() {
+    var svgEl = document.querySelector('#mindmap');
+    if (!svgEl) return;
+    
+    // 1. Center foreignObjects and circles vertically
+    svgEl.querySelectorAll('.markmap-node').forEach(function(nodeEl) {
+      var circle = nodeEl.querySelector('circle');
+      var foreign = nodeEl.querySelector('foreignObject');
+      if (!foreign) return;
+      var height = parseFloat(foreign.getAttribute('height') || 0);
+      if (height > 0) {
+        var yVal = String(-height / 2);
+        if (foreign.getAttribute('y') !== yVal) {
+          foreign.setAttribute('y', yVal);
+        }
+      }
+      if (circle) {
+        if (circle.getAttribute('cy') !== '0') {
+          circle.setAttribute('cy', '0');
+        }
+        if (nodeEl.lastElementChild !== circle) {
+          nodeEl.appendChild(circle);
+        }
+      }
+    });
+
+    // 2. Redraw paths through the vertical center of the nodes
+    svgEl.querySelectorAll('.markmap-link').forEach(function(pathEl) {
+      var data = pathEl.__data__;
+      if (!data || !data.source || !data.target) return;
+      var sourceRect = data.source.state && data.source.state.rect;
+      var targetRect = data.target.state && data.target.state.rect;
+      if (!sourceRect || !targetRect) return;
+
+      var x1 = sourceRect.x + sourceRect.width;
+      var y1 = sourceRect.y;
+      var x2 = targetRect.x;
+      var y2 = targetRect.y;
+      var w2 = targetRect.width;
+      
+      var dVal = 'M ' + x1 + ',' + y1 + ' C ' + ((x1 + x2) / 2) + ',' + y1 + ' ' + ((x1 + x2) / 2) + ',' + y2 + ' ' + x2 + ',' + y2 + ' L ' + (x2 + w2) + ',' + y2;
+      if (pathEl.getAttribute('d') !== dVal) {
+        pathEl.setAttribute('d', dVal);
+      }
+    });
+  }
+
+  var svgEl = document.querySelector('#mindmap');
+  var observer = new MutationObserver(function() {
+    observer.disconnect();
+    alignNodes();
+    if (svgEl) {
+      observer.observe(svgEl, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['transform', 'd', 'y', 'cy', 'height']
+      });
+    }
+  });
+  if (svgEl) {
+    observer.observe(svgEl, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['transform', 'd', 'y', 'cy', 'height']
+    });
+  }
+  alignNodes();
 
   // Force re-layout after web fonts load to ensure perfect alignment
   if (document.fonts && typeof document.fonts.ready === 'object') {
     document.fonts.ready.then(function() {
+      mm.options.duration = 0;
       mm.setData(root);
       mm.fit();
+      mm.options.duration = ${X.duration || 400};
+      alignNodes();
     });
   }
 
